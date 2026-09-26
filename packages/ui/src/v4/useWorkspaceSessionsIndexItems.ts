@@ -75,11 +75,23 @@ function toRegistryScope(scope: WorkspaceSessionsIndexScope): SessionsIndexScope
   };
 }
 
+/** agentService 实例的稳定序号；scope 签名用它区分不同 service 实例（换代重建订阅）。 */
+const agentServiceIds = new WeakMap<object, number>();
+let nextAgentServiceId = 1;
+
+function agentServiceIdOf(agentService: object): number {
+  const existing = agentServiceIds.get(agentService);
+  if (existing !== undefined) return existing;
+  const id = nextAgentServiceId++;
+  agentServiceIds.set(agentService, id);
+  return id;
+}
+
 function buildScopeBindingKey(
   scope: WorkspaceSessionsIndexScope,
   agentService: SessionsIndexAgentService,
 ): string {
-  return `${buildSessionsIndexEntryKey(toRegistryScope(scope), agentService)}\0path:${scope.workspacePath}`;
+  return `${buildSessionsIndexEntryKey(toRegistryScope(scope))}\0path:${scope.workspacePath}\0service:${agentServiceIdOf(agentService)}`;
 }
 
 /** store 尚未持有任何 snapshot（connecting/首帧未到）；error 不算 hydrating（避免永久 loading）。 */

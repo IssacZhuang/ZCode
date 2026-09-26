@@ -14,11 +14,7 @@ import {
   useBaseWorkspaceServices,
   useWorkspaceServicesResolution,
 } from "@/hooks/useWorkspaceServices.js";
-import {
-  resolveWorkspaceServices,
-  type WorkspaceServiceResolverState,
-} from "@/lib/workspaceServiceResolver.js";
-import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionStore.js";
+import { resolveWorkspaceServices } from "@/lib/workspaceServiceResolver.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab, type WorkspaceTabState } from "@/store/tabStore.js";
 import {
@@ -122,12 +118,10 @@ function limitSessionMentionItemsPerWorkspace(items: SessionMentionItem[]): Sess
 
 function buildSessionMentionScopes(params: {
   baseServices: IServiceAccessor;
-  currentRemoteSessionId: string | null;
   currentServices: IServiceAccessor;
   currentWorkspaceIdentity?: string;
   currentWorkspacePath: string;
   enabled: boolean;
-  serviceResolverState: WorkspaceServiceResolverState;
   workspaceTabs: WorkspaceTabState[];
 }): WorkspaceSessionsIndexScope[] {
   if (!params.enabled) {
@@ -138,17 +132,13 @@ function buildSessionMentionScopes(params: {
   const scopes: WorkspaceSessionsIndexScope[] = [];
   const seenWorkspaceKeys = new Set<string>();
   const candidates: Array<
-    Pick<
-      WorkspaceTabState,
-      "remoteSessionId" | "remoteTarget" | "workspaceIdentity" | "workspacePath"
-    >
+    Pick<WorkspaceTabState, "remoteSessionId" | "workspaceIdentity" | "workspacePath">
   > = [
     {
       workspacePath: params.currentWorkspacePath,
       ...(params.currentWorkspaceIdentity
         ? { workspaceIdentity: params.currentWorkspaceIdentity }
         : {}),
-      ...(params.currentRemoteSessionId ? { remoteSessionId: params.currentRemoteSessionId } : {}),
     },
     ...params.workspaceTabs,
   ];
@@ -162,11 +152,7 @@ function buildSessionMentionScopes(params: {
       continue;
     }
 
-    const resolved = resolveWorkspaceServices(
-      candidate,
-      params.baseServices,
-      params.serviceResolverState,
-    );
+    const resolved = resolveWorkspaceServices(candidate, params.baseServices);
     // 功能边界：# 引用最终由当前 Agent Host 的 SQLite session store 按 session id 读取。
     // 这里只聚合同一 agent service authority，避免把另一个远端 Host 的会话做成可选但不可读的引用；
     // 未连接 remote 也会在 resolver 处返回 null，不能回退到本地 base service。
@@ -199,30 +185,15 @@ export function useSessionsMentionProvider(
   const baseServices = useBaseWorkspaceServices();
   const tabs = useTabStore((state) => state.tabs);
   const workspaceTabs = useMemo(() => tabs.filter(isWorkspaceTab), [tabs]);
-  const sessionsById = useRemoteWorkspaceSessionStore((state) => state.sessionsById);
-  const sessionIdByWorkspaceIdentity = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspaceIdentity,
+  const { services: workspaceServices } = useWorkspaceServicesResolution(
+    workspacePath,
+    undefined,
+    workspaceIdentity,
   );
-  const sessionIdByWorkspacePath = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspacePath,
-  );
-  const serviceResolverState = useMemo(
-    () => ({
-      sessionsById,
-      sessionIdByWorkspaceIdentity,
-      sessionIdByWorkspacePath,
-    }),
-    [sessionIdByWorkspaceIdentity, sessionIdByWorkspacePath, sessionsById],
-  );
-  const {
-    services: workspaceServices,
-    remoteSessionId,
-    isRemoteTarget,
-  } = useWorkspaceServicesResolution(workspacePath, undefined, workspaceIdentity);
   // `@` 与 `#` 复用 provider，但只有 `#` 能扩展到同 authority 的 workspace。
   // sessions-index registry 仍按 endpoint+workspaceKey 引用计数复用，不额外建立连接。
   const scopes = useMemo<WorkspaceSessionsIndexScope[]>(() => {
-    if (!enabled || (isRemoteTarget && !remoteSessionId)) {
+    if (!enabled) {
       return [];
     }
     if (workspaceScope === "current-workspace") {
@@ -230,28 +201,21 @@ export function useSessionsMentionProvider(
         {
           workspacePath,
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
-          ...(remoteSessionId ? { endpointKey: remoteSessionId } : {}),
-          // 远端必须显式携带已解析 endpoint 的 service，不能让本机 Host 查询远端路径。
           agentService: workspaceServices.zcodeAgentService,
         },
       ];
     }
     return buildSessionMentionScopes({
       baseServices,
-      currentRemoteSessionId: remoteSessionId,
       currentServices: workspaceServices,
       currentWorkspaceIdentity: workspaceIdentity,
       currentWorkspacePath: workspacePath,
       enabled,
-      serviceResolverState,
       workspaceTabs,
     });
   }, [
     baseServices,
     enabled,
-    isRemoteTarget,
-    remoteSessionId,
-    serviceResolverState,
     workspaceIdentity,
     workspacePath,
     workspaceScope,

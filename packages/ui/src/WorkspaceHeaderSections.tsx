@@ -5,7 +5,6 @@ import {
   TID_WORKSPACE_MORE_BUTTON,
   TID_WORKSPACE_PATH,
   TID_WORKSPACE_TITLE,
-  type RemoteTarget,
   type ZCodeTaskMeta,
 } from "@zcode/shared";
 import { useMemo, useRef, useState } from "react";
@@ -15,7 +14,7 @@ import { Button } from "@/components/ui/button.js";
 import { Cloud, Ellipsis, Folder, GitBranch, LoaderIcon } from "lucide-react";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useGlobalTaskList } from "@/hooks/useGlobalTaskList.js";
-import { useBaseWorkspaceServices, useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
+import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useTaskListItemContextActions } from "@/useTaskListItemContextActions.js";
 import { TaskActionMenuContent } from "@/TaskActionMenuContent.js";
 import {
@@ -26,10 +25,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import {
-  formatRemoteWorkspaceDisplayLabel,
-  formatRemoteWorkspaceHeaderHostLabel,
-} from "@/lib/remoteWorkspaceHistory.js";
 import { resolveWorkspaceHeaderProvider } from "@/lib/workspaceHeaderProvider.js";
 import { toast } from "@/components/ui/toast.js";
 import { useFeedbackStore } from "@/feedback/feedbackStore.js";
@@ -42,18 +37,7 @@ import type {
 } from "@/WorkspaceHeaderSections/shared.js";
 import { applyTaskQueryCacheMutation } from "@/store/taskQueryCacheStore.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { useRemotePinnedTaskStore } from "@/store/remotePinnedTaskStore.js";
-import { useRemoteTimelineTaskStore } from "@/store/remoteTimelineTaskStore.js";
 import { TaskRenameDialog } from "@/TaskRenameDialog.js";
-import {
-  RemoteSyncDialogs,
-  RemoteSyncMenuItems,
-  shouldShowRemoteSyncActions,
-} from "@/settings/RemoteSyncActions.js";
-import { invalidateDeferredDraftSessionForSkillChange } from "@/lib/zcodeDraftSkillInvalidation.js";
-import { refreshSharedSkillStoreForWorkspace } from "@/lib/skillStoreRefresh.js";
-import { refreshWorkspacePluginCapabilitiesAfterRemoteSync } from "@/lib/remotePluginSyncRefresh.js";
-import { useMcpStore } from "@/store/mcpStore.js";
 
 export type { WorkspaceHeaderState, WorkspaceHeaderTitleSectionProps };
 export {
@@ -61,23 +45,13 @@ export {
   type WorkspaceHeaderActionSectionProps,
 } from "@/WorkspaceHeaderSections/WorkspaceHeaderActionSection.js";
 
-function shouldShowRemoteSkillSyncAction(params: {
-  remoteSessionId?: string | null;
-  remoteTarget?: RemoteTarget | null;
-  clientMode?: "desktop-continuous" | "web-remote-replayable";
-  hasLocalSourceService?: boolean;
-}): boolean {
-  return shouldShowRemoteSyncActions(params);
-}
-
 export function WorkspaceHeaderTitleSection({
   variant,
   readOnlyReason,
   workspaceAbsPath,
   remoteSessionId,
   workspaceIdentity,
-  remoteTarget,
-  localWorkspacePath,
+  localWorkspacePath: _localWorkspacePath,
   projectName,
   activeTaskTitle,
   activeTaskChangeSummary: _activeTaskChangeSummary,
@@ -107,7 +81,6 @@ export function WorkspaceHeaderTitleSection({
   const openFeedbackSubmit = useFeedbackStore((state) => state.openSubmit);
   const confirmDialog = useConfirmDialog();
   const services = useWorkspaceServices(workspaceAbsPath, remoteSessionId, workspaceIdentity);
-  const baseServices = useBaseWorkspaceServices();
   const removeTaskState = useZCodeSessionStore((state) => state.removeTaskState);
   const upsertOptimisticTaskListItem = useZCodeSessionStore(
     (state) => state.upsertOptimisticTaskListItem,
@@ -120,9 +93,6 @@ export function WorkspaceHeaderTitleSection({
   const [workspaceContextOpen, setWorkspaceContextOpen] = useState(false);
   const [renamingTaskId, setRenamingTaskId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState("");
-  const [remoteSkillSyncOpen, setRemoteSkillSyncOpen] = useState(false);
-  const [remoteMcpSyncOpen, setRemoteMcpSyncOpen] = useState(false);
-  const [remotePluginSyncOpen, setRemotePluginSyncOpen] = useState(false);
   const renameInputRef = useRef<HTMLInputElement | null>(null);
   const headerWorkspaceTabs = useMemo(
     () => [
@@ -180,16 +150,7 @@ export function WorkspaceHeaderTitleSection({
     provider: menuTaskProvider,
     intl,
   });
-  const remoteWorkspaceHostLabel = remoteTarget
-    ? formatRemoteWorkspaceHeaderHostLabel(remoteTarget)
-    : null;
-  const workspaceDisplayLabel = formatRemoteWorkspaceDisplayLabel(projectName, remoteTarget);
-  const showRemoteWorkspaceHostLabel = Boolean(
-    remoteWorkspaceHostLabel && workspaceDisplayLabel === projectName,
-  );
-  const workspaceContextLabel = showRemoteWorkspaceHostLabel
-    ? `${workspaceDisplayLabel} @ ${remoteWorkspaceHostLabel}`
-    : workspaceDisplayLabel;
+  const workspaceContextLabel = projectName;
   const workspaceBranchLabel = gitSummary.isRepository
     ? resolveGitBranchTriggerLabel({
         headRefType: gitSummary.headRefType,
@@ -198,19 +159,7 @@ export function WorkspaceHeaderTitleSection({
         fallbackLabel: intl.formatMessage({ id: "git.branchSwitcher.label" }),
       })
     : null;
-  const isRemoteWorkspace = Boolean(
-    remoteWorkspaceHostLabel || workspaceIdentity?.trim() || remoteSessionId,
-  );
-  const showRemoteSkillSyncAction = shouldShowRemoteSkillSyncAction({
-    remoteSessionId,
-    remoteTarget,
-    clientMode: "desktop-continuous" as const,
-    hasLocalSourceService: Boolean(
-      baseServices.skillSyncService &&
-      baseServices.mcpSyncService &&
-      baseServices.pluginSyncService,
-    ),
-  });
+  const isRemoteWorkspace = Boolean(workspaceIdentity?.trim() || remoteSessionId);
   const workspaceActionLoading = reloadSessionPending;
   const workspaceActionLoadingTitle = intl.formatMessage({
     id: "appHeader.workspaceSessionActionLoading",
@@ -303,13 +252,6 @@ export function WorkspaceHeaderTitleSection({
         ...(workspaceIdentity ? { workspaceIdentity } : {}),
       });
       upsertOptimisticTaskListItem(workspaceAbsPath, renamedTask, workspaceIdentity);
-      if (workspaceIdentity) {
-        if (isPinned) {
-          useRemotePinnedTaskStore.getState().upsertTask(renamedTask);
-        } else {
-          useRemoteTimelineTaskStore.getState().upsertTask(renamedTask);
-        }
-      }
       applyTaskQueryCacheMutation({
         previousTask: buildHeaderTaskSnapshot(renamedTask, {
           title: currentTitle,
@@ -360,14 +302,6 @@ export function WorkspaceHeaderTitleSection({
         // Header 更多菜单不能只依赖 zcodeTaskMetaMerge：归档后只有旧列表状态被更新。
         // 这里改成和 Sidebar 一样同步清理运行态与 sqlite cache，避免 Header 操作后列表不刷新。
         removeTaskState(workspaceAbsPath, resolvedTaskActionTaskId, workspaceIdentity);
-        if (workspaceIdentity) {
-          useRemotePinnedTaskStore
-            .getState()
-            .removeTask(workspaceAbsPath, resolvedTaskActionTaskId, workspaceIdentity);
-          useRemoteTimelineTaskStore
-            .getState()
-            .removeTask(workspaceAbsPath, resolvedTaskActionTaskId, workspaceIdentity);
-        }
         applyTaskQueryCacheMutation({
           previousTask: buildHeaderTaskSnapshot(meta),
           nextTask: meta,
@@ -505,19 +439,6 @@ export function WorkspaceHeaderTitleSection({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-48">
-              {showRemoteSkillSyncAction && remoteTarget ? (
-                <>
-                  <RemoteSyncMenuItems
-                    canSyncSkills
-                    canSyncMcp
-                    canSyncPlugins
-                    onOpenSkillSync={() => setRemoteSkillSyncOpen(true)}
-                    onOpenMcpSync={() => setRemoteMcpSyncOpen(true)}
-                    onOpenPluginSync={() => setRemotePluginSyncOpen(true)}
-                  />
-                  <DropdownMenuSeparator />
-                </>
-              ) : null}
               <TaskActionMenuContent
                 intl={intl}
                 isPinned={isPinned}
@@ -540,18 +461,6 @@ export function WorkspaceHeaderTitleSection({
                   if (optimisticTask) {
                     // Header 里切换 pin 以前只等 RPC 成功后更新列表缓存，
                     // pinned 区会在请求期间被旧查询结果覆盖。先乐观切换，失败再回滚。
-                    if (workspaceIdentity && !isPinned) {
-                      useRemotePinnedTaskStore.getState().upsertTask(optimisticTask);
-                      useRemoteTimelineTaskStore
-                        .getState()
-                        .removeTask(workspaceAbsPath, resolvedTaskActionTaskId, workspaceIdentity);
-                    }
-                    if (workspaceIdentity && isPinned) {
-                      useRemotePinnedTaskStore
-                        .getState()
-                        .removeTask(workspaceAbsPath, resolvedTaskActionTaskId, workspaceIdentity);
-                      useRemoteTimelineTaskStore.getState().upsertTask(optimisticTask);
-                    }
                     applyTaskQueryCacheMutation({
                       previousTask: optimisticTask,
                       nextTask: optimisticTask,
@@ -572,26 +481,6 @@ export function WorkspaceHeaderTitleSection({
                         resolvedTaskActionTaskId,
                         workspaceIdentity,
                       );
-                      if (workspaceIdentity && !isPinned) {
-                        useRemotePinnedTaskStore.getState().upsertTask(meta);
-                        useRemoteTimelineTaskStore
-                          .getState()
-                          .removeTask(
-                            workspaceAbsPath,
-                            resolvedTaskActionTaskId,
-                            workspaceIdentity,
-                          );
-                      }
-                      if (workspaceIdentity && isPinned) {
-                        useRemotePinnedTaskStore
-                          .getState()
-                          .removeTask(
-                            workspaceAbsPath,
-                            resolvedTaskActionTaskId,
-                            workspaceIdentity,
-                          );
-                        useRemoteTimelineTaskStore.getState().upsertTask(meta);
-                      }
                       applyTaskQueryCacheMutation({
                         previousTask: buildHeaderTaskSnapshot(meta),
                         nextTask: meta,
@@ -601,26 +490,6 @@ export function WorkspaceHeaderTitleSection({
                     })
                     .catch(() => {
                       if (optimisticTask) {
-                        if (workspaceIdentity && !isPinned) {
-                          useRemotePinnedTaskStore
-                            .getState()
-                            .removeTask(
-                              workspaceAbsPath,
-                              resolvedTaskActionTaskId,
-                              workspaceIdentity,
-                            );
-                          useRemoteTimelineTaskStore.getState().upsertTask(optimisticTask);
-                        }
-                        if (workspaceIdentity && isPinned) {
-                          useRemotePinnedTaskStore.getState().upsertTask(optimisticTask);
-                          useRemoteTimelineTaskStore
-                            .getState()
-                            .removeTask(
-                              workspaceAbsPath,
-                              resolvedTaskActionTaskId,
-                              workspaceIdentity,
-                            );
-                        }
                         applyTaskQueryCacheMutation({
                           previousTask: optimisticTask,
                           nextTask: optimisticTask,
@@ -654,13 +523,6 @@ export function WorkspaceHeaderTitleSection({
                         workspaceIdentity,
                       );
                       upsertOptimisticTaskListItem(workspaceAbsPath, meta, workspaceIdentity);
-                      if (workspaceIdentity) {
-                        if (isPinned) {
-                          useRemotePinnedTaskStore.getState().upsertTask(meta);
-                        } else {
-                          useRemoteTimelineTaskStore.getState().upsertTask(meta);
-                        }
-                      }
                       applyTaskQueryCacheMutation({
                         previousTask: buildHeaderTaskSnapshot(meta),
                         nextTask: meta,
@@ -714,66 +576,6 @@ export function WorkspaceHeaderTitleSection({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
-        <RemoteSyncDialogs
-          canSyncSkills={showRemoteSkillSyncAction}
-          canSyncMcp={showRemoteSkillSyncAction}
-          canSyncPlugins={showRemoteSkillSyncAction}
-          skillOpen={remoteSkillSyncOpen}
-          mcpOpen={remoteMcpSyncOpen}
-          pluginOpen={remotePluginSyncOpen}
-          onSkillOpenChange={setRemoteSkillSyncOpen}
-          onMcpOpenChange={setRemoteMcpSyncOpen}
-          onPluginOpenChange={setRemotePluginSyncOpen}
-          localSkillSyncService={baseServices.skillSyncService}
-          remoteSkillSyncService={services.skillSyncService}
-          localMcpSyncService={baseServices.mcpSyncService}
-          remoteMcpSyncService={services.mcpSyncService}
-          localPluginSyncService={baseServices.pluginSyncService}
-          remotePluginSyncService={services.pluginSyncService}
-          localZCodeAgentService={baseServices.zcodeAgentService}
-          remoteZCodeAgentService={services.zcodeAgentService}
-          remoteTarget={remoteTarget}
-          skillWorkspacePath={workspaceAbsPath}
-          mcpWorkspacePath={workspaceAbsPath}
-          pluginWorkspacePath={workspaceAbsPath}
-          pluginLocalWorkspacePath={localWorkspacePath}
-          mcpLocalWorkspacePath={localWorkspacePath}
-          workspaceIdentity={workspaceIdentity}
-          onSkillsSynced={async () => {
-            await invalidateDeferredDraftSessionForSkillChange({
-              zcodeSessionService: services.zcodeSessionService,
-              workspacePath: workspaceAbsPath,
-              workspaceIdentity,
-              reason: "header-remote-skill-sync",
-            });
-            await refreshSharedSkillStoreForWorkspace({
-              workspacePath: workspaceAbsPath,
-              workspaceIdentity,
-              skillsService: services.skillsService,
-            });
-          }}
-          onMcpSynced={async () => {
-            await useMcpStore
-              .getState()
-              .ensureLoadedForWorkspace(
-                workspaceAbsPath,
-                services.mcpSyncService,
-                workspaceIdentity,
-              );
-          }}
-          onPluginsSynced={async () => {
-            await refreshWorkspacePluginCapabilitiesAfterRemoteSync({
-              commandsService: services.commandsService,
-              mcpSyncService: services.mcpSyncService,
-              reason: "header-remote-plugin-sync",
-              skillsService: services.skillsService,
-              workspaceIdentity,
-              workspacePath: workspaceAbsPath,
-              zcodeAgentService: services.zcodeAgentService,
-              zcodeSessionService: services.zcodeSessionService,
-            });
-          }}
-        />
         {!isDraftNewTask && workspaceActionLoading ? (
           <ControlHintTooltip
             title={workspaceActionLoadingTitle}

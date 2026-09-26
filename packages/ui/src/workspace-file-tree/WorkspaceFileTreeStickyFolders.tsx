@@ -78,7 +78,6 @@ export function WorkspaceFileTreeStickyFolders({
               canOpenLocalFileManager={editorState.canOpenLocalFileManager}
               installedEditors={editorState.installedEditors}
               isRemoteWorkspaceFileTree={editorState.isRemoteWorkspaceFileTree}
-              remoteTarget={editorState.remoteTarget}
               workspacePath={workspacePath}
               workspaceIdentity={workspaceIdentity}
               style={{}}

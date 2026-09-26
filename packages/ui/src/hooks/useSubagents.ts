@@ -2,7 +2,6 @@ import type { ZCodeProvider } from "@zcode/shared";
 import { useCallback, useEffect, useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useServices } from "./useServices.js";
-import { useResolvedRemoteWorkspaceSessionId } from "@/hooks/useResolvedRemoteWorkspaceSessionId.js";
 import { shouldEnableWorkspaceRpc } from "@/lib/workspaceRpcAvailability.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab, type WindowTabState, type WorkspaceTabState } from "@/store/tabStore.js";
@@ -22,7 +21,6 @@ export function useSubagents(
         return {
           workspaceIdentity: undefined,
           preferredRemoteSessionId: undefined,
-          remoteTarget: undefined,
         };
       }
 
@@ -41,21 +39,13 @@ export function useSubagents(
       return {
         workspaceIdentity: matchedWorkspaceTab?.workspaceIdentity,
         preferredRemoteSessionId: matchedWorkspaceTab?.remoteSessionId,
-        remoteTarget: matchedWorkspaceTab?.remoteTarget,
       };
     }),
   );
   const workspaceIdentity = explicitIdentity || workspaceRpcTarget.workspaceIdentity;
-  const remoteSessionId = useResolvedRemoteWorkspaceSessionId(
-    workspacePath,
-    workspaceRpcTarget.preferredRemoteSessionId,
-    workspaceIdentity,
-    workspaceRpcTarget.remoteTarget,
-  );
   const workspaceRpcEnabled = shouldEnableWorkspaceRpc({
     workspaceIdentity,
-    remoteSessionId,
-    remoteTarget: workspaceRpcTarget.remoteTarget,
+    remoteSessionId: workspaceRpcTarget.preferredRemoteSessionId,
   });
   const contextKey = workspacePath
     ? getSubagentsContextKey(workspacePath, provider, workspaceIdentity)

@@ -62,7 +62,6 @@ export function OpenSplitButton({
     workspaceIdentity: previewSource?.workspaceIdentity,
     workspaceRemoteSessionId: previewSource?.workspaceRemoteSessionId,
   });
-  const openInEditorRemoteTarget = matchedOpenContext.remoteTarget;
   const isRemoteSource = Boolean(
     previewSource?.workspaceIdentity ||
     previewSource?.workspaceRemoteSessionId ||
@@ -73,14 +72,13 @@ export function OpenSplitButton({
   const [loadingEditors, setLoadingEditors] = useState(false);
   const sortedEditors = useMemo(
     () =>
-      isRemoteSource && !openInEditorRemoteTarget
+      isRemoteSource
         ? []
         : resolveWorkspaceEditorSelection({
             installedEditors: editors,
             selectedEditorId: null,
-            remoteTarget: openInEditorRemoteTarget,
           }).availableEditors,
-    [editors, isRemoteSource, openInEditorRemoteTarget],
+    [editors, isRemoteSource],
   );
   const canPreview =
     target.type === "website"
@@ -154,7 +152,6 @@ export function OpenSplitButton({
     void platform
       .openInEditor(editor.id, target.path, {
         pathKind: "file",
-        remoteTarget: openInEditorRemoteTarget,
         workspaceIdentity: target.previewSource?.workspaceIdentity,
       })
       .then((result) => {

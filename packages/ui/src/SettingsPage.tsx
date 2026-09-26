@@ -655,9 +655,7 @@ export function SettingsPage({
     [activeWorkspaceIdentity, activeWorkspacePath, activeWorkspaceTab, workspaceTabs],
   );
   const isRemoteModelProviderWorkspace = Boolean(
-    activeWorkspaceIdentity?.trim() ||
-    activeWorkspaceTab?.remoteSessionId?.trim() ||
-    activeWorkspaceTab?.remoteTarget,
+    activeWorkspaceIdentity?.trim() || activeWorkspaceTab?.remoteSessionId?.trim(),
   );
   const selectDirectory = useSelectDirectory();
   const services = useServices();
@@ -1944,7 +1942,6 @@ export function SettingsPage({
                             workspacePath={activeWorkspacePath}
                             workspaceIdentity={activeWorkspaceIdentity}
                             remoteSessionId={activeWorkspaceTab?.remoteSessionId}
-                            remoteTarget={activeWorkspaceTab?.remoteTarget}
                             localWorkspacePath={activeWorkspaceTab?.localWorkspacePath}
                           />
                         ) : null}

@@ -16,10 +16,8 @@ import {
   markTaskQueryCacheScopesStale,
   useTaskQueryCacheStore,
 } from "@/store/taskQueryCacheStore.js";
-import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionStore.js";
 import {
   isRemoteWorkspaceTarget,
-  resolveWorkspaceRemoteSessionId,
   resolveWorkspaceServices,
 } from "@/lib/workspaceServiceResolver.js";
 import { useWorkspaceTaskOptimisticOverlayByWorkspaceKey } from "@/hooks/workspaceTaskListOptimisticOverlay.js";
@@ -201,21 +199,6 @@ export function useWorkspaceTaskLists(params: {
   defaultVisibleLimit: number;
 }) {
   const baseServices = useBaseWorkspaceServices();
-  const sessionsById = useRemoteWorkspaceSessionStore((state) => state.sessionsById);
-  const sessionIdByWorkspaceIdentity = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspaceIdentity,
-  );
-  const sessionIdByWorkspacePath = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspacePath,
-  );
-  const serviceResolverState = useMemo(
-    () => ({
-      sessionsById,
-      sessionIdByWorkspaceIdentity,
-      sessionIdByWorkspacePath,
-    }),
-    [sessionIdByWorkspaceIdentity, sessionIdByWorkspacePath, sessionsById],
-  );
   const setQueryResults = useTaskQueryCacheStore((state) => state.setQueryResults);
   const resultsByQueryKey = useTaskQueryCacheStore((state) => state.resultsByQueryKey);
   const taskMetaByEntityKey = useTaskQueryCacheStore((state) => state.taskMetaByEntityKey);
@@ -249,20 +232,12 @@ export function useWorkspaceTaskLists(params: {
   const remoteSessionSignature = useMemo(
     () =>
       buildWorkspaceRemoteSessionSignature(
-        params.workspaceTabs.map((tab) => {
-          const workspaceKey = buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity);
-          const resolvedRemoteSessionId = resolveWorkspaceRemoteSessionId(
-            tab,
-            serviceResolverState,
-          );
-          return {
-            workspaceKey,
-            remoteSessionId: resolvedRemoteSessionId,
-            ready: resolvedRemoteSessionId ? Boolean(sessionsById[resolvedRemoteSessionId]) : true,
-          };
-        }),
+        params.workspaceTabs.map((tab) => ({
+          workspaceKey: buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity),
+          ready: true,
+        })),
       ),
-    [params.workspaceTabs, serviceResolverState, sessionsById],
+    [params.workspaceTabs],
   );
   const activeWorkspaceKey = useMemo(
     () => buildTaskWorkspaceKey(params.activeWorkspacePath, params.activeWorkspaceIdentity),
@@ -290,8 +265,7 @@ export function useWorkspaceTaskLists(params: {
           workspacePath: tab.workspacePath,
           workspaceIdentity: tab.workspaceIdentity,
         };
-        const resolvedRemoteSessionId = resolveWorkspaceRemoteSessionId(tab, serviceResolverState);
-        const isRemoteWorkspace = isRemoteWorkspaceTarget(tab, resolvedRemoteSessionId);
+        const isRemoteWorkspace = isRemoteWorkspaceTarget(tab);
         const workspaceKey = buildTaskWorkspaceKey(scope.workspacePath, scope.workspaceIdentity);
         const visibleLimit = resolveWorkspaceTaskVisibleLimit(
           params.visibleLimitByWorkspaceKey,
@@ -309,7 +283,6 @@ export function useWorkspaceTaskLists(params: {
         return {
           scope,
           workspaceKey,
-          remoteSessionId: resolvedRemoteSessionId,
           isRemoteWorkspace,
           visibleLimit,
           descriptor,
@@ -327,7 +300,6 @@ export function useWorkspaceTaskLists(params: {
       params.sortBy,
       params.visibleLimitByWorkspaceKey,
       params.workspaceTabs,
-      serviceResolverState,
       taskListVersionByWorkspaceKey,
     ],
   );
@@ -341,14 +313,7 @@ export function useWorkspaceTaskLists(params: {
     >();
 
     for (const config of queryConfigs) {
-      const resolvedServices = resolveWorkspaceServices(
-        {
-          ...config.scope,
-          remoteSessionId: config.remoteSessionId,
-        },
-        baseServices,
-        serviceResolverState,
-      );
+      const resolvedServices = resolveWorkspaceServices(config.scope, baseServices);
       if (!resolvedServices) {
         continue;
       }
@@ -370,7 +335,7 @@ export function useWorkspaceTaskLists(params: {
         services: shard.services,
         configs: shard.configs,
       }));
-  }, [baseServices, queryConfigs, serviceResolverState]);
+  }, [baseServices, queryConfigs]);
   const endpointShardsRef = useRef(endpointShards);
   endpointShardsRef.current = endpointShards;
   const workspaceEventSubscriptionSignature = useMemo(
@@ -423,7 +388,6 @@ export function useWorkspaceTaskLists(params: {
             ...(config.scope.workspaceIdentity
               ? { workspaceIdentity: config.scope.workspaceIdentity }
               : {}),
-            ...(config.remoteSessionId ? { endpointKey: config.remoteSessionId } : {}),
           });
           return `${sourceKey}=${sourceRevisionByScopeKey[sourceKey] ?? "missing"}`;
         })
@@ -441,7 +405,7 @@ export function useWorkspaceTaskLists(params: {
         `membership=${membershipVersion}`,
         ...pendingConfigs.map(
           (config) =>
-            `${config.workspaceKey}:${config.remoteSessionId ?? "base"}:limit=${config.visibleLimit}:${config.queryKey}:invalidation=${resultsByQueryKey[config.queryKey]?.invalidationVersion ?? 0}`,
+            `${config.workspaceKey}:limit=${config.visibleLimit}:${config.queryKey}:invalidation=${resultsByQueryKey[config.queryKey]?.invalidationVersion ?? 0}`,
         ),
       ].join("||"),
     [

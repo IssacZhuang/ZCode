@@ -40,7 +40,6 @@ import {
   safeReadJson,
   safeWriteJson,
 } from "@/store/mcpStoreHelpers.js";
-import { isRemoteWorkspaceDisconnectedError } from "@/lib/remoteWorkspaceServiceError.js";
 import { mergeMcpServerStatusSnapshots } from "@/store/mcpStoreStatusList.js";
 
 let mcpPlatformService: McpPlatformService | null = null;
@@ -331,11 +330,7 @@ export const useMcpStore = create<McpStoreState>((set, get) => {
         } catch (e) {
           // 读取失败不是“配置为空”；调用方必须保持 workspace not-ready，
           // 否则会显式下发空 mcpServers 并触发 replace，断开仍在运行的 MCP。
-          // remote session attachment 绑定前只能拿到断连代理；这是初始化时序，不是
-          // MCP 配置读取失败。只过滤该精确错误码，避免吞掉真实的目录或 RPC 故障。
-          if (!isRemoteWorkspaceDisconnectedError(e)) {
-            logger.warn("[mcpStore] loadMcpFromUserDirectory failed", String(e));
-          }
+          logger.warn("[mcpStore] loadMcpFromUserDirectory failed", String(e));
           return false;
         } finally {
           loadMcpPromise = null;

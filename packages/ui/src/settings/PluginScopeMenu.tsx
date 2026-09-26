@@ -24,9 +24,7 @@ export function isPluginScopeWorkspaceConnected(tab: WorkspaceTabState): boolean
   if (tab.availability === "unavailable-local-directory") {
     return false;
   }
-  const isRemote = Boolean(
-    tab.workspaceIdentity?.trim() || tab.remoteTarget || tab.remoteSessionId,
-  );
+  const isRemote = Boolean(tab.workspaceIdentity?.trim() || tab.remoteSessionId);
   if (!isRemote) {
     return true;
   }
@@ -64,7 +62,7 @@ export function PluginScopeMenu({
     workspaceTabs.filter(isPluginScopeWorkspaceConnected).map((tab) => ({
       key: getPluginWorkspaceKey(tab),
       label: tab.label,
-      remote: Boolean(tab.remoteTarget || tab.remoteSessionId),
+      remote: Boolean(tab.remoteSessionId),
     }));
   const selectedWorkspace = scopeWorkspaces.find((workspace) => workspace.key === selectedScopeKey);
   const SelectedWorkspaceIcon = selectedWorkspace?.remote ? Cloud : Folder;

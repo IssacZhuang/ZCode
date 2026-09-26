@@ -181,7 +181,6 @@ export function HooksSection({ workspacePath, workspaceIdentity }: HooksSectionP
     targetWorkspacePath,
     selectedWorkspace?.remoteSessionId,
     targetWorkspaceIdentity,
-    selectedWorkspace?.remoteTarget,
   );
   // Scope 切到另一个远程 workspace 后，路径已切换但 hooks/plugin 服务仍来自
   // 当前激活 workspace。这里让服务 host 与 target 身份同源，等待连接时不发送越界 RPC。

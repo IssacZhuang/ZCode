@@ -40,8 +40,6 @@ export function useRootPlatformEffects({
   tabs,
   activeWorkspacePath,
   activeWorkspaceIdentity,
-  reconnectingRemoteWorkspaceKeys = [],
-  remoteWorkspaceErrorByWorkspaceKey = {},
   totalUnreadTaskCount,
   hasCompletedFullTabRestore = true,
   intl,
@@ -73,8 +71,6 @@ export function useRootPlatformEffects({
   tabs: WindowTabState[];
   activeWorkspacePath?: string | null;
   activeWorkspaceIdentity?: string | null;
-  reconnectingRemoteWorkspaceKeys?: string[];
-  remoteWorkspaceErrorByWorkspaceKey?: Record<string, string>;
   totalUnreadTaskCount: number;
   hasCompletedFullTabRestore?: boolean;
   intl: ReturnType<typeof import("@/i18n/IntlProvider.js").useZCodeIntl>["intl"];
@@ -193,8 +189,7 @@ export function useRootPlatformEffects({
             ...(activeWorkspaceIdentity
               ? { targetWorkspaceIdentity: activeWorkspaceIdentity }
               : {}),
-            targetWorkspaceKind:
-              activeTab?.remoteSessionId || activeTab?.remoteTarget ? "remote" : "local",
+            targetWorkspaceKind: activeTab?.remoteSessionId ? "remote" : "local",
           });
           setShareImportRevision((revision) => revision + 1);
           logger.info("[Root] 收到 share import deep link", {
@@ -497,10 +492,8 @@ export function useRootPlatformEffects({
 
     const paths = tabs
       .filter(isWorkspaceTab)
-      // 启动期远程 workspace 现在会先以“断开占位 tab”恢复，
-      // 这些 tab 没有 remoteSessionId，但本质仍是远程会话，不能当成本地路径同步给主进程窗口列表。
-      // 这里改成按完整远程身份字段过滤，避免把远程路径误同步到本地窗口标签。
-      .filter((tab) => !tab.remoteSessionId && !tab.workspaceIdentity && !tab.remoteTarget)
+      // 远程身份（remoteSessionId/workspaceIdentity）的 tab 不能当成本地路径同步给主进程窗口列表。
+      .filter((tab) => !tab.remoteSessionId && !tab.workspaceIdentity)
       .map((tab) => tab.workspacePath);
     platform.syncWindowTabs(paths);
   }, [hasCompletedFullTabRestore, isDesktop, platform, tabs]);

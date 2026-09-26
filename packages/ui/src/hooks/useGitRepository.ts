@@ -16,7 +16,6 @@ import { buildTurnChangeSummary, toWorkspaceRelativePath } from "@/lib/taskChang
 import { logger } from "@/logger.js";
 import { shouldEnableWorkspaceRpc } from "@/lib/workspaceRpcAvailability.js";
 import { useServices } from "@/hooks/useServices.js";
-import { useResolvedRemoteWorkspaceSessionId } from "@/hooks/useResolvedRemoteWorkspaceSessionId.js";
 
 type GitRepositorySourceId = Extract<GitChangeSourceId, "unstaged" | "staged" | "branch">;
 
@@ -377,28 +376,19 @@ export function useGitRepository(options: {
   includeExtendedData?: boolean;
   refreshToken?: string | number | boolean | null;
   remoteSessionId?: string | null;
-  remoteTarget?: unknown;
   workspaceIdentity?: string | null;
 }): GitPaneRepositoryState {
   const {
     workspacePath,
     includeExtendedData = false,
     refreshToken = null,
-    remoteSessionId: preferredRemoteSessionId = null,
-    remoteTarget,
+    remoteSessionId = null,
     workspaceIdentity = null,
   } = options;
   const { gitService } = useServices();
-  const remoteSessionId = useResolvedRemoteWorkspaceSessionId(
-    workspacePath,
-    preferredRemoteSessionId,
-    workspaceIdentity,
-    remoteTarget,
-  );
   const workspaceRpcEnabled = shouldEnableWorkspaceRpc({
     workspaceIdentity,
     remoteSessionId,
-    remoteTarget,
   });
   const workspaceKey = workspaceIdentity?.trim() || workspacePath;
   // store 收尾：per-turn 变更摘要 map（setPerTurnSummaries/setPerTurnFileChanges）

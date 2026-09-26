@@ -4,7 +4,6 @@ import type {
   ZCodeTaskChangeSummary,
   EditorInfo,
   GitRepositorySummary,
-  RemoteTarget,
   UserInfo,
 } from "@zcode/shared";
 import { useState } from "react";
@@ -26,7 +25,6 @@ export function WorkspaceHeader({
   workspaceAbsPath,
   remoteSessionId,
   workspaceIdentity,
-  remoteTarget,
   localWorkspacePath,
   projectName,
   activeTaskTitle,
@@ -69,7 +67,6 @@ export function WorkspaceHeader({
   workspaceAbsPath: string;
   remoteSessionId?: string;
   workspaceIdentity?: string;
-  remoteTarget?: RemoteTarget;
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
@@ -166,7 +163,6 @@ export function WorkspaceHeader({
             workspaceAbsPath={workspaceAbsPath}
             remoteSessionId={remoteSessionId}
             workspaceIdentity={workspaceIdentity}
-            remoteTarget={remoteTarget}
             localWorkspacePath={localWorkspacePath}
             projectName={projectName}
             activeTaskTitle={activeTaskTitle}
@@ -205,7 +201,6 @@ export function WorkspaceHeader({
           workspaceAbsPath={workspaceAbsPath}
           workspaceIdentity={workspaceIdentity}
           remoteSessionId={remoteSessionId}
-          remoteTarget={remoteTarget}
           isDesktop={isDesktop}
           isTerminalOpen={isTerminalOpen}
           isSidePaneOpen={isSidePaneOpen}

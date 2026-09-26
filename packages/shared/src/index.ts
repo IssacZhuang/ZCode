@@ -135,7 +135,6 @@ export {
   LOCAL_MEDIA_PREVIEW_SCHEME,
   DesktopCommandIds,
   buildLocalMediaPreviewUrl,
-  createOpenInEditorRemoteTarget,
 } from "./platform.js";
 export type {
   ArmsCustomEventPayload,
@@ -171,9 +170,6 @@ export * from "./sessionCreateTelemetry.js";
 export type { LaunchMarks } from "./launchMarks.js";
 export { LAUNCH_MARKS_QUERY_KEY, parseLaunchMarks, serializeLaunchMarks } from "./launchMarks.js";
 export type {
-  CancelPendingRemoteConnectionRequest,
-  BindRemoteWorkspaceSessionContextRequest,
-  BotRemoteWorkspaceReconnectedEvent,
   BrowserTabResidencyState,
   BrowserViewCloseTabNotification,
   BrowserViewCloseTabRequest,
@@ -189,7 +185,6 @@ export type {
   ChromeBrowserDataImportError,
   ChromeBrowserDataImportOptions,
   ChromeBrowserDataImportResult,
-  ConnectRemoteRequest,
   CreateTempTextAttachmentRequest,
   CreateTempTextAttachmentResult,
   SaveFileRequest,
@@ -199,7 +194,6 @@ export type {
   CuaOsSupport,
   DesktopWindowChromeState,
   DesktopTitleBarTheme,
-  DockerContainerInfo,
   EditorInfo,
   ApplicationIconInfo,
   ApplicationIconLocator,
@@ -209,17 +203,12 @@ export type {
   EmbeddedBrowserDataClearResult,
   EmbeddedBrowserOpenUrlRequest,
   IPlatformService,
-  OpenInEditorRemoteTarget,
   OpenInEditorOptions,
   PostUpdateReleaseNotesPayload,
-  RemoteConnectionRuntimeLog,
-  RemoteSessionClosedEvent,
   RemoteServiceSession,
-  SSHConfigAliasOption,
   TaskNotificationPayload,
   UpdateCheckResultPayload,
   UpdateStatePayload,
-  WSLDistro,
   ZCodeStdioTapDevState,
 } from "./platform.js";
 export type {
@@ -251,9 +240,7 @@ export * from "./legacy-model-provider-identity.js";
 export * from "./official-glm-model-id.js";
 export * from "./skills-types.js";
 export * from "./skill-sync.js";
-export * from "./mcp-sync.js";
 export * from "./plugin-sync.js";
-export * from "./remote-sync.js";
 export * from "./plugin-types.js";
 export * from "./subagents-types.js";
 export * from "./settings-source.js";

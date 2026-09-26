@@ -184,7 +184,6 @@ export function useModelSelectionView(
     workspacePath,
     remoteSessionId,
     workspaceIdentity,
-    remoteTarget,
   );
   const remoteWaiting = resolution.connectionKind === "remote-waiting";
   return useModelSelectionServiceView(

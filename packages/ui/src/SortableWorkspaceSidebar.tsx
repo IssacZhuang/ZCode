@@ -3,7 +3,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { WorkspaceSidebarItem, type SortableBindings } from "./WorkspaceSidebarItem.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
-import type { RemoteConnectionLogEntry } from "@/hooks/useRemoteConnectionLogs.js";
 import type { ZCodeTaskMeta } from "@zcode/shared";
 
 export type { SortableBindings };
@@ -27,10 +26,6 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
   taskListLiveWorkflowCount = 0,
   workspaceKey,
   onShowMoreWorkspaceTasks,
-  reconnectingRemoteWorkspaceKeys,
-  remoteWorkspaceErrorByWorkspaceKey,
-  reconnectingRemoteWorkspaceLogsByWorkspaceKey,
-  onReconnectRemoteWorkspace,
   onOpenFileTree,
 }: {
   tab: WorkspaceTabState;
@@ -52,10 +47,6 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
   taskListLiveWorkflowCount?: number;
   workspaceKey: string;
   onShowMoreWorkspaceTasks: (workspaceKey: string) => void;
-  reconnectingRemoteWorkspaceKeys: string[];
-  remoteWorkspaceErrorByWorkspaceKey: Record<string, string>;
-  reconnectingRemoteWorkspaceLogsByWorkspaceKey: Record<string, RemoteConnectionLogEntry[]>;
-  onReconnectRemoteWorkspace: (workspaceKey: string) => Promise<void>;
   onOpenFileTree: (target: {
     workspacePath: string;
     workspaceName: string;
@@ -120,10 +111,6 @@ export const SortableWorkspaceSidebarItem = memo(function SortableWorkspaceSideb
       taskListHasUnread={taskListHasUnread}
       taskListLiveWorkflowCount={taskListLiveWorkflowCount}
       onShowMoreTasks={handleShowMoreTasks}
-      reconnectingRemoteWorkspaceKeys={reconnectingRemoteWorkspaceKeys}
-      remoteWorkspaceErrorByWorkspaceKey={remoteWorkspaceErrorByWorkspaceKey}
-      reconnectingRemoteWorkspaceLogsByWorkspaceKey={reconnectingRemoteWorkspaceLogsByWorkspaceKey}
-      onReconnectRemoteWorkspace={onReconnectRemoteWorkspace}
       onOpenFileTree={onOpenFileTree}
       itemRef={setNodeRef}
       itemStyle={style}

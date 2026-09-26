@@ -1,4 +1,4 @@
-import { createOpenInEditorRemoteTarget, type EditorInfo, type RemoteTarget } from "@zcode/shared";
+import { type EditorInfo } from "@zcode/shared";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.js";
 import { ChevronDown } from "lucide-react";
@@ -24,13 +24,11 @@ export function WorkspaceEditorButtonGroup({
   disabledReason,
   workspaceAbsPath,
   workspaceIdentity,
-  remoteTarget,
   onSelectedEditorChange,
 }: {
   disabledReason?: string;
   workspaceAbsPath: string;
   workspaceIdentity?: string;
-  remoteTarget?: RemoteTarget;
   onSelectedEditorChange?: (editor: EditorInfo | null) => void;
 }) {
   const { intl } = useZCodeIntl();
@@ -70,9 +68,8 @@ export function WorkspaceEditorButtonGroup({
           ? installedEditors.filter(isFileManagerOpenTarget)
           : installedEditors,
         selectedEditorId,
-        remoteTarget,
       }),
-    [installedEditors, isOfficeMode, remoteTarget, selectedEditorId],
+    [installedEditors, isOfficeMode, selectedEditorId],
   );
 
   useEffect(() => {
@@ -103,13 +100,7 @@ export function WorkspaceEditorButtonGroup({
     if (shouldPersistWorkspaceEditorSelection("explicit")) {
       persistLastSelectedEditorId(editor.id);
     }
-    const openOptions =
-      remoteTarget || workspaceIdentity
-        ? {
-            remoteTarget: remoteTarget ? createOpenInEditorRemoteTarget(remoteTarget) : undefined,
-            workspaceIdentity,
-          }
-        : undefined;
+    const openOptions = workspaceIdentity ? { workspaceIdentity } : undefined;
 
     void platform.openInEditor(editor.id, workspaceAbsPath, openOptions).then((result) => {
       if (result.success) {

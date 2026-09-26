@@ -1,7 +1,6 @@
 interface AppWorkspaceRpcTarget {
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  remoteTarget?: unknown;
 }
 
 function normalizeOptionalString(value?: string | null): string | undefined {
@@ -25,6 +24,5 @@ export function resolveAppWorkspaceRpcTarget({
     remoteSessionId:
       normalizeOptionalString(activeTarget.remoteSessionId) ??
       normalizeOptionalString(explicitRemoteSessionId),
-    remoteTarget: activeTarget.remoteTarget,
   };
 }

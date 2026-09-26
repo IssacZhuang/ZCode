@@ -960,7 +960,6 @@ export async function openMessageFileLinkInEditor({
   editorId,
   fileLink,
   openInEditor,
-  remoteTarget,
   statFile,
 }: {
   editorId: string;
@@ -970,7 +969,6 @@ export async function openMessageFileLinkInEditor({
     path: string,
     options: OpenInEditorOptions,
   ) => Promise<{ success: boolean; error?: string }>;
-  remoteTarget?: OpenInEditorOptions["remoteTarget"];
   statFile: (params: { path: string }) => Promise<Pick<FileStat, "type">>;
 }) {
   // Markdown 渲染层无法从名称可靠判断文件/目录。这里在动作发生时通过
@@ -978,7 +976,6 @@ export async function openMessageFileLinkInEditor({
   const fileStat = await statFile({ path: fileLink.path });
   return openInEditor(editorId, fileLink.path, {
     pathKind: fileStat.type,
-    remoteTarget,
     workspaceIdentity: fileLink.workspaceIdentity,
   });
 }
@@ -1128,12 +1125,11 @@ function MessageFileLink({ className, fileIconSrc, fileLink, onOpen }: MessageFi
   const [loadingEditors, setLoadingEditors] = useState(false);
   const sortedEditors = useMemo(
     () =>
-      openInEditorContext.isRemoteWorkspace && !openInEditorContext.remoteTarget
+      openInEditorContext.isRemoteWorkspace
         ? []
         : resolveWorkspaceEditorSelection({
             installedEditors: editors,
             selectedEditorId: null,
-            remoteTarget: openInEditorContext.remoteTarget,
           }).availableEditors,
     [editors, openInEditorContext],
   );
@@ -1179,7 +1175,6 @@ function MessageFileLink({ className, fileIconSrc, fileLink, onOpen }: MessageFi
       editorId: editor.id,
       fileLink,
       openInEditor: (editorId, path, options) => platform.openInEditor(editorId, path, options),
-      remoteTarget: openInEditorContext.remoteTarget,
       statFile: (params) => services.fileService.stat(params),
     })
       .then((result) => {

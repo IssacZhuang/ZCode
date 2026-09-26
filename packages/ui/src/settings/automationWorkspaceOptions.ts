@@ -1,11 +1,10 @@
-import { resolveWorkspaceKey, type RemoteTarget, type WorkspacePurpose } from "@zcode/shared";
+import { resolveWorkspaceKey, type WorkspacePurpose } from "@zcode/shared";
 import { isWorkspaceTab, isWorkspaceTabReadOnly, type WindowTabState } from "@/store/tabStore.js";
 
 export interface AutomationWorkspaceOption {
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
   label: string;
   workspacePurpose?: WorkspacePurpose;
 }
@@ -75,7 +74,6 @@ export function buildAutomationWorkspaceOptions(
       workspacePath: tab.workspacePath,
       ...(tab.workspaceIdentity ? { workspaceIdentity: tab.workspaceIdentity } : {}),
       ...(tab.remoteSessionId ? { remoteSessionId: tab.remoteSessionId } : {}),
-      ...(tab.remoteTarget ? { remoteTarget: tab.remoteTarget } : {}),
       label: tab.label || workspaceLabelFromPath(tab.workspacePath),
     });
   }

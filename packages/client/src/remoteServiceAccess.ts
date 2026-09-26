@@ -27,9 +27,7 @@ import {
   IClientScenesService,
   IOffPeakTaskService,
   ISkillsService,
-  ISkillSyncService,
   IMcpSyncService,
-  IPluginSyncService,
   IPluginsService,
   IPluginManagementService,
   ISubagentsService,
@@ -80,9 +78,7 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly clientScenesService: IClientScenesService;
   readonly offPeakTaskService: IOffPeakTaskService;
   readonly skillsService: ISkillsService;
-  readonly skillSyncService: ISkillSyncService;
   readonly mcpSyncService: IMcpSyncService;
-  readonly pluginSyncService: IPluginSyncService;
   readonly pluginsService: IPluginsService;
   readonly pluginManagementService: IPluginManagementService;
   readonly subagentsService: ISubagentsService;
@@ -183,14 +179,8 @@ export class RemoteServiceAccess implements IServiceAccessor {
     this.skillsService = ProxyChannel.toService<ISkillsService>(
       channelClient.getChannel(ISkillsService.channelName),
     );
-    this.skillSyncService = ProxyChannel.toService<ISkillSyncService>(
-      channelClient.getChannel(ISkillSyncService.channelName),
-    );
     this.mcpSyncService = ProxyChannel.toService<IMcpSyncService>(
       channelClient.getChannel(IMcpSyncService.channelName),
-    );
-    this.pluginSyncService = ProxyChannel.toService<IPluginSyncService>(
-      channelClient.getChannel(IPluginSyncService.channelName),
     );
     this.pluginsService = ProxyChannel.toService<IPluginsService>(
       channelClient.getChannel(IPluginsService.channelName),

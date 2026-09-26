@@ -336,9 +336,9 @@ function ReadyV4PaneConversationProvider({
   ]);
 
   useLayoutEffect(() => {
-    // acquire 发生在 render，只负责稳定租约；远端 proxy 换代引发的 store 更新和
+    // acquire 发生在 render，只负责稳定租约；换代引发的 store 更新和
     // 重订阅必须等到 commit，避免在渲染阶段同步更新现有 pane。
-    bundle.lease.activateRemoteService();
+    void bundle;
   }, [bundle]);
 
   useEffect(() => {

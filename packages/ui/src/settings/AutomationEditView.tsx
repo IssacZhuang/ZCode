@@ -1272,9 +1272,6 @@ export function AutomationEditView({
               ...(editingWorkspaceOption?.remoteSessionId
                 ? { remoteSessionId: editingWorkspaceOption.remoteSessionId }
                 : {}),
-              ...(editingWorkspaceOption?.remoteTarget
-                ? { remoteTarget: editingWorkspaceOption.remoteTarget }
-                : {}),
               ...(editingWorkspaceOption?.workspacePurpose
                 ? { workspacePurpose: editingWorkspaceOption.workspacePurpose }
                 : {}),
@@ -1472,7 +1469,6 @@ export function AutomationEditView({
     selectedWorkspacePath || null,
     selectedWorkspace?.remoteSessionId,
     selectedWorkspaceIdentity,
-    selectedWorkspace?.remoteTarget,
     { selection: originalSelection },
   );
   const modelSelectionView =
@@ -2612,11 +2608,7 @@ export function AutomationEditView({
                         onSelectWorkspace={handleSelectWorkspace}
                         onSelectConversationWorkspace={handleSelectConversationWorkspace}
                         allowOpenWorkspace={false}
-                        allowRemoteWorkspace={false}
                         onOpenFolder={() => {}}
-                        onConnectRemote={async () => ""}
-                        onSelectRemoteProject={async () => {}}
-                        onCancelRemoteProject={async (_sessionId) => {}}
                         containerClassName="contents"
                         triggerClassName={cn(
                           AUTOMATION_INSTRUCTIONS_TOOLBAR_TRIGGER_CLASSNAME,

@@ -16,13 +16,6 @@ import { TaskRenameDialog } from "@/TaskRenameDialog.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { applyTaskQueryCacheMutation } from "@/store/taskQueryCacheStore.js";
-import { TaskListRemoteSyncHint } from "@/TaskListRemoteSyncHint.js";
-import { useRemotePinnedTaskStore } from "@/store/remotePinnedTaskStore.js";
-import { useRemoteTimelineTaskStore } from "@/store/remoteTimelineTaskStore.js";
-import {
-  getRemoteWorkspaceServicesForIdentity,
-  useRemoteWorkspaceSessionStore,
-} from "@/store/remoteWorkspaceSessionStore.js";
 
 function buildPinnedItemKey(workspacePath: string, taskId: string, workspaceIdentity?: string) {
   return `${buildTaskWorkspaceKey(workspacePath, workspaceIdentity)}:${taskId}`;
@@ -75,9 +68,6 @@ export function WorkspacePinnedTasksSection({
   const scopedWorkspaceTabs = useLocalWorkspaceScopes({
     workspaceTabs,
   });
-  const remoteSessionIdByWorkspaceIdentity = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspaceIdentity,
-  );
   const removeTaskState = useZCodeSessionStore((state) => state.removeTaskState);
   const upsertOptimisticTaskListItem = useZCodeSessionStore(
     (state) => state.upsertOptimisticTaskListItem,
@@ -118,39 +108,13 @@ export function WorkspacePinnedTasksSection({
     expanded: true,
     collapsedLimit,
   });
-  const remotePinnedItemsByWorkspaceKey = useRemotePinnedTaskStore(
-    (state) => state.itemsByWorkspaceKey,
-  );
-  const remotePinnedLoadingByWorkspaceKey = useRemotePinnedTaskStore(
-    (state) => state.loadingByWorkspaceKey,
-  );
-  const remoteItems = useMemo(() => {
-    const remoteWorkspaceKeys = new Set(
-      workspaceTabs
-        .filter((tab) => tab.workspaceIdentity || tab.remoteTarget || tab.remoteSessionId)
-        .map((tab) => buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity)),
-    );
-    return [...remoteWorkspaceKeys].flatMap(
-      (workspaceKey) => remotePinnedItemsByWorkspaceKey[workspaceKey] ?? [],
-    );
-  }, [remotePinnedItemsByWorkspaceKey, workspaceTabs]);
   const sortedItems = useMemo(() => {
-    return [...localItems, ...remoteItems].sort((left, right) =>
+    return [...localItems].sort((left, right) =>
       compareZCodeTaskListItems(left, right, taskSortBy),
     );
-  }, [localItems, remoteItems, taskSortBy]);
+  }, [localItems, taskSortBy]);
   const items = showAllTasks ? sortedItems : sortedItems.slice(0, collapsedLimit);
   const total = sortedItems.length;
-  const syncingRemoteWorkspaces = workspaceTabs.some((tab) => {
-    if (!tab.workspaceIdentity && !tab.remoteTarget && !tab.remoteSessionId) {
-      return false;
-    }
-    return Boolean(
-      remotePinnedLoadingByWorkspaceKey[
-        buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity)
-      ],
-    );
-  });
   const canToggleExpanded = total > collapsedLimit;
   const sectionTitle = intl.formatMessage({ id: "taskList.pinnedSection" });
   const activeWorkspaceKey = buildTaskWorkspaceKey(activeWorkspacePath, activeWorkspaceIdentity);
@@ -171,15 +135,7 @@ export function WorkspacePinnedTasksSection({
   const onOpenFileTreeRef = useRef(onOpenFileTree);
   onOpenFileTreeRef.current = onOpenFileTree;
 
-  const resolveTaskServices = useCallback(
-    (workspaceIdentity?: string) => {
-      if (!workspaceIdentity) {
-        return baseServices;
-      }
-      return getRemoteWorkspaceServicesForIdentity(workspaceIdentity);
-    },
-    [baseServices],
-  );
+  const resolveTaskServices = useCallback(() => baseServices, [baseServices]);
   const resolveTaskServicesRef = useRef(resolveTaskServices);
   resolveTaskServicesRef.current = resolveTaskServices;
 
@@ -202,7 +158,7 @@ export function WorkspacePinnedTasksSection({
       return null;
     }
 
-    const services = resolveTaskServicesRef.current(item.workspaceIdentity);
+    const services = resolveTaskServicesRef.current();
     if (!services) {
       return null;
     }
@@ -224,14 +180,6 @@ export function WorkspacePinnedTasksSection({
         })
         .then((meta) => {
           removeTaskStateRef.current(item.workspacePath, item.taskId, item.workspaceIdentity);
-          if (item.workspaceIdentity) {
-            useRemotePinnedTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -270,14 +218,6 @@ export function WorkspacePinnedTasksSection({
       const { item, services } = current;
       // unpin 以前等 RPC 返回后才把任务移出 pinned 区，重查期间会出现列表闪烁。
       // 这里先乐观移动，RPC 失败再把任务恢复为 pinned。
-      if (item.workspaceIdentity) {
-        useRemotePinnedTaskStore
-          .getState()
-          .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-        if (!pinned) {
-          useRemoteTimelineTaskStore.getState().upsertTask(item, taskSortByRef.current);
-        }
-      }
       applyTaskQueryCacheMutation({
         previousTask: item,
         nextTask: item,
@@ -297,15 +237,6 @@ export function WorkspacePinnedTasksSection({
             item.taskId,
             item.workspaceIdentity,
           );
-          if (item.workspaceIdentity && pinned) {
-            useRemotePinnedTaskStore.getState().upsertTask(meta);
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-          }
-          if (item.workspaceIdentity && !pinned) {
-            useRemoteTimelineTaskStore.getState().upsertTask(meta, taskSortByRef.current);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -314,12 +245,6 @@ export function WorkspacePinnedTasksSection({
           });
         })
         .catch(() => {
-          if (item.workspaceIdentity) {
-            useRemotePinnedTaskStore.getState().upsertTask(item);
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: item,
@@ -358,9 +283,6 @@ export function WorkspacePinnedTasksSection({
             item.workspaceIdentity,
           );
           upsertOptimisticTaskListItemRef.current(item.workspacePath, meta, item.workspaceIdentity);
-          if (item.workspaceIdentity) {
-            useRemotePinnedTaskStore.getState().upsertTask(meta);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -457,9 +379,7 @@ export function WorkspacePinnedTasksSection({
   }, [itemByKey]);
 
   const contextMenuItem = contextMenuItemKey ? findItemByKey(contextMenuItemKey) : null;
-  const contextMenuServices = contextMenuItem
-    ? resolveTaskServices(contextMenuItem.workspaceIdentity)
-    : null;
+  const contextMenuServices = contextMenuItem ? resolveTaskServices() : null;
 
   if (items.length === 0) {
     // 切换/加入工作区时 pinned 查询会先进入 loading，但此时没有可展示的数据。
@@ -492,7 +412,7 @@ export function WorkspacePinnedTasksSection({
               handleCancelRenameTask();
               return;
             }
-            const services = resolveTaskServices(item.workspaceIdentity);
+            const services = resolveTaskServices();
             if (!services) {
               handleCancelRenameTask();
               return;
@@ -506,9 +426,6 @@ export function WorkspacePinnedTasksSection({
               })
               .then((meta) => {
                 upsertOptimisticTaskListItem(item.workspacePath, meta, item.workspaceIdentity);
-                if (item.workspaceIdentity) {
-                  useRemotePinnedTaskStore.getState().upsertTask(meta);
-                }
                 applyTaskQueryCacheMutation({
                   previousTask: item,
                   nextTask: meta,
@@ -539,7 +456,7 @@ export function WorkspacePinnedTasksSection({
                 item.taskId,
                 item.workspaceIdentity,
               );
-              const services = resolveTaskServices(item.workspaceIdentity);
+              const services = resolveTaskServices();
               if (!services) {
                 return null;
               }
@@ -548,11 +465,6 @@ export function WorkspacePinnedTasksSection({
                 <MemoTaskItem
                   key={itemKey}
                   workspacePath={item.workspacePath}
-                  remoteSessionId={
-                    item.workspaceIdentity
-                      ? remoteSessionIdByWorkspaceIdentity[item.workspaceIdentity]
-                      : undefined
-                  }
                   task={item}
                   isPinned
                   isActive={
@@ -579,27 +491,10 @@ export function WorkspacePinnedTasksSection({
         {contextMenuItem && contextMenuServices ? (
           <TaskListItemContextMenuContent
             workspacePath={contextMenuItem.workspacePath}
-            remoteSessionId={
-              contextMenuItem.workspaceIdentity
-                ? remoteSessionIdByWorkspaceIdentity[contextMenuItem.workspaceIdentity]
-                : undefined
-            }
             task={contextMenuItem}
             isPinned
             intl={intl}
             onTogglePinTask={(_taskId, pinned) => {
-              if (contextMenuItem.workspaceIdentity) {
-                useRemotePinnedTaskStore
-                  .getState()
-                  .removeTask(
-                    contextMenuItem.workspacePath,
-                    contextMenuItem.taskId,
-                    contextMenuItem.workspaceIdentity,
-                  );
-                if (!pinned) {
-                  useRemoteTimelineTaskStore.getState().upsertTask(contextMenuItem, taskSortBy);
-                }
-              }
               applyTaskQueryCacheMutation({
                 previousTask: contextMenuItem,
                 nextTask: contextMenuItem,
@@ -621,19 +516,6 @@ export function WorkspacePinnedTasksSection({
                     contextMenuItem.taskId,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity && pinned) {
-                    useRemotePinnedTaskStore.getState().upsertTask(meta);
-                    useRemoteTimelineTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                  }
-                  if (contextMenuItem.workspaceIdentity && !pinned) {
-                    useRemoteTimelineTaskStore.getState().upsertTask(meta, taskSortBy);
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -642,16 +524,6 @@ export function WorkspacePinnedTasksSection({
                   });
                 })
                 .catch(() => {
-                  if (contextMenuItem.workspaceIdentity) {
-                    useRemotePinnedTaskStore.getState().upsertTask(contextMenuItem);
-                    useRemoteTimelineTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: contextMenuItem,
@@ -681,22 +553,6 @@ export function WorkspacePinnedTasksSection({
                     contextMenuItem.taskId,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity) {
-                    useRemotePinnedTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                    useRemoteTimelineTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -727,9 +583,6 @@ export function WorkspacePinnedTasksSection({
                     meta,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity) {
-                    useRemotePinnedTaskStore.getState().upsertTask(meta);
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -741,7 +594,6 @@ export function WorkspacePinnedTasksSection({
           />
         ) : null}
       </ContextMenu>
-      {syncingRemoteWorkspaces ? <TaskListRemoteSyncHint /> : null}
       {canToggleExpanded ? (
         <div className="cursor-pointer pl-8.5">
           <span

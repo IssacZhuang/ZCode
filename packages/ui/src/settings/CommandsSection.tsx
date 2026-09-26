@@ -75,7 +75,6 @@ export function CommandsSection({
     currentWorkspaceTab?.workspacePath ?? workspacePath,
     currentWorkspaceTab?.remoteSessionId,
     currentWorkspaceTab?.workspaceIdentity ?? workspaceIdentity,
-    currentWorkspaceTab?.remoteTarget,
   );
   const { commandsService, pluginManagementService, settingsSyncService } =
     listServiceResolution.services;
@@ -110,7 +109,6 @@ export function CommandsSection({
     formServiceTarget?.workspacePath ?? workspacePath,
     formServiceTarget?.remoteSessionId,
     formServiceTarget?.workspaceIdentity ?? workspaceIdentity,
-    formServiceTarget?.remoteTarget,
   );
   const formServices = formServiceResolution.services;
 

@@ -5,13 +5,6 @@ interface WorkspaceServiceTarget {
   workspacePath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  remoteTarget?: unknown;
-}
-
-export interface WorkspaceServiceResolverState<TServices = IServiceAccessor> {
-  sessionsById: Record<string, { services: TServices }>;
-  sessionIdByWorkspaceIdentity: Record<string, string>;
-  sessionIdByWorkspacePath: Record<string, string>;
 }
 
 interface ResolvedWorkspaceServices {
@@ -20,55 +13,21 @@ interface ResolvedWorkspaceServices {
   isRemoteWorkspace: boolean;
 }
 
-export function resolveWorkspaceRemoteSessionId<TServices>(
-  target: WorkspaceServiceTarget,
-  state: WorkspaceServiceResolverState<TServices>,
-): string | undefined {
-  const workspaceIdentity = target.workspaceIdentity?.trim();
-  const candidateSessionIds = [
-    target.remoteSessionId,
-    workspaceIdentity ? state.sessionIdByWorkspaceIdentity[workspaceIdentity] : undefined,
-    // 同一路径可能同时存在于多个 SSH/WSL/Docker endpoint。已有 identity 时若
-    // 精确绑定尚未恢复，按 path fallback 会借用另一 endpoint 的 services，导致 sessions-index、
-    // provider 和 task RPC 串到错误 Host。identity 缺失时保持 remote-waiting；只有旧版无
-    // identity 的 remote tab 才继续使用 path 兼容恢复。
-    !workspaceIdentity && target.remoteTarget
-      ? state.sessionIdByWorkspacePath[target.workspacePath]
-      : undefined,
-  ];
-
-  return candidateSessionIds.find((sessionId): sessionId is string =>
-    Boolean(sessionId && state.sessionsById[sessionId]),
-  );
-}
-
-export function isRemoteWorkspaceTarget(
-  target: WorkspaceServiceTarget,
-  resolvedRemoteSessionId?: string,
-): boolean {
-  return Boolean(target.workspaceIdentity || target.remoteTarget || resolvedRemoteSessionId);
+export function isRemoteWorkspaceTarget(target: WorkspaceServiceTarget): boolean {
+  return Boolean(target.workspaceIdentity?.trim() || target.remoteSessionId?.trim());
 }
 
 export function resolveWorkspaceServices(
   target: WorkspaceServiceTarget,
   baseServices: IServiceAccessor,
-  state: WorkspaceServiceResolverState,
 ): ResolvedWorkspaceServices | null {
-  const remoteSessionId = resolveWorkspaceRemoteSessionId(target, state);
-  const isRemoteWorkspace = isRemoteWorkspaceTarget(target, remoteSessionId);
+  const isRemoteWorkspace = isRemoteWorkspaceTarget(target);
 
-  // 远端历史恢复时 tab 可能先只有 workspaceIdentity，remoteSessionId 稍后才回填。
-  // 这种状态不能落回 baseServices，否则会用本机 sqlite 查询远端 workspace 并缓存空结果；
-  // 这里统一要求远端目标必须解析到远端 session 后才返回 services。
+  // 携带远程身份（workspaceIdentity/remoteSessionId）的目标在本 fork 中没有远端
+  // session 可用：保持失败关闭，不回退 baseServices，避免把远端 workspace 的查询
+  // 误路由到本机 host。
   if (isRemoteWorkspace) {
-    const services = remoteSessionId ? state.sessionsById[remoteSessionId]?.services : undefined;
-    return services
-      ? {
-          services,
-          remoteSessionId,
-          isRemoteWorkspace,
-        }
-      : null;
+    return null;
   }
 
   return {
@@ -80,12 +39,11 @@ export function resolveWorkspaceServices(
 export function buildWorkspaceServiceLookup(
   workspaceTabs: WorkspaceServiceTarget[],
   baseServices: IServiceAccessor,
-  state: WorkspaceServiceResolverState,
 ): Map<string, ResolvedWorkspaceServices> {
   const lookup = new Map<string, ResolvedWorkspaceServices>();
 
   for (const tab of workspaceTabs) {
-    const resolved = resolveWorkspaceServices(tab, baseServices, state);
+    const resolved = resolveWorkspaceServices(tab, baseServices);
     if (!resolved) {
       continue;
     }

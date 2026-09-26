@@ -581,11 +581,7 @@ export function OffPeakEditView({
                       }
                       onSelectConversationWorkspace={() => {}}
                       allowOpenWorkspace={false}
-                      allowRemoteWorkspace={false}
                       onOpenFolder={() => {}}
-                      onConnectRemote={async () => ""}
-                      onSelectRemoteProject={async () => {}}
-                      onCancelRemoteProject={async (_sessionId) => {}}
                       containerClassName="contents"
                       triggerClassName={cn(
                         AUTOMATION_INSTRUCTIONS_TOOLBAR_TRIGGER_CLASSNAME,

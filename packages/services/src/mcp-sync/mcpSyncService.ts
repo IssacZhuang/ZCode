@@ -1,17 +1,12 @@
-/* eslint-disable max-lines -- MCP 同步服务集中维护用户目录读写、远端导入和 filesystem 路径改写，拆分会增加远端配置同步回归面。 */
-import { createHash } from "node:crypto";
+/* eslint-disable max-lines -- MCP 同步服务集中维护用户目录读写与运行态状态列表，拆分会扩大配置读写回归面。 */
 import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
-import { basename, dirname, join, posix, win32 } from "node:path";
+import { basename, dirname, join } from "node:path";
 import type {
   LoadCliMcpFromUserDirectoryRequest,
   LoadCliMcpFromUserDirectoryResult,
   McpScope,
   McpServerConfig,
-  McpSyncCandidate,
-  McpSyncExportedServer,
-  McpSyncImportResult,
-  McpSyncRemoteStatus,
   McpSyncSource,
   NativeMcpServerRecord,
   SaveCliMcpToUserDirectoryRequest,
@@ -19,7 +14,6 @@ import type {
   SettingsDirectorySource,
 } from "@zcode/shared";
 import type { IMcpSyncService } from "./mcpSync.js";
-import { checkRemoteSyncDirectoryWriteAccess } from "../remote-sync/remoteSyncWriteAccess.js";
 
 type McpConfigKeyName = "mcp.servers" | "mcpServers";
 
@@ -94,54 +88,6 @@ export function createMcpSyncService(
     async saveMcpToUserDirectory(payload) {
       await saveMcpToUserDirectory(payload);
     },
-    async listLocalUserMcpCandidates() {
-      const localHomeDir = resolveUserHomeDir();
-      return {
-        candidates: (await collectEffectiveUserMcpRecords()).map(recordToCandidate),
-        localHomeDir,
-      };
-    },
-    async listRemoteUserMcpStatuses(params) {
-      const remoteHomeDir = resolveUserHomeDir();
-      const existingByName = await collectEffectiveUserMcpRecordByName();
-      return {
-        remoteHomeDir,
-        statuses: params.names.map((name): McpSyncRemoteStatus => {
-          const existing = existingByName.get(normalizeMcpNameKey(name));
-          return existing ? { name, exists: true, path: existing.path } : { name, exists: false };
-        }),
-      };
-    },
-    async exportMcpServers(params) {
-      const candidates = (await collectEffectiveUserMcpRecords()).map(recordToCandidate);
-      const candidateById = new Map(candidates.map((candidate) => [candidate.id, candidate]));
-      return {
-        localHomeDir: resolveUserHomeDir(),
-        servers: params.serverIds.map((id): McpSyncExportedServer => {
-          const candidate = candidateById.get(id);
-          if (!candidate) {
-            throw new Error(`mcp sync candidate not found: ${id}`);
-          }
-          return {
-            id: candidate.id,
-            name: candidate.name,
-            config: cloneMcpConfig(candidate.config),
-            enabled: candidate.enabled,
-            source: candidate.source,
-            path: candidate.path,
-          };
-        }),
-      };
-    },
-    async checkRemoteUserMcpWriteAccess() {
-      return checkRemoteSyncDirectoryWriteAccess(dirname(getUserZcodeMcpConfigPath()));
-    },
-    async importMcpServers(params) {
-      if (params.overwrite) {
-        throw new Error("mcp sync overwrite is not supported");
-      }
-      return await importMcpServers(params);
-    },
   };
 }
 
@@ -195,25 +141,6 @@ function findDescriptorByLocation(location: SettingsDirectoryLocation): Director
     throw new Error(`Unsupported MCP settings directory source: ${location.source}`);
   }
   return descriptor;
-}
-
-async function collectEffectiveUserMcpRecords(): Promise<UserMcpRecord[]> {
-  const zcodeRecords = await readUserMcpRecordsFromFile(ZCODE_MCP_DESCRIPTOR);
-  if (zcodeRecords.length > 0) {
-    return sortMcpRecords(zcodeRecords);
-  }
-  return sortMcpRecords(await readUserMcpRecordsFromFile(AGENTS_MCP_DESCRIPTOR));
-}
-
-async function collectEffectiveUserMcpRecordByName(): Promise<Map<string, UserMcpRecord>> {
-  const result = new Map<string, UserMcpRecord>();
-  for (const record of await collectEffectiveUserMcpRecords()) {
-    const nameKey = normalizeMcpNameKey(record.name);
-    if (!result.has(nameKey)) {
-      result.set(nameKey, record);
-    }
-  }
-  return result;
 }
 
 async function loadMcpFromUserDirectory(
@@ -434,27 +361,6 @@ async function readUserMcpRecordsFromFile(
   }));
 }
 
-function recordToCandidate(record: UserMcpRecord): McpSyncCandidate {
-  return {
-    id: createCandidateId(record),
-    name: record.name,
-    config: cloneMcpConfig(record.config),
-    enabled: record.enabled,
-    source: record.source,
-    path: record.path,
-  };
-}
-
-function createCandidateId(record: UserMcpRecord): string {
-  return createHash("sha256")
-    .update(`${record.source}:${record.path}:${record.name}`)
-    .digest("hex");
-}
-
-function normalizeMcpNameKey(name: string): string {
-  return name.trim().toLowerCase();
-}
-
 function readServerEnabled(config: Record<string, unknown>): boolean {
   return config[ENABLED_KEY] !== false;
 }
@@ -554,218 +460,6 @@ function writeServerMapToJson(
       servers,
     },
   };
-}
-
-async function importMcpServers(params: {
-  servers: McpSyncExportedServer[];
-  localHomeDir: string;
-  localWorkspacePath?: string;
-  remoteWorkspacePath?: string;
-}): Promise<McpSyncImportResult> {
-  const targetPath = getUserZcodeMcpConfigPath();
-  const current = (await readJsonObject(targetPath)) ?? {};
-  const targetServers = readServerMapFromJson(current, ZCODE_MCP_DESCRIPTOR.configKeyName);
-  const existingByName = await collectEffectiveUserMcpRecordByName();
-  const results: McpSyncImportResult["results"] = [];
-  let changed = false;
-
-  for (const server of params.servers) {
-    const nameKey = normalizeMcpNameKey(server.name);
-    const existingTarget = targetServers[server.name];
-    if (existingTarget) {
-      results.push({ name: server.name, status: "skipped", path: targetPath });
-      continue;
-    }
-
-    const existing = existingByName.get(nameKey);
-    if (existing) {
-      results.push({
-        name: server.name,
-        status: "skipped",
-        path: existing.path,
-      });
-      continue;
-    }
-
-    try {
-      const rewrittenConfig = rewriteFilesystemMcpConfig(
-        server.name,
-        setServerEnabled(cloneMcpConfig(server.config), server.enabled),
-        {
-          localHomeDir: params.localHomeDir,
-          localWorkspacePath: params.localWorkspacePath,
-          remoteHomeDir: resolveUserHomeDir(),
-          remoteWorkspacePath: params.remoteWorkspacePath,
-        },
-      );
-      targetServers[server.name] = rewrittenConfig as Record<string, unknown>;
-      existingByName.set(nameKey, {
-        name: server.name,
-        config: rewrittenConfig,
-        enabled: server.enabled,
-        source: "zcode",
-        path: targetPath,
-      });
-      results.push({ name: server.name, status: "synced", path: targetPath });
-      changed = true;
-    } catch (error) {
-      results.push({
-        name: server.name,
-        status: "failed",
-        path: targetPath,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  if (changed) {
-    await writeTextAtomic(
-      targetPath,
-      `${JSON.stringify(writeServerMapToJson(current, ZCODE_MCP_DESCRIPTOR.configKeyName, targetServers), null, 2)}\n`,
-    );
-  }
-
-  return { results };
-}
-
-function rewriteFilesystemMcpConfig(
-  name: string,
-  config: McpServerConfig,
-  paths: {
-    localHomeDir: string;
-    localWorkspacePath?: string;
-    remoteHomeDir: string;
-    remoteWorkspacePath?: string;
-  },
-): McpServerConfig {
-  if (!isStdioMcpConfig(config) || !isFilesystemMcpServer(name, config)) {
-    return config;
-  }
-  if (!Array.isArray(config.args)) {
-    return config;
-  }
-  return {
-    ...config,
-    args: config.args.map((arg) => rewritePathArgForRemote(arg, paths)),
-  };
-}
-
-function isStdioMcpConfig(config: McpServerConfig): boolean {
-  const type = typeof config.type === "string" ? config.type.trim().toLowerCase() : "";
-  if (!type && typeof config.command === "string" && config.command.trim()) {
-    return true;
-  }
-  return type === "stdio";
-}
-
-function isFilesystemMcpServer(name: string, config: McpServerConfig): boolean {
-  const normalizedName = name.trim().toLowerCase();
-  if (
-    normalizedName === "filesystem" ||
-    normalizedName === "file-system" ||
-    normalizedName === "fs"
-  ) {
-    return true;
-  }
-  const haystack = [config.command, ...(Array.isArray(config.args) ? config.args : [])]
-    .filter((value): value is string => typeof value === "string")
-    .join(" ")
-    .toLowerCase();
-  return (
-    haystack.includes("@modelcontextprotocol/server-filesystem") ||
-    haystack.includes("mcp-server-filesystem")
-  );
-}
-
-function rewritePathArgForRemote(
-  arg: string,
-  paths: {
-    localHomeDir: string;
-    localWorkspacePath?: string;
-    remoteHomeDir: string;
-    remoteWorkspacePath?: string;
-  },
-): string {
-  const workspaceRelative = getRelativePathIfWithin(paths.localWorkspacePath, arg);
-  if (workspaceRelative !== null && paths.remoteWorkspacePath?.trim()) {
-    return joinRemotePath(paths.remoteWorkspacePath, workspaceRelative);
-  }
-
-  const homeRelative = getRelativePathIfWithin(paths.localHomeDir, arg);
-  if (homeRelative !== null) {
-    return joinRemotePath(paths.remoteHomeDir, homeRelative);
-  }
-
-  return arg;
-}
-
-function getRelativePathIfWithin(
-  basePath: string | undefined,
-  candidatePath: string,
-): string | null {
-  if (!basePath?.trim()) {
-    return null;
-  }
-  const base = normalizeComparablePath(basePath);
-  const candidate = normalizeComparablePath(candidatePath);
-  if (!base || !candidate) {
-    return null;
-  }
-  const baseValue = base.caseInsensitive ? base.value.toLowerCase() : base.value;
-  const candidateValue = base.caseInsensitive ? candidate.value.toLowerCase() : candidate.value;
-  if (candidateValue === baseValue) {
-    return "";
-  }
-  const prefix = baseValue.endsWith("/") ? baseValue : `${baseValue}/`;
-  if (!candidateValue.startsWith(prefix)) {
-    return null;
-  }
-  return candidate.value.slice(prefix.length);
-}
-
-function normalizeComparablePath(
-  rawPath: string,
-): { value: string; caseInsensitive: boolean } | null {
-  const trimmed = rawPath.trim();
-  if (!trimmed) {
-    return null;
-  }
-  const isWindowsPath = /^[a-zA-Z]:[\\/]/u.test(trimmed) || trimmed.startsWith("\\\\");
-  const isPosixPath = trimmed.startsWith("/");
-  if (!isWindowsPath && !isPosixPath) {
-    return null;
-  }
-
-  let value = trimmed.replaceAll("\\", "/");
-  value = value.replace(/\/+$/u, "");
-  if (value === "") {
-    value = "/";
-  }
-  return {
-    value,
-    caseInsensitive: isWindowsPath,
-  };
-}
-
-function joinRemotePath(remoteBasePath: string, relativePath: string): string {
-  if (!relativePath) {
-    return remoteBasePath;
-  }
-  const segments = relativePath.split(/[\\/]+/u).filter(Boolean);
-  // MCP 同步运行在本机进程里，但 remoteWorkspacePath 描述的是远端主机路径。
-  // 不能用 process.platform 决定拼接风格，否则 Windows 客户端同步到 Linux/WSL 时会把 /srv/... 写成 \srv\...。
-  const normalizedBasePath = remoteBasePath.trim();
-  if (normalizedBasePath.startsWith("/")) {
-    return posix.join(normalizedBasePath.replaceAll("\\", "/"), ...segments);
-  }
-  if (/^[a-zA-Z]:[\\/]/u.test(normalizedBasePath) || normalizedBasePath.startsWith("\\\\")) {
-    return win32.join(normalizedBasePath, ...segments);
-  }
-  return posix.join(normalizedBasePath.replaceAll("\\", "/"), ...segments);
-}
-
-function cloneMcpConfig(config: McpServerConfig): McpServerConfig {
-  return JSON.parse(JSON.stringify(config)) as McpServerConfig;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

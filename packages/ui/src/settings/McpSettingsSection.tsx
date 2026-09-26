@@ -13,7 +13,6 @@ import {
   testId,
 } from "@zcode/shared";
 import type {
-  RemoteTarget,
   ZCodeAvailablePluginSummary,
   ZCodeAgentMcpServer,
   ZCodeMcpListMode,
@@ -24,7 +23,6 @@ import type {
 import { isZCodeAgentMcpStatusModeUnsupportedError, type IMcpSyncService } from "@zcode/services";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
-import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { logger } from "@/logger.js";
@@ -60,17 +58,15 @@ import {
   SettingsResourceList,
 } from "@/settings/SettingsResourceGroup.js";
 import { McpServersImportDialog } from "@/settings/ExternalAgentImportDialog.js";
-import { RemoteSyncDialogs, shouldShowRemoteSyncActions } from "@/settings/RemoteSyncActions.js";
 import { useMcpStore } from "@/store/mcpStore.js";
 import { usePluginManagementStore } from "@/store/pluginManagementStore.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { useBaseWorkspaceServices, useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
+import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { getPluginWorkspaceKey } from "@/settings/PluginScopeMenu.js";
-import { ExternalLink, Import, Plus, UploadCloud } from "lucide-react";
+import { ExternalLink, Import, Plus } from "lucide-react";
 import { SettingsSegmentedTabs } from "@/settings/SettingsSegmentedTabs.js";
-import { formatRemoteSkillSyncTarget } from "@/settings/RemoteSkillSyncDialog.js";
 import { selectPluginsForScope } from "@/settings/pluginCapabilityProjection.js";
 
 const DEFAULT_MCP_SOURCE: ServerScope = "zcodeagentmcp";
@@ -390,10 +386,6 @@ function buildPluginMcpServerStatusListKey(plugins: ZCodePluginInfo[]): string {
     .join("|");
 }
 
-function shouldShowPluginMcpServersInMcpSettings(isRemoteSyncContext: boolean): boolean {
-  return !isRemoteSyncContext;
-}
-
 function buildPendingMcpOAuthAuthorizationRefreshKey(
   servers: ZCodeMcpServer[],
   statusSnapshots: Record<string, ZCodeMcpServerStatusSnapshot> = {},
@@ -537,8 +529,6 @@ interface McpSettingsSectionProps {
   workspacePath?: string | null;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
-  localWorkspacePath?: string;
   scopeFilter: "user" | "workspace";
   parentScopeKey: string;
   workspaceTabs: WorkspaceTabState[];
@@ -554,8 +544,6 @@ export function McpSettingsSection({
   workspacePath,
   workspaceIdentity,
   remoteSessionId,
-  remoteTarget,
-  localWorkspacePath,
   scopeFilter,
   parentScopeKey,
   workspaceTabs,
@@ -568,14 +556,8 @@ export function McpSettingsSection({
 }: McpSettingsSectionProps) {
   const { intl, locale } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
-  const services = useWorkspaceServices(
-    workspacePath,
-    remoteSessionId,
-    workspaceIdentity,
-    remoteTarget,
-  );
+  const services = useWorkspaceServices(workspacePath, remoteSessionId, workspaceIdentity);
   const platform = usePlatform();
-  const baseServices = useBaseWorkspaceServices();
 
   const storedServers = useMcpStore((s) => s.servers);
   const storedStatusSnapshots = useMcpStore((s) => s.statusSnapshots);
@@ -616,7 +598,6 @@ export function McpSettingsSection({
   const [formScopeKey, setFormScopeKey] = useState(parentScopeKey);
   const [editingServer, setEditingServer] = useState<ZCodeMcpServer | null>(null);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
-  const [remoteMcpSyncOpen, setRemoteMcpSyncOpen] = useState(false);
   const query = searchQuery;
   const [editorMode, setEditorMode] = useState<McpEditorMode>("form");
   const [mcpConfigReadyWorkspaceKey, setMcpConfigReadyWorkspaceKey] = useState("");
@@ -1140,22 +1121,7 @@ export function McpSettingsSection({
     () => filterLocalMcpServers(scopedServers, query),
     [query, scopedServers],
   );
-  const connectedRemoteSyncTarget =
-    shouldShowRemoteSyncActions({
-      remoteSessionId,
-      remoteTarget,
-      clientMode: "desktop-continuous" as const,
-      hasLocalSourceService: Boolean(baseServices.mcpSyncService),
-    }) && activeWorkspacePath
-      ? remoteTarget
-      : null;
-  const isRemoteSyncContext = Boolean(connectedRemoteSyncTarget);
   const pluginMcpServers = useMemo(() => {
-    if (!shouldShowPluginMcpServersInMcpSettings(isRemoteSyncContext)) {
-      // 插件 MCP 列表来自本机插件管理 store，不是当前远端目标。
-      // 远端 MCP 设置页必须和 Skills 一样只展示远端工作区可读写的资源。
-      return [];
-    }
     const pluginStoreMatchesTarget =
       (pluginStoreWorkspaceIdentity?.trim() || pluginStoreWorkspacePath || "") ===
         activeWorkspaceKey && pluginConfigScope === scopeFilter;
@@ -1169,7 +1135,6 @@ export function McpSettingsSection({
   }, [
     installedPlugins,
     activeWorkspaceKey,
-    isRemoteSyncContext,
     pluginConfigScope,
     pluginStoreWorkspaceIdentity,
     pluginStoreWorkspacePath,
@@ -1211,9 +1176,6 @@ export function McpSettingsSection({
   useEffect(() => {
     onVisibleCountChange?.(filteredMcpCount);
   }, [filteredMcpCount, onVisibleCountChange]);
-  const remoteMcpSyncTargetLabel = connectedRemoteSyncTarget
-    ? formatRemoteSkillSyncTarget(connectedRemoteSyncTarget, activeWorkspacePath ?? "")
-    : "";
 
   async function handleToggle(id: string, enabled: boolean) {
     await toggleServer(id, enabled);
@@ -1418,33 +1380,6 @@ export function McpSettingsSection({
 
   return (
     <div className="space-y-4">
-      {connectedRemoteSyncTarget ? (
-        <div className="flex justify-end">
-          <ControlHintTooltip title={intl.formatMessage({ id: "settings.mcp.remoteSync.open" })}>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon-lg"
-              aria-label={intl.formatMessage({
-                id: "settings.mcp.remoteSync.open",
-              })}
-              onClick={() => setRemoteMcpSyncOpen(true)}
-            >
-              <UploadCloud className="size-3.5" aria-hidden="true" />
-            </Button>
-          </ControlHintTooltip>
-        </div>
-      ) : null}
-
-      {connectedRemoteSyncTarget ? (
-        <div className="rounded-lg border border-border bg-card px-3 py-2 text-ui-base text-foreground-subtle">
-          {intl.formatMessage(
-            { id: "settings.mcp.remoteContext" },
-            { target: remoteMcpSyncTargetLabel },
-          )}
-        </div>
-      ) : null}
-
       {!mcpProjectionReady ? (
         <PluginLoadingState label={intl.formatMessage({ id: "common.loading" })} />
       ) : hasEmptySearchResult ? (
@@ -1564,30 +1499,6 @@ export function McpSettingsSection({
         onOpenChange={setImportDialogOpen}
         onImported={async () => {
           await loadMcpFromUserDirectory(services.mcpSyncService, activeWorkspaceIdentity);
-        }}
-      />
-      <RemoteSyncDialogs
-        canSyncSkills={false}
-        canSyncMcp={Boolean(connectedRemoteSyncTarget && activeWorkspacePath)}
-        skillOpen={false}
-        mcpOpen={remoteMcpSyncOpen}
-        onSkillOpenChange={() => {}}
-        onMcpOpenChange={setRemoteMcpSyncOpen}
-        localMcpSyncService={baseServices.mcpSyncService}
-        remoteMcpSyncService={services.mcpSyncService}
-        remoteTarget={connectedRemoteSyncTarget}
-        skillWorkspacePath=""
-        mcpWorkspacePath={activeWorkspacePath ?? ""}
-        mcpLocalWorkspacePath={localWorkspacePath}
-        onSkillsSynced={() => {}}
-        onMcpSynced={async () => {
-          const loaded = await loadMcpFromUserDirectory(
-            services.mcpSyncService,
-            activeWorkspaceIdentity,
-          );
-          if (loaded) {
-            await requestMcpServerStatusList();
-          }
         }}
       />
     </div>

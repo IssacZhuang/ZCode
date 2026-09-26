@@ -4,7 +4,6 @@ import type {
   ZCodeTaskChangeSummary,
   EditorInfo,
   GitRepositorySummary,
-  RemoteTarget,
   UserInfo,
 } from "@zcode/shared";
 
@@ -25,7 +24,6 @@ export interface WorkspaceHeaderTitleSectionProps {
   workspaceAbsPath: string;
   remoteSessionId?: string;
   workspaceIdentity?: string;
-  remoteTarget?: RemoteTarget;
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
@@ -63,7 +61,6 @@ export interface WorkspaceHeaderActionSectionProps {
   workspaceAbsPath: string;
   workspaceIdentity?: string;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
   isDesktop?: boolean;
   isTerminalOpen: boolean;
   isSidePaneOpen: boolean;

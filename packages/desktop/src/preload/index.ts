@@ -58,8 +58,6 @@ import type {
   RendererActionTraceConfigV1,
   RendererHeapSample,
   PostUpdateReleaseNotesPayload,
-  RemoteSessionClosedEvent,
-  BotRemoteWorkspaceReconnectedEvent,
   UpdateCheckResultPayload,
   UpdateStatePayload,
   ZCodeStdioTapDevState,
@@ -69,8 +67,6 @@ import type {
   SaveFileRequest,
   SaveFileResult,
   PrintPageToPdfResult,
-  SSHConfigAliasOption,
-  RemoteConnectionRuntimeLog,
   WindowControlsOverlayMetrics,
   WindowControlsOverlayReadyPayload,
   CreateTempTextAttachmentRequest,
@@ -245,37 +241,6 @@ window.addEventListener("DOMContentLoaded", updateRendererProcessTitle, {
  * 通过 MessagePort RPC 访问，不再经过此 bridge。
  */
 contextBridge.exposeInMainWorld("zcode", {
-  connectRemote: (
-    options: RemoteTarget,
-    requestId?: string,
-    context?: {
-      workspacePath: string;
-      workspaceIdentity?: string;
-      connectTrigger?: import("@zcode/shared").RemoteWorkspaceConnectTrigger;
-    },
-  ) =>
-    ipcRenderer.invoke(PlatformChannels.ConnectRemote, {
-      target: options,
-      requestId,
-      ...(context ? context : {}),
-    }),
-  cancelPendingRemoteConnection: (requestId?: string): Promise<void> =>
-    ipcRenderer.invoke(PlatformChannels.CancelPendingRemoteConnection, {
-      requestId,
-    }),
-  bindRemoteWorkspaceSessionContext: (context: {
-    remoteSessionId: string;
-    workspacePath: string;
-    workspaceIdentity?: string;
-  }): Promise<void> =>
-    ipcRenderer.invoke(PlatformChannels.BindRemoteWorkspaceSessionContext, context),
-  disposeRemoteSession: (sessionId: string): Promise<void> =>
-    ipcRenderer.invoke(PlatformChannels.DisposeRemoteSession, sessionId),
-  isDockerAvailable: (): Promise<boolean> => ipcRenderer.invoke(PlatformChannels.IsDockerAvailable),
-  listWSLDistros: () => ipcRenderer.invoke(PlatformChannels.ListWSLDistros),
-  listDockerContainers: () => ipcRenderer.invoke(PlatformChannels.ListDockerContainers),
-  listSSHConfigAliases: (): Promise<SSHConfigAliasOption[]> =>
-    ipcRenderer.invoke(PlatformChannels.ListSSHConfigAliases),
   loadMcpFromUserDirectory: (payload?: LoadCliMcpFromUserDirectoryRequest) =>
     ipcRenderer.invoke(PlatformChannels.LoadMcpFromUserDirectory, payload ?? {}),
   saveMcpToUserDirectory: (payload: SaveCliMcpToUserDirectoryRequest) =>
@@ -308,30 +273,6 @@ contextBridge.exposeInMainWorld("zcode", {
   /** 长文本粘贴落盘为真正的本地附件，避免正文和 prompt payload 被撑大 */
   createTempTextAttachment: (payload: CreateTempTextAttachmentRequest) =>
     ipcRenderer.invoke(PlatformChannels.CreateTempTextAttachment, payload),
-  /** 订阅当前窗口内远程连接过程日志，返回 disposer */
-  onRemoteConnectionLog: (callback: (entry: RemoteConnectionRuntimeLog) => void) => {
-    const handler = (_event: unknown, payload: unknown) =>
-      callback(payload as RemoteConnectionRuntimeLog);
-    ipcRenderer.on(PlatformChannels.RemoteConnectionLog, handler);
-    return () => ipcRenderer.removeListener(PlatformChannels.RemoteConnectionLog, handler);
-  },
-  /** 订阅当前窗口内远程 session 关闭事件，返回 disposer */
-  onRemoteSessionClosed: (callback: (event: RemoteSessionClosedEvent) => void) => {
-    const handler = (_event: unknown, payload: unknown) =>
-      callback(payload as RemoteSessionClosedEvent);
-    ipcRenderer.on(PlatformChannels.RemoteSessionClosed, handler);
-    return () => ipcRenderer.removeListener(PlatformChannels.RemoteSessionClosed, handler);
-  },
-  /** 订阅 Bot 触发的远程 workspace 重连成功事件，返回 disposer */
-  onBotRemoteWorkspaceReconnected: (
-    callback: (event: BotRemoteWorkspaceReconnectedEvent) => void,
-  ) => {
-    const handler = (_event: unknown, payload: unknown) =>
-      callback(payload as BotRemoteWorkspaceReconnectedEvent);
-    ipcRenderer.on(PlatformChannels.BotRemoteWorkspaceReconnected, handler);
-    return () =>
-      ipcRenderer.removeListener(PlatformChannels.BotRemoteWorkspaceReconnected, handler);
-  },
   /** 检查目录是否已在其他窗口打开 */
   activateOrSetWorkspace: (path: string): Promise<{ activated: boolean }> =>
     ipcRenderer.invoke(PlatformChannels.ActivateOrSetWorkspace, path),

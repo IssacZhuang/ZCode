@@ -21,7 +21,6 @@ import {
   useTaskQueryCacheStore,
 } from "@/store/taskQueryCacheStore.js";
 import { taskNavigationTargetExists } from "@/lib/taskNavigationTarget.js";
-import { getRemoteWorkspaceSession } from "@/store/remoteWorkspaceSessionStore.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
 import { bumpTaskListMembershipVersion } from "@/v4/taskListMembershipVersion.js";
@@ -112,10 +111,6 @@ export function useWorkspaceTaskNavigation({
         buildTaskWorkspaceKey(activeTab.workspacePath, activeTab.workspaceIdentity) ===
           targetWorkspaceKey,
       );
-      const resolvedRemoteSessionId =
-        activeTab && isWorkspaceTab(activeTab) && activeWorkspaceTabMatchesTarget
-          ? activeTab.remoteSessionId
-          : undefined;
       const targetWorkspaceIdentity =
         activeTab && isWorkspaceTab(activeTab) && activeWorkspaceTabMatchesTarget
           ? (activeTab.workspaceIdentity ?? targetWorkspaceIdentityHint)
@@ -140,7 +135,7 @@ export function useWorkspaceTaskNavigation({
         (activeTab &&
           isWorkspaceTab(activeTab) &&
           activeWorkspaceTabMatchesTarget &&
-          (activeTab.remoteSessionId || activeTab.remoteTarget)),
+          activeTab.remoteSessionId),
       );
 
       if (shouldClearUnread) {
@@ -152,11 +147,7 @@ export function useWorkspaceTaskNavigation({
         // 不会让蓝点重渲染。先对精确 entity key 加字段级 overlay，服务端回包
         // 后再 reconcile；期间的旧 membership 刷新也不能把蓝点写回来。
         setTaskQueryCacheUnreadOverlay(targetTask, undefined);
-        const targetServices = resolvedRemoteSessionId
-          ? (getRemoteWorkspaceSession(resolvedRemoteSessionId)?.services ?? null)
-          : isRemoteWorkspace
-            ? null
-            : baseServices;
+        const targetServices = isRemoteWorkspace ? null : baseServices;
         if (!targetServices) {
           // 远程 workspace 断开时不能按相同 workspacePath 回退到
           // 其他 remote session 或本地 base services，否则会把另一个工作区的未读状态清掉。

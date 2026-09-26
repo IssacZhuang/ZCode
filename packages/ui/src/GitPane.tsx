@@ -85,7 +85,6 @@ export function GitPane({
     isRemoteWorkspace:
       Boolean(workspaceRemoteSessionId || workspaceIdentity?.trim()) ||
       workspaceOpenTarget.isRemoteWorkspace,
-    remoteTarget: workspaceOpenTarget.remoteTarget,
     workspaceIdentity,
   });
   const resolvedTheme = resolveTheme(theme);

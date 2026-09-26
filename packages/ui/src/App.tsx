@@ -82,38 +82,20 @@ import { useWorkbenchGroupStore } from "@/v4/workbenchGroupStore.js";
 import type { AssistantPreviewCardsAutoOpenRequest } from "@/lib/assistantPreviewCards.js";
 import { startMemoryDiagnosticsLogger } from "@/lib/memoryDiagnostics.js";
 
-const EMPTY_RECONNECTING_REMOTE_WORKSPACE_LOGS_BY_WORKSPACE_KEY: NonNullable<
-  AppProps["reconnectingRemoteWorkspaceLogsByWorkspaceKey"]
-> = {};
-const EMPTY_REMOTE_CONNECTION_LOGS: NonNullable<AppProps["remoteConnectionLogs"]> = [];
-const EMPTY_REMOTE_WORKSPACE_SESSIONS: NonNullable<AppProps["remoteWorkspaceSessions"]> = [];
-
 export function App({
   services,
   baseFeedbackService,
-  onConnectRemote,
-  onSelectRemoteProject,
-  onCancelRemoteProject,
-  onReconnectRemoteWorkspace,
   onLogout,
   onLogin,
   user,
-  reconnectingRemoteWorkspaceKeys,
-  remoteWorkspaceErrorByWorkspaceKey,
-  reconnectingRemoteWorkspaceLogsByWorkspaceKey = EMPTY_RECONNECTING_REMOTE_WORKSPACE_LOGS_BY_WORKSPACE_KEY,
-  remoteConnectionLogs = EMPTY_REMOTE_CONNECTION_LOGS,
   onCreateTask,
   onCreateConversationTask,
   onResolveConversationWorkspace,
   onOpenWorkspace,
   onOpenFolderFromWorkspaceMenu,
-  onOpenRemoteWorkspace,
   onCreateScratchWorkspace,
-  remoteConnectionInProgress = false,
   onReturnToWorkspace,
   allowOpenWorkspace = true,
-  allowRemoteWorkspace = true,
-  remoteWorkspaceSessions = EMPTY_REMOTE_WORKSPACE_SESSIONS,
   workspaceAbsPath,
   workspaceRemoteSessionId,
   workspaceIdentity: explicitWorkspaceIdentity,
@@ -152,7 +134,6 @@ export function App({
         return {
           workspaceIdentity: undefined,
           remoteSessionId: undefined,
-          remoteTarget: undefined,
         };
       }
 
@@ -165,14 +146,12 @@ export function App({
         return {
           workspaceIdentity: undefined,
           remoteSessionId: undefined,
-          remoteTarget: undefined,
         };
       }
 
       return {
         workspaceIdentity: activeTab.workspaceIdentity,
         remoteSessionId: activeTab.remoteSessionId,
-        remoteTarget: activeTab.remoteTarget,
       };
     }),
   );
@@ -188,7 +167,6 @@ export function App({
     workspaceAbsPath,
     workspaceRpcTarget.remoteSessionId,
     workspaceIdentity,
-    workspaceRpcTarget.remoteTarget,
   );
   const workspaceReadOnly = useTabStore((state) =>
     isWorkspaceReadOnly(state, workspaceAbsPath, workspaceIdentity),
@@ -397,7 +375,6 @@ export function App({
         workspacePath: tab.workspacePath,
         label: tab.label,
         remoteSessionId: tab.remoteSessionId,
-        remoteTarget: tab.remoteTarget,
         workspaceIdentity: tab.workspaceIdentity,
         workspacePurpose: tab.workspacePurpose,
         localWorkspacePath: tab.localWorkspacePath,
@@ -422,7 +399,6 @@ export function App({
     // task 切换 / last-turn 摘要变化只更新本地衍生数据，不再顺带重跑 Git 命令。
     refreshToken: gitRefreshVersion,
     remoteSessionId: workspaceRpcTarget.remoteSessionId ?? null,
-    remoteTarget: workspaceRpcTarget.remoteTarget,
     workspaceIdentity,
   });
   useGitAutoRefresh({
@@ -1134,30 +1110,16 @@ export function App({
         handleOpenAutomations={handleOpenAutomations}
         handleOpenPluginStore={handleOpenPluginStoreForScope}
         handleManageInstalledPlugins={handleManageInstalledPlugins}
-        onConnectRemote={onConnectRemote}
-        onSelectRemoteProject={onSelectRemoteProject}
-        onCancelRemoteProject={onCancelRemoteProject}
-        onReconnectRemoteWorkspace={onReconnectRemoteWorkspace}
         onLogout={onLogout}
         onLogin={onLogin}
         user={user}
-        reconnectingRemoteWorkspaceKeys={reconnectingRemoteWorkspaceKeys}
-        remoteWorkspaceErrorByWorkspaceKey={remoteWorkspaceErrorByWorkspaceKey}
-        reconnectingRemoteWorkspaceLogsByWorkspaceKey={
-          reconnectingRemoteWorkspaceLogsByWorkspaceKey
-        }
-        remoteConnectionLogs={remoteConnectionLogs}
         onCreateTask={handleCreateTaskIfWritable}
         onCreateConversationTask={onCreateConversationTask}
         onResolveConversationWorkspace={onResolveConversationWorkspace}
         onOpenWorkspace={onOpenWorkspace}
         onOpenFolderFromWorkspaceMenu={onOpenFolderFromWorkspaceMenu}
-        onOpenRemoteWorkspace={onOpenRemoteWorkspace}
         onCreateScratchWorkspace={onCreateScratchWorkspace}
-        remoteConnectionInProgress={remoteConnectionInProgress}
         allowOpenWorkspace={allowOpenWorkspace}
-        allowRemoteWorkspace={allowRemoteWorkspace}
-        remoteWorkspaceSessions={remoteWorkspaceSessions}
         workspaceAbsPath={workspaceAbsPath}
         workspaceRemoteSessionId={workspaceRemoteSessionId}
         workspaceIdentity={workspaceIdentity}

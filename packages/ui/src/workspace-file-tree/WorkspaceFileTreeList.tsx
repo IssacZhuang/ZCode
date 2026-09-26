@@ -132,7 +132,6 @@ export function WorkspaceFileTreeList({
       canOpenLocalFileManager={editorState.canOpenLocalFileManager}
       installedEditors={editorState.installedEditors}
       isRemoteWorkspaceFileTree={editorState.isRemoteWorkspaceFileTree}
-      remoteTarget={editorState.remoteTarget}
       workspacePath={workspacePath}
       workspaceIdentity={workspaceIdentity}
       style={style}

@@ -1,12 +1,6 @@
 import type {
   LoadCliMcpFromUserDirectoryRequest,
   LoadCliMcpFromUserDirectoryResult,
-  McpSyncCandidateListResult,
-  McpSyncExportResult,
-  McpSyncExportedServer,
-  McpSyncImportResult,
-  McpSyncRemoteStatusResult,
-  RemoteSyncWriteAccessResult,
   SaveCliMcpToUserDirectoryRequest,
   ZCodeAgentMcpServer,
   ZCodeMcpListMode,
@@ -31,17 +25,6 @@ export interface IMcpSyncService {
     mode?: ZCodeMcpListMode;
   }): Promise<ZCodeMcpListResult>;
   saveMcpToUserDirectory(payload: SaveCliMcpToUserDirectoryRequest): Promise<void>;
-  listLocalUserMcpCandidates(): Promise<McpSyncCandidateListResult>;
-  listRemoteUserMcpStatuses(params: { names: string[] }): Promise<McpSyncRemoteStatusResult>;
-  exportMcpServers(params: { serverIds: string[] }): Promise<McpSyncExportResult>;
-  checkRemoteUserMcpWriteAccess(): Promise<RemoteSyncWriteAccessResult>;
-  importMcpServers(params: {
-    servers: McpSyncExportedServer[];
-    localHomeDir: string;
-    localWorkspacePath?: string;
-    remoteWorkspacePath?: string;
-    overwrite?: false;
-  }): Promise<McpSyncImportResult>;
 }
 
 export const IMcpSyncService = createServiceDescriptor<IMcpSyncService>(ServiceChannels.McpSync);

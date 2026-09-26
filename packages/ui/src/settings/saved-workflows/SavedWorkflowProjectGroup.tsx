@@ -89,7 +89,6 @@ export function SavedWorkflowProjectGroup({
     project.workspacePath,
     project.remoteSessionId ?? null,
     project.workspaceIdentity,
-    project.remoteTarget,
   );
   const { services, rpcReady } = resolution;
   const agentService = services.zcodeAgentService;

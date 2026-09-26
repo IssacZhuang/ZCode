@@ -1,11 +1,5 @@
 /* eslint-disable max-lines -- 跨端 platform contract 集中声明 renderer 能力；OAuth 与 browser lifecycle 必须保持 desktop/web 类型合同，本 MR 不拆分平台边界。 */
 import type {
-  DockerConnectOptions,
-  RemoteTarget,
-  SSHConnectOptions,
-  WSLConnectOptions,
-} from "./remoteTarget.js";
-import type {
   LoadCliMcpFromUserDirectoryRequest,
   LoadCliMcpFromUserDirectoryResult,
   MigrateLegacyCommonMcpRequest,
@@ -225,13 +219,7 @@ export interface ApplicationIconRequest {
   locators: ApplicationIconLocator[];
 }
 
-export type OpenInEditorRemoteTarget =
-  | Pick<SSHConnectOptions, "kind" | "host" | "port" | "username" | "sshConfigAlias">
-  | Pick<WSLConnectOptions, "kind" | "distro" | "user">
-  | Pick<DockerConnectOptions, "kind" | "container">;
-
 export interface OpenInEditorOptions {
-  remoteTarget?: OpenInEditorRemoteTarget;
   workspaceIdentity?: string;
   pathKind?: "file" | "directory";
 }
@@ -273,58 +261,6 @@ export interface PrintPageToPdfResult {
   data?: ArrayBuffer;
   /** "print_in_progress" | "print_failed" */
   error?: string;
-}
-
-export function createOpenInEditorRemoteTarget(target: RemoteTarget): OpenInEditorRemoteTarget {
-  switch (target.kind) {
-    case "ssh":
-      // openInEditor 只需要构造 VS Code Remote-SSH URI 的连接标识，
-      // 不应该把 password/privateKeyPassphrase 等凭据字段继续穿过 renderer/preload/main IPC。
-      return {
-        kind: "ssh",
-        host: target.host,
-        port: target.port,
-        username: target.username,
-        ...(target.sshConfigAlias?.trim() ? { sshConfigAlias: target.sshConfigAlias.trim() } : {}),
-      };
-    case "wsl": {
-      const user = target.user?.trim();
-      return {
-        kind: "wsl",
-        distro: target.distro,
-        ...(user ? { user } : {}),
-      };
-    }
-    case "docker":
-      return {
-        kind: "docker",
-        container: target.container,
-      };
-  }
-}
-
-export interface WSLDistro {
-  name: string;
-  isDefault: boolean;
-  state: string;
-  version: 1 | 2 | null;
-}
-
-export interface DockerContainerInfo {
-  id: string;
-  image: string;
-  name: string;
-  state: string;
-  status: string;
-}
-
-export interface SSHConfigAliasOption {
-  alias: string;
-  host?: string;
-  port?: number;
-  username?: string;
-  privateKeyPath?: string;
-  source?: string;
 }
 
 export interface ZCodeStdioTapDevState {
@@ -416,23 +352,6 @@ export interface RemoteServiceSession {
   sessionId: string;
 }
 
-export interface RemoteConnectionRuntimeLog {
-  label: string;
-  requestId?: string;
-  sessionId?: string;
-  level: "info" | "warn" | "error";
-  source: string;
-  message: string;
-  timestamp: string;
-}
-
-export interface RemoteSessionClosedEvent {
-  sessionId: string;
-  reason: "host-exit";
-  exitCode: number | null;
-  signal: string | null;
-}
-
 export interface EmbeddedBrowserOpenUrlRequest {
   url: string;
   disposition: "default" | "foreground-tab" | "background-tab" | "new-window" | "other";
@@ -443,31 +362,6 @@ export interface EmbeddedBrowserOpenUrlRequest {
   browserId?: string;
   browserGeneration?: number;
   sourceTabId?: string;
-}
-
-export interface BotRemoteWorkspaceReconnectedEvent {
-  sessionId: string;
-  workspacePath: string;
-  workspaceIdentity: string;
-  target: RemoteTarget;
-}
-
-export interface ConnectRemoteRequest {
-  target: RemoteTarget;
-  requestId?: string;
-  workspacePath?: string;
-  workspaceIdentity?: string;
-  connectTrigger?: import("./remoteUsageTelemetry.js").RemoteWorkspaceConnectTrigger;
-}
-
-export interface CancelPendingRemoteConnectionRequest {
-  requestId?: string;
-}
-
-export interface BindRemoteWorkspaceSessionContextRequest {
-  remoteSessionId: string;
-  workspacePath: string;
-  workspaceIdentity?: string;
 }
 
 export const DesktopCommandIds = {
@@ -565,53 +459,8 @@ export interface IPlatformService {
     payload: CreateTempTextAttachmentRequest,
   ): Promise<CreateTempTextAttachmentResult>;
 
-  /** 订阅当前窗口内远程连接过程日志，返回 disposer */
-  onRemoteConnectionLog(handler: (entry: RemoteConnectionRuntimeLog) => void): () => void;
-
-  /** 订阅远程 workspace session 关闭事件，返回 disposer */
-  onRemoteSessionClosed(handler: (event: RemoteSessionClosedEvent) => void): () => void;
-
-  /** 订阅 Bot 触发的远程 workspace 重连成功事件，返回 disposer */
-  onBotRemoteWorkspaceReconnected(
-    handler: (event: BotRemoteWorkspaceReconnectedEvent) => void,
-  ): () => void;
-
   /** 检查目录是否已在其他窗口打开；如果是则激活该窗口并切到对应 tab */
   activateOrSetWorkspace(path: string): Promise<{ activated: boolean }>;
-
-  /** 建立远程连接（Desktop: 在当前窗口创建远程 session；Web: HTTP API） */
-  connectRemote(
-    options: RemoteTarget,
-    requestId?: string,
-    context?: {
-      workspacePath: string;
-      workspaceIdentity?: string;
-      connectTrigger?: import("./remoteUsageTelemetry.js").RemoteWorkspaceConnectTrigger;
-    },
-  ): Promise<{ success: boolean; error?: string; sessionId?: string }>;
-
-  /** 取消当前窗口尚未建立完成的远程连接（可选：Web 平台可忽略） */
-  cancelPendingRemoteConnection?(requestId?: string): Promise<void>;
-
-  /** 将 canonical workspace 身份绑定到已创建的远程 logical session。 */
-  bindRemoteWorkspaceSessionContext?(
-    context: BindRemoteWorkspaceSessionContextRequest,
-  ): Promise<void>;
-
-  /** 释放当前窗口里已创建的远程 session */
-  disposeRemoteSession(sessionId: string): Promise<void>;
-
-  /** 检查本机 Docker daemon 是否可用 */
-  isDockerAvailable(): Promise<boolean>;
-
-  /** 列出本机可用的 WSL 发行版 */
-  listWSLDistros(): Promise<WSLDistro[]>;
-
-  /** 列出当前可连接的 Docker 容器 */
-  listDockerContainers(): Promise<DockerContainerInfo[]>;
-
-  /** 列出当前机器 SSH config 中可用于快速填表的 alias */
-  listSSHConfigAliases(): Promise<SSHConfigAliasOption[]>;
 
   /** 读取宿主环境中的原生 MCP 用户目录配置；手机远控通过已连接桌面 host 转发。 */
   loadMcpFromUserDirectory?(

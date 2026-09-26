@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { isWorkspaceTab, type WorkspaceTabState } from "@/store/tabStore.js";
 
 function isLocalWorkspaceTab(tab: WorkspaceTabState): boolean {
-  return !tab.remoteSessionId && !tab.remoteTarget && !tab.workspaceIdentity;
+  return !tab.remoteSessionId && !tab.workspaceIdentity;
 }
 
 export function useLocalWorkspaceScopes({

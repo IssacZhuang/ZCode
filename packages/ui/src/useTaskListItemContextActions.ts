@@ -78,29 +78,12 @@ export function useTaskListItemContextActions({
       remoteSessionId || workspaceIdentity?.trim() || workspaceOpenTarget.isRemoteWorkspace,
     );
     if (hasRemoteWorkspaceScope) {
-      if (workspaceOpenTarget.remoteTarget?.kind !== "wsl") {
-        // 远程项目路径不是宿主机路径。无法精确解析为 WSL 时必须失败关闭，
-        // 避免 SSH/Docker 的 Linux 路径误落到原生 Windows、macOS 或 Linux 文件管理器。
-        logger.warn("[TaskListItem] 远程 workspace 不支持本机文件管理器", {
-          taskId,
-          path: workspacePath,
-          remoteKind: workspaceOpenTarget.remoteTarget?.kind ?? "unresolved",
-        });
-        return;
-      }
-
-      const result = await platform.openInEditor("explorer", workspacePath, {
-        pathKind: "directory",
-        remoteTarget: workspaceOpenTarget.remoteTarget,
-        workspaceIdentity,
+      // 远程项目路径不是宿主机路径，必须失败关闭，
+      // 避免 Linux 路径误落到原生 Windows、macOS 或 Linux 文件管理器。
+      logger.warn("[TaskListItem] 远程 workspace 不支持本机文件管理器", {
+        taskId,
+        path: workspacePath,
       });
-      if (!result.success) {
-        logger.warn("[TaskListItem] 打开 WSL workspace 路径失败", {
-          taskId,
-          path: workspacePath,
-          error: result.error ?? "unknown-error",
-        });
-      }
       return;
     }
 
@@ -132,7 +115,6 @@ export function useTaskListItemContextActions({
     taskId,
     workspaceIdentity,
     workspaceOpenTarget.isRemoteWorkspace,
-    workspaceOpenTarget.remoteTarget,
     workspacePath,
   ]);
 

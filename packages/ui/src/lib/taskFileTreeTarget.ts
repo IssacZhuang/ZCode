@@ -17,9 +17,7 @@ function resolveTaskFileTreeTarget(
   // 旧本地 task 没有 workspaceIdentity，key 会回退到 workspacePath；如果同路径
   // 远程 tab 也缺 identity，仅按 key 会误带远程 session。匹配前必须先保证本地/远程类型一致。
   const taskIsRemote = Boolean(task.workspaceIdentity?.trim());
-  const tabIsRemote = Boolean(
-    tab?.workspaceIdentity?.trim() || tab?.remoteTarget || tab?.remoteSessionId,
-  );
+  const tabIsRemote = Boolean(tab?.workspaceIdentity?.trim() || tab?.remoteSessionId);
   const matchingTab =
     tab &&
     buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity) ===
@@ -30,9 +28,7 @@ function resolveTaskFileTreeTarget(
   if (tab && !matchingTab) {
     return null;
   }
-  const isRemoteWorkspace = Boolean(
-    task.workspaceIdentity?.trim() || matchingTab?.remoteTarget || matchingTab?.remoteSessionId,
-  );
+  const isRemoteWorkspace = Boolean(task.workspaceIdentity?.trim() || matchingTab?.remoteSessionId);
   // 远端 task 的 workspacePath 可能和本地 workspace 相同。缺少对应 remoteSessionId
   // 时禁止打开文件树，否则文件读取会错误降级到本地 service。
   if (isRemoteWorkspace && !matchingTab?.remoteSessionId) {

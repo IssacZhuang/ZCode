@@ -32,11 +32,8 @@ import { resolveTaskFileTreeTargetFromTabs } from "@/lib/taskFileTreeTarget.js";
 import { toast } from "@/components/ui/toast.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { selectWorkspaceZCodeState, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionStore.js";
 import { buildWorkspaceServiceLookup } from "@/lib/workspaceServiceResolver.js";
 import { applyTaskQueryCacheMutation } from "@/store/taskQueryCacheStore.js";
-import { useRemotePinnedTaskStore } from "@/store/remotePinnedTaskStore.js";
-import { useRemoteTimelineTaskStore } from "@/store/remoteTimelineTaskStore.js";
 import { bumpTaskListMembershipVersion } from "@/v4/taskListMembershipVersion.js";
 import { GroupItem, GroupedTaskItem } from "@/workspace-grouped-tasks/items.js";
 import { GroupDragOverlay } from "@/workspace-grouped-tasks/group-drag-overlay.js";
@@ -557,24 +554,9 @@ export function WorkspaceGroupedTasksSection({
 }) {
   const { intl } = useZCodeIntl();
   const baseServices = useBaseWorkspaceServices();
-  const sessionsById = useRemoteWorkspaceSessionStore((state) => state.sessionsById);
-  const sessionIdByWorkspaceIdentity = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspaceIdentity,
-  );
-  const sessionIdByWorkspacePath = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspacePath,
-  );
-  const serviceResolverState = useMemo(
-    () => ({
-      sessionsById,
-      sessionIdByWorkspaceIdentity,
-      sessionIdByWorkspacePath,
-    }),
-    [sessionIdByWorkspaceIdentity, sessionIdByWorkspacePath, sessionsById],
-  );
   const workspaceServiceLookup = useMemo(
-    () => buildWorkspaceServiceLookup(workspaceTabs, baseServices, serviceResolverState),
-    [baseServices, serviceResolverState, workspaceTabs],
+    () => buildWorkspaceServiceLookup(workspaceTabs, baseServices),
+    [baseServices, workspaceTabs],
   );
   const removeTaskState = useZCodeSessionStore((state) => state.removeTaskState);
   const upsertOptimisticTaskListItem = useZCodeSessionStore(
@@ -1098,14 +1080,6 @@ export function WorkspaceGroupedTasksSection({
           // 归档成功后主动换代 membership；渲染层在权威列表确认消失前继续屏蔽该 task。
           bumpTaskListMembershipVersion();
           removeTaskState(task.workspacePath, task.taskId, task.workspaceIdentity);
-          if (task.workspaceIdentity) {
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(task.workspacePath, task.taskId, task.workspaceIdentity);
-            useRemotePinnedTaskStore
-              .getState()
-              .removeTask(task.workspacePath, task.taskId, task.workspaceIdentity);
-          }
           applyTaskQueryCacheMutation({
             previousTask: task,
             nextTask: meta,

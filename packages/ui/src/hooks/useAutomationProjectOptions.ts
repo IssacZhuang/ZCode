@@ -11,7 +11,7 @@ interface AutomationProjectOption {
 }
 
 export function isRemoteAutomationWorkspace(tab: WorkspaceTabState | undefined): boolean {
-  return Boolean(tab?.remoteSessionId || tab?.remoteTarget || tab?.workspaceIdentity);
+  return Boolean(tab?.remoteSessionId || tab?.workspaceIdentity);
 }
 
 interface AutomationProjectOptionsConfig {

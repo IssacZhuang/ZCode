@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- 文件树行集中维护拖拽、打开方式、Git 状态与上下文菜单交互。 */
-import type { EditorInfo, OpenInEditorRemoteTarget } from "@zcode/shared";
+import type { EditorInfo } from "@zcode/shared";
 import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { AlertCircle, ChevronRight, LoaderCircle } from "lucide-react";
 import { TID_WORKSPACE_FILE_TREE_ROW, testId } from "@zcode/shared";
@@ -20,7 +20,6 @@ import { useFileContextActions } from "@/hooks/useFileContextActions.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { FileDisplayIcon, resolveFileDisplayDescriptor } from "@/lib/fileDisplay.js";
 import { logger } from "@/logger.js";
-import { resolveWorkspaceFileManagerEditor } from "@/lib/workspaceEditorSelection.js";
 import { buildFileMentionMarkdown } from "@/mentions/mentionMarkdown.js";
 import {
   dispatchWorkspaceFileAddToChat,
@@ -64,7 +63,6 @@ export function WorkspaceFileTreeRowView({
   canOpenLocalFileManager,
   installedEditors,
   isRemoteWorkspaceFileTree,
-  remoteTarget,
   workspacePath,
   workspaceIdentity,
   style,
@@ -84,7 +82,6 @@ export function WorkspaceFileTreeRowView({
   canOpenLocalFileManager: boolean;
   installedEditors: EditorInfo[];
   isRemoteWorkspaceFileTree: boolean;
-  remoteTarget?: OpenInEditorRemoteTarget;
   workspacePath: string;
   workspaceIdentity?: string;
   style: CSSProperties;
@@ -104,7 +101,6 @@ export function WorkspaceFileTreeRowView({
   const relativePath = getWorkspaceFileRelativePath(workspacePath, row.path);
   const isDirectory = row.type === "directory";
   const isDeletedFile = isWorkspaceFileTreeDeletedFile(row, gitStatus);
-  const wslFileManagerEditor = resolveWorkspaceFileManagerEditor(installedEditors, remoteTarget);
   const rowStyle = {
     ...style,
     "--workspace-file-tree-depth": row.depth,
@@ -171,11 +167,8 @@ export function WorkspaceFileTreeRowView({
     if (isDeletedFile) {
       return;
     }
-    // 远程文件树以前整项禁用第三方打开，且调用只传 Linux path；
-    // 这里把已脱敏 remoteTarget 与文件/目录类型交给 main，由唯一平台边界生成正确 URI。
     const result = await platform.openInEditor(editor.id, row.path, {
       pathKind: isDirectory ? "directory" : "file",
-      remoteTarget,
       workspaceIdentity,
     });
     if (result.success) {
@@ -197,10 +190,6 @@ export function WorkspaceFileTreeRowView({
     onOpenBrowserUrl?.(url);
   };
   const handleRevealInFileManager = async () => {
-    if (wslFileManagerEditor) {
-      await handleOpenInEditor(wslFileManagerEditor);
-      return;
-    }
     await fileActions.revealInFileManager({
       path: row.path,
       deleted: isDeletedFile,
@@ -329,14 +318,10 @@ export function WorkspaceFileTreeRowView({
       ) : null}
     </div>
   );
-  // 普通远程路径不能交给本机文件管理器，但 WSL Explorer 会在 main 边界
-  // 转成 UNC；因此它和“打开方式 → 资源管理器”必须共享相同的可用性与执行路径。
-  const canRevealInFileManager =
-    (!isDeletedFile && Boolean(wslFileManagerEditor)) ||
-    fileActions.canRevealInFileManager({
-      path: row.path,
-      deleted: isDeletedFile,
-    });
+  const canRevealInFileManager = fileActions.canRevealInFileManager({
+    path: row.path,
+    deleted: isDeletedFile,
+  });
   const canOpenPrimary = !isDeletedFile;
   const canOpenInBrowser =
     !isDeletedFile &&

@@ -16,7 +16,6 @@ export function WorkspaceHeaderActionSection({
   readOnlyReason,
   workspaceAbsPath,
   workspaceIdentity,
-  remoteTarget,
   isDesktop,
   isTerminalOpen,
   isSidePaneOpen,
@@ -43,7 +42,6 @@ export function WorkspaceHeaderActionSection({
           disabledReason={readOnlyReason}
           workspaceAbsPath={workspaceAbsPath}
           workspaceIdentity={workspaceIdentity}
-          remoteTarget={remoteTarget}
           onSelectedEditorChange={onSelectedEditorChange}
         />
       ) : null}

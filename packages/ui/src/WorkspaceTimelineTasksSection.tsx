@@ -12,15 +12,10 @@ import { getTaskTimelineGroupMessage, groupTaskTimelineItems } from "@/lib/taskT
 import { buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
 import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { buildWorkspaceServiceLookup } from "@/lib/workspaceServiceResolver.js";
-import { logger } from "@/logger.js";
 import { MemoTaskItem, TaskListItemContextMenuContent } from "@/TaskListItem.js";
 import { TaskListLoadingHint } from "@/TaskListLoadingHint.js";
-import { TaskListRemoteSyncHint } from "@/TaskListRemoteSyncHint.js";
 import { TaskRenameDialog } from "@/TaskRenameDialog.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { useRemotePinnedTaskStore } from "@/store/remotePinnedTaskStore.js";
-import { useRemoteTimelineTaskStore } from "@/store/remoteTimelineTaskStore.js";
-import { useRemoteWorkspaceSessionStore } from "@/store/remoteWorkspaceSessionStore.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { applyTaskQueryCacheMutation } from "@/store/taskQueryCacheStore.js";
 
@@ -69,21 +64,6 @@ export function WorkspaceTimelineTasksSection({
   const scopedWorkspaceTabs = useLocalWorkspaceScopes({
     workspaceTabs,
   });
-  const sessionsById = useRemoteWorkspaceSessionStore((state) => state.sessionsById);
-  const sessionIdByWorkspaceIdentity = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspaceIdentity,
-  );
-  const sessionIdByWorkspacePath = useRemoteWorkspaceSessionStore(
-    (state) => state.sessionIdByWorkspacePath,
-  );
-  const serviceResolverState = useMemo(
-    () => ({
-      sessionsById,
-      sessionIdByWorkspaceIdentity,
-      sessionIdByWorkspacePath,
-    }),
-    [sessionIdByWorkspaceIdentity, sessionIdByWorkspacePath, sessionsById],
-  );
   const removeTaskState = useZCodeSessionStore((state) => state.removeTaskState);
   const upsertOptimisticTaskListItem = useZCodeSessionStore(
     (state) => state.upsertOptimisticTaskListItem,
@@ -121,8 +101,8 @@ export function WorkspaceTimelineTasksSection({
   removeOptimisticTaskListItemRef.current = removeOptimisticTaskListItem;
   setTaskUnreadIndicatorRef.current = setTaskUnreadIndicator;
   const workspaceServiceLookup = useMemo(
-    () => buildWorkspaceServiceLookup(workspaceTabs, baseServices, serviceResolverState),
-    [baseServices, serviceResolverState, workspaceTabs],
+    () => buildWorkspaceServiceLookup(workspaceTabs, baseServices),
+    [baseServices, workspaceTabs],
   );
   const activeWorkspaceKey = buildTaskWorkspaceKey(activeWorkspacePath, activeWorkspaceIdentity);
   const workspaceTabsSignature = useMemo(
@@ -145,38 +125,11 @@ export function WorkspaceTimelineTasksSection({
     expanded: false,
     collapsedLimit: visibleTaskLimit,
   });
-  const remoteTimelineItemsByWorkspaceKey = useRemoteTimelineTaskStore(
-    (state) => state.itemsByWorkspaceKey,
-  );
-  const remoteTimelineLoadingByWorkspaceKey = useRemoteTimelineTaskStore(
-    (state) => state.loadingByWorkspaceKey,
-  );
-  const remoteTimelineTotalByWorkspaceKey = useRemoteTimelineTaskStore(
-    (state) => state.totalByWorkspaceKey,
-  );
-  const remoteTimelineHasMoreByWorkspaceKey = useRemoteTimelineTaskStore(
-    (state) => state.hasMoreByWorkspaceKey,
-  );
-  const remoteWorkspaceKeys = useMemo(
-    () => [
-      ...new Set(
-        workspaceTabs
-          .filter((tab) => tab.workspaceIdentity || tab.remoteTarget || tab.remoteSessionId)
-          .map((tab) => buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity)),
-      ),
-    ],
-    [workspaceTabs],
-  );
-  const remoteItems = useMemo(() => {
-    return remoteWorkspaceKeys.flatMap(
-      (workspaceKey) => remoteTimelineItemsByWorkspaceKey[workspaceKey] ?? [],
-    );
-  }, [remoteTimelineItemsByWorkspaceKey, remoteWorkspaceKeys]);
   const sortedItems = useMemo(() => {
-    return [...localItems, ...remoteItems].sort((left, right) =>
+    return [...localItems].sort((left, right) =>
       compareZCodeTaskListItems(left, right, taskSortBy),
     );
-  }, [localItems, remoteItems, taskSortBy]);
+  }, [localItems, taskSortBy]);
   const items = sortedItems.slice(0, visibleTaskLimit);
   const itemByKey = useMemo(() => {
     const nextItemByKey = new Map<string, ZCodeTaskMeta>();
@@ -214,30 +167,9 @@ export function WorkspaceTimelineTasksSection({
       }))
       .filter((group) => group.items.length > 0);
   }, [groupByDate, items, locale, taskSortBy, workspaceServiceLookup]);
-  const remoteTotal = remoteWorkspaceKeys.reduce(
-    (sum, workspaceKey) =>
-      sum +
-      (remoteTimelineTotalByWorkspaceKey[workspaceKey] ??
-        remoteTimelineItemsByWorkspaceKey[workspaceKey]?.length ??
-        0),
-    0,
-  );
-  const total = localTotal + remoteTotal;
-  const remoteHasMore = remoteWorkspaceKeys.some(
-    (workspaceKey) => remoteTimelineHasMoreByWorkspaceKey[workspaceKey],
-  );
-  const syncingRemoteWorkspaces = workspaceTabs.some((tab) => {
-    if (!tab.workspaceIdentity && !tab.remoteTarget && !tab.remoteSessionId) {
-      return false;
-    }
-    return Boolean(
-      remoteTimelineLoadingByWorkspaceKey[
-        buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity)
-      ],
-    );
-  });
-  const loading = localLoading || syncingRemoteWorkspaces;
-  const hasKnownMore = localHasMore || remoteHasMore || total > items.length;
+  const total = localTotal;
+  const loading = localLoading;
+  const hasKnownMore = localHasMore || total > items.length;
   const currentLimitFilled = sortedItems.length >= visibleTaskLimit;
   // 远端/本地 hasMore 偶尔会在下一轮请求完成前保持旧值。
   // 如果当前已加载数量没有填满 limit，说明这轮已经到底了，不能继续显示 show more。
@@ -246,53 +178,6 @@ export function WorkspaceTimelineTasksSection({
   useEffect(() => {
     setVisibleTaskLimit(collapsedLimit);
   }, [taskSortBy, workspaceTabsSignature]);
-
-  useEffect(() => {
-    // 这条日志会随着远端 timeline 同步和 tab 恢复多次触发。
-    // 生产环境只需要保留生命周期和异常，列表同步细节降为 debug，避免任务多时持续落盘。
-    logger.debug("[WorkspaceTimelineTasksSection] scopedWorkspaceTabs", {
-      workspaceTabs: workspaceTabs.map((tab) => ({
-        workspacePath: tab.workspacePath,
-        workspaceIdentity: tab.workspaceIdentity,
-        remoteSessionId: tab.remoteSessionId,
-        hasRemoteTarget: Boolean(tab.remoteTarget),
-      })),
-      scopedWorkspaceTabs: scopedWorkspaceTabs.map((tab) => ({
-        workspacePath: tab.workspacePath,
-        workspaceIdentity: tab.workspaceIdentity,
-        remoteSessionId: tab.remoteSessionId,
-        hasRemoteTarget: Boolean(tab.remoteTarget),
-      })),
-      remoteItemCount: remoteItems.length,
-    });
-  }, [remoteItems.length, scopedWorkspaceTabs, workspaceTabs]);
-
-  useEffect(() => {
-    const remoteTabs = workspaceTabs.filter(
-      (tab) => tab.workspaceIdentity || tab.remoteTarget || tab.remoteSessionId,
-    );
-    if (remoteTabs.length === 0) {
-      return;
-    }
-
-    for (const tab of remoteTabs) {
-      const workspaceServices = workspaceServiceLookup.get(
-        buildTaskWorkspaceKey(tab.workspacePath, tab.workspaceIdentity),
-      );
-      if (!workspaceServices?.isRemoteWorkspace) {
-        continue;
-      }
-      // timeline 不能复用 useGlobalTaskList 的远端混合查询，否则 active services 切到远端时会影响本地缓存。
-      // 远端数据跟 pinned 一样走独立 store，show more 时只把 limit 按 20 条阶梯增加，避免一次性拉全量。
-      void useRemoteTimelineTaskStore.getState().refreshWorkspace({
-        workspacePath: tab.workspacePath,
-        ...(tab.workspaceIdentity ? { workspaceIdentity: tab.workspaceIdentity } : {}),
-        zcodeTaskService: workspaceServices.services.zcodeTaskService,
-        sortBy: taskSortBy,
-        limit: visibleTaskLimit,
-      });
-    }
-  }, [taskSortBy, visibleTaskLimit, workspaceServiceLookup, workspaceTabs]);
 
   const handleCancelArchiveConfirm = useCallback(() => {
     setPendingArchiveItemKey(null);
@@ -337,14 +222,6 @@ export function WorkspaceTimelineTasksSection({
         })
         .then((meta) => {
           removeTaskStateRef.current(item.workspacePath, item.taskId, item.workspaceIdentity);
-          if (item.workspaceIdentity) {
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-            useRemotePinnedTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -387,12 +264,6 @@ export function WorkspaceTimelineTasksSection({
         return;
       }
       const { item, workspaceServices } = current;
-      if (item.workspaceIdentity && pinned) {
-        useRemoteTimelineTaskStore
-          .getState()
-          .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-        useRemotePinnedTaskStore.getState().upsertTask(item);
-      }
       applyTaskQueryCacheMutation({
         previousTask: item,
         nextTask: item,
@@ -412,12 +283,6 @@ export function WorkspaceTimelineTasksSection({
             item.taskId,
             item.workspaceIdentity,
           );
-          if (item.workspaceIdentity && pinned) {
-            useRemotePinnedTaskStore.getState().upsertTask(meta);
-            useRemoteTimelineTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -426,12 +291,6 @@ export function WorkspaceTimelineTasksSection({
           });
         })
         .catch(() => {
-          if (item.workspaceIdentity && pinned) {
-            useRemotePinnedTaskStore
-              .getState()
-              .removeTask(item.workspacePath, item.taskId, item.workspaceIdentity);
-            useRemoteTimelineTaskStore.getState().upsertTask(item, taskSortByRef.current);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: item,
@@ -485,9 +344,6 @@ export function WorkspaceTimelineTasksSection({
             item.workspaceIdentity,
           );
           upsertOptimisticTaskListItemRef.current(item.workspacePath, meta, item.workspaceIdentity);
-          if (item.workspaceIdentity) {
-            useRemoteTimelineTaskStore.getState().upsertTask(meta, taskSortByRef.current);
-          }
           applyTaskQueryCacheMutation({
             previousTask: item,
             nextTask: meta,
@@ -646,9 +502,6 @@ export function WorkspaceTimelineTasksSection({
               })
               .then((meta) => {
                 upsertOptimisticTaskListItem(item.workspacePath, meta, item.workspaceIdentity);
-                if (item.workspaceIdentity) {
-                  useRemoteTimelineTaskStore.getState().upsertTask(meta, taskSortBy);
-                }
                 applyTaskQueryCacheMutation({
                   previousTask: item,
                   nextTask: meta,
@@ -735,18 +588,6 @@ export function WorkspaceTimelineTasksSection({
             isPinned={false}
             intl={intl}
             onTogglePinTask={(_taskId, pinned) => {
-              // timeline 现在本地和远端分属两套缓存，pin 时需要同时维护成员关系。
-              // 否则远端任务会进入 pinned 后仍残留在 timeline 缓存里。
-              if (contextMenuItem.workspaceIdentity && pinned) {
-                useRemoteTimelineTaskStore
-                  .getState()
-                  .removeTask(
-                    contextMenuItem.workspacePath,
-                    contextMenuItem.taskId,
-                    contextMenuItem.workspaceIdentity,
-                  );
-                useRemotePinnedTaskStore.getState().upsertTask(contextMenuItem);
-              }
               applyTaskQueryCacheMutation({
                 previousTask: contextMenuItem,
                 nextTask: contextMenuItem,
@@ -768,16 +609,6 @@ export function WorkspaceTimelineTasksSection({
                     contextMenuItem.taskId,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity && pinned) {
-                    useRemotePinnedTaskStore.getState().upsertTask(meta);
-                    useRemoteTimelineTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -786,16 +617,6 @@ export function WorkspaceTimelineTasksSection({
                   });
                 })
                 .catch(() => {
-                  if (contextMenuItem.workspaceIdentity && pinned) {
-                    useRemotePinnedTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                    useRemoteTimelineTaskStore.getState().upsertTask(contextMenuItem, taskSortBy);
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: contextMenuItem,
@@ -834,22 +655,6 @@ export function WorkspaceTimelineTasksSection({
                     contextMenuItem.taskId,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity) {
-                    useRemoteTimelineTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                    useRemotePinnedTaskStore
-                      .getState()
-                      .removeTask(
-                        contextMenuItem.workspacePath,
-                        contextMenuItem.taskId,
-                        contextMenuItem.workspaceIdentity,
-                      );
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -883,9 +688,6 @@ export function WorkspaceTimelineTasksSection({
                     meta,
                     contextMenuItem.workspaceIdentity,
                   );
-                  if (contextMenuItem.workspaceIdentity) {
-                    useRemoteTimelineTaskStore.getState().upsertTask(meta, taskSortBy);
-                  }
                   applyTaskQueryCacheMutation({
                     previousTask: contextMenuItem,
                     nextTask: meta,
@@ -900,7 +702,6 @@ export function WorkspaceTimelineTasksSection({
           />
         ) : null}
       </ContextMenu>
-      {syncingRemoteWorkspaces ? <TaskListRemoteSyncHint /> : null}
       {canLoadMore ? (
         <div className="cursor-pointer pl-8.5 pb-4">
           <span

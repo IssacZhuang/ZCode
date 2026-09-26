@@ -6,7 +6,6 @@ import {
   type ProviderFamilyDomain,
 } from "@zcode/shared";
 import { useOptionalServices } from "@/hooks/useServices.js";
-import { isRemoteWorkspaceDisconnectedError } from "@/lib/remoteWorkspaceServiceError.js";
 import { logger } from "@/logger.js";
 import {
   resolveEnterpriseCodingPlanProductList,
@@ -168,12 +167,10 @@ export function useEnterpriseCodingPlanProducts({
             loading: false,
             error: message,
           }));
-          if (!isRemoteWorkspaceDisconnectedError(pricingError)) {
-            logger.warn("[useEnterpriseCodingPlanProducts] 读取企业实时定价失败", {
-              authenticated,
-              error: message,
-            });
-          }
+          logger.warn("[useEnterpriseCodingPlanProducts] 读取企业实时定价失败", {
+            authenticated,
+            error: message,
+          });
           return;
         }
         setState({
@@ -189,10 +186,7 @@ export function useEnterpriseCodingPlanProducts({
           loading: false,
           error: pricingError ? normalizeErrorMessage(pricingError) : null,
         });
-        if (
-          staticResult.status === "rejected" &&
-          !isRemoteWorkspaceDisconnectedError(staticResult.reason)
-        ) {
+        if (staticResult.status === "rejected") {
           logger.warn("[useEnterpriseCodingPlanProducts] 读取团队静态配置失败，回退实时 pricing", {
             authenticated,
             error: normalizeErrorMessage(staticResult.reason),
@@ -200,14 +194,10 @@ export function useEnterpriseCodingPlanProducts({
         }
       } catch (error) {
         const message = normalizeErrorMessage(error);
-        // 远端 workspace 壳层会早于 attachment 绑定短暂渲染；此时断连代理报错是
-        // 可预期的初始化等待态，不应伪装成 pricing 故障。真实 RPC 错误仍保留 warn。
-        if (!isRemoteWorkspaceDisconnectedError(error)) {
-          logger.warn("[useEnterpriseCodingPlanProducts] 读取企业 Coding Plan 套餐失败", {
-            authenticated,
-            error: message,
-          });
-        }
+        logger.warn("[useEnterpriseCodingPlanProducts] 读取企业 Coding Plan 套餐失败", {
+          authenticated,
+          error: message,
+        });
         setState((current) => ({
           // 企业定价接口失败时如果直接清空 snapshot，
           // 切换到团队套餐页会只剩“暂无可购买的编程套餐”，用户无法分辨是接口失败还是确实无商品。

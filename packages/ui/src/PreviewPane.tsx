@@ -507,7 +507,6 @@ export function PreviewPane({
     workspaceIdentity: source?.workspaceIdentity,
     workspaceRemoteSessionId: source?.workspaceRemoteSessionId,
   });
-  const openInEditorRemoteTarget = matchedOpenContext.remoteTarget;
   const isRemoteSource = Boolean(
     source?.workspaceIdentity ||
     source?.workspaceRemoteSessionId ||
@@ -619,11 +618,10 @@ export function PreviewPane({
   const editorSelection = useMemo(
     () =>
       resolveWorkspaceEditorSelection({
-        installedEditors: isRemoteSource && !openInEditorRemoteTarget ? [] : installedEditors,
+        installedEditors: isRemoteSource ? [] : installedEditors,
         selectedEditorId: preferredEditorId,
-        remoteTarget: openInEditorRemoteTarget,
       }),
-    [installedEditors, isRemoteSource, openInEditorRemoteTarget, preferredEditorId],
+    [installedEditors, isRemoteSource, preferredEditorId],
   );
   const selectedEditor = editorSelection.selectedEditor;
   const canOpenInEditor = Boolean(source?.path && selectedEditor);
@@ -1486,7 +1484,6 @@ export function PreviewPane({
       // 否则同一 PreviewPane 切回本地文件时仍会错误沿用远程 VS Code。
       const result = await platform.openInEditor(selectedEditor.id, source.path, {
         pathKind: "file",
-        remoteTarget: openInEditorRemoteTarget,
         workspaceIdentity: source.workspaceIdentity,
       });
       if (result.success) {

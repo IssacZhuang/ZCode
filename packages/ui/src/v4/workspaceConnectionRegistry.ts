@@ -4,12 +4,9 @@
 // （同 session 多 pane 由 layer 内 per-topic refCount 单订阅收口，不触发 CLI
 // (connectionId, topic) 重订阅替换）。与 sessionsIndexRegistry 同构，多两点：
 // - 30s keep-warm：refCount 归零不立即 dispose（防 pane 关/开、布局调整抖动）；
-// - agentService 换代：远程条目保持 layer/transport 身份并单向切换最新 proxy；
-//   本地 __base__ 用新 service 重建条目。
+// - 本地 __base__ 条目在 service 换代时重建。
 import type { IZCodeAgentService } from "@zcode/services";
 import { createAgentConversationTransport } from "@/v4/agentConversationTransport.js";
-import { remoteAgentServiceGeneration } from "@/lib/remoteAgentServiceGeneration.js";
-import { ReplaceableConversationTransport } from "@/v4/replaceableConversationTransport.js";
 import { SessionDataLayer } from "@/v4/sessionDataLayer.js";
 import type { ConversationTransport } from "@/v4/transport.js";
 import { logger } from "@/logger.js";
@@ -50,7 +47,7 @@ interface WorkspaceConnectionScope {
   /** = pane 绑定的 primary workspace（连接路由键）。 */
   workspacePath: string;
   workspaceIdentity?: string;
-  /** endpoint 维度：remote shard 的 remoteSessionId；缺省 = 本机 __base__。 */
+  /** endpoint 维度：远端 shard 的 remoteSessionId；缺省 = 本机 __base__。 */
   remoteSessionId?: string;
 }
 
@@ -62,17 +59,13 @@ interface WorkspaceConnectionScope {
 export interface WorkspaceConnectionLease {
   readonly layer: SessionDataLayer;
   readonly transport: ConversationTransport;
-  /** React commit 后激活本租约携带的远程 service；本地租约为 no-op。 */
-  activateRemoteService(): void;
   release(): void;
 }
 
 interface RegistryEntry {
   key: string;
   agentService: WorkspaceConnectionAgentService;
-  agentServiceGeneration: number;
   transport: ConversationTransport;
-  replaceableTransport: ReplaceableConversationTransport | null;
   layer: SessionDataLayer;
   refCount: number;
   keepWarmTimer: ReturnType<typeof setTimeout> | null;
@@ -152,9 +145,7 @@ function releaseEntry(entry: RegistryEntry): void {
 
 /**
  * 取/建某 endpoint+workspace 的共享 conversation 连接，refCount++。
- * agentService 由调用方（V4PaneConversationProvider 经 useWorkspaceServicesResolution）解析；
- * 调用方只在 local-ready / remote-ready 时进入本层。remote-waiting 不会拿断连代理
- * 创建 registry entry，同时仍禁止回落 base services 或为 pane 另起独立 runtime。
+ * agentService 由调用方（V4PaneConversationProvider 经 useWorkspaceServicesResolution）解析。
  */
 export function acquireWorkspaceConnection(
   scope: WorkspaceConnectionScope,
@@ -163,12 +154,8 @@ export function acquireWorkspaceConnection(
 ): WorkspaceConnectionLease {
   const key = buildWorkspaceConnectionKey(scope);
   const existing = registry.get(key);
-  const incomingServiceGeneration = remoteAgentServiceGeneration(agentService);
-  const isRemote =
-    (scope.remoteSessionId ?? LOCAL_WORKSPACE_CONNECTION_ENDPOINT) !==
-    LOCAL_WORKSPACE_CONNECTION_ENDPOINT;
   let entry: RegistryEntry;
-  if (existing && (existing.agentService === agentService || isRemote)) {
+  if (existing && existing.agentService === agentService) {
     existing.refCount += 1;
     if (existing.keepWarmTimer !== null) {
       clearTimeout(existing.keepWarmTimer);
@@ -177,11 +164,9 @@ export function acquireWorkspaceConnection(
     entry = existing;
     logger.lifecycle.info("v4 workspace connection reused", {
       event: "v4.workspace_connection.reused",
-      isRemote,
       key,
       module: "ui.v4.workspace_connection_registry",
       refCount: entry.refCount,
-      serviceGeneration: incomingServiceGeneration,
       status: "completed",
     });
   } else {
@@ -194,21 +179,15 @@ export function acquireWorkspaceConnection(
         disposeEntry(existing);
       }
     }
-    const initialTransport = createAgentConversationTransport(agentService, {
+    const transport = createAgentConversationTransport(agentService, {
       workspacePath: scope.workspacePath,
       ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
       ...(createLocalMediaPreviewUrl ? { createLocalMediaPreviewUrl } : {}),
     });
-    const replaceableTransport = isRemote
-      ? new ReplaceableConversationTransport(initialTransport)
-      : null;
-    const transport = replaceableTransport ?? initialTransport;
     entry = {
       key,
       agentService,
-      agentServiceGeneration: incomingServiceGeneration,
       transport,
-      replaceableTransport,
       layer: new SessionDataLayer({ transport }),
       refCount: 1,
       keepWarmTimer: null,
@@ -217,11 +196,9 @@ export function acquireWorkspaceConnection(
     registry.set(key, entry);
     logger.lifecycle.info("v4 workspace connection created", {
       event: "v4.workspace_connection.created",
-      isRemote,
       key,
       module: "ui.v4.workspace_connection_registry",
       refCount: 1,
-      serviceGeneration: incomingServiceGeneration,
       status: "completed",
     });
   }
@@ -230,31 +207,6 @@ export function acquireWorkspaceConnection(
   return {
     layer: entry.layer,
     transport: entry.transport,
-    activateRemoteService: () => {
-      if (
-        released ||
-        !isRemote ||
-        entry.stale ||
-        entry.agentService === agentService ||
-        incomingServiceGeneration <= entry.agentServiceGeneration
-      ) {
-        return;
-      }
-      // acquire 会在 React render 中执行；若此处同步 replace，会经
-      // runtimeRestart listener 更新外部 store 并发起 RPC。租约只捕获候选 service，
-      // 由 Provider 在 commit 阶段显式激活，同时保持 generation 单向切换。
-      if (!entry.replaceableTransport) {
-        throw new Error("远程 conversation registry 条目缺少可换代 transport");
-      }
-      entry.agentService = agentService;
-      entry.agentServiceGeneration = incomingServiceGeneration;
-      entry.replaceableTransport.replace(
-        createAgentConversationTransport(agentService, {
-          workspacePath: scope.workspacePath,
-          ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
-        }),
-      );
-    },
     release: () => {
       if (released) return;
       released = true;

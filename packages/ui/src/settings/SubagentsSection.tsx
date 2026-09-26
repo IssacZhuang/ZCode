@@ -1283,7 +1283,7 @@ export function SubagentsSection({ onManageModels }: SubagentsSectionProps) {
         .filter(isWorkspaceTab)
         .filter(isPluginScopeWorkspaceConnected)
         // Subagent Settings 只管理 Local Environment；远程配置浏览/编辑是独立产品能力。
-        .filter((tab) => !tab.remoteTarget && !tab.remoteSessionId && !tab.workspaceIdentity)
+        .filter((tab) => !tab.remoteSessionId && !tab.workspaceIdentity)
         .filter((tab) => {
           const key = getPluginWorkspaceKey(tab);
           if (seen.has(key)) return false;

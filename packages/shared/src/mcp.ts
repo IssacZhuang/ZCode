@@ -16,6 +16,9 @@ export const ZCODE_CUA_OFFICIAL_MCP_NAMESPACE_NAME = "plugin:computer-use:comput
 export const ZCODE_PLUGIN_ID_ENV_KEY = "ZCODE_PLUGIN_ID";
 
 export type McpSource = "mcp" | "zcodeagentmcp";
+
+/** MCP 用户目录配置来源：zcode CLI 目录或通用 .agents 目录。 */
+export type McpSyncSource = "zcode" | "agents";
 export type CliMcpSource = Exclude<McpSource, "mcp">;
 export type McpScope = "common" | "user" | "workspace";
 export type McpFileFormat = "json";

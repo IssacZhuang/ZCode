@@ -6,13 +6,7 @@
  * 标签页状态通过 settingService 持久化（见 useTabPersistence）。
  */
 import { create } from "zustand";
-import {
-  createUuid,
-  type RemoteTarget,
-  type TabId,
-  type TabState,
-  type WorkspacePurpose,
-} from "@zcode/shared";
+import { createUuid, type TabId, type TabState, type WorkspacePurpose } from "@zcode/shared";
 import {
   persistWorkspaceExpandedPreference,
   readWorkspaceExpansionState,
@@ -36,8 +30,6 @@ export interface WorkspaceTabState extends TabState {
   /** 启动期一次性校验结果；不持久化，运行期间不重检。 */
   availability?: WorkspaceAvailability;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
-  remoteHistoryId?: string;
   workspaceIdentity?: string;
   localWorkspacePath?: string;
   workspacePurpose?: WorkspacePurpose;
@@ -46,8 +38,6 @@ export interface WorkspaceTabState extends TabState {
 export interface WorkspaceTabOptions {
   availability?: WorkspaceAvailability;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
-  remoteHistoryId?: string;
   workspaceIdentity?: string;
   localWorkspacePath?: string;
   workspacePurpose?: WorkspacePurpose;
@@ -57,7 +47,6 @@ export interface RestorableWorkspaceTab {
   workspacePath: string;
   availability?: WorkspaceAvailability;
   remoteSessionId?: string;
-  remoteTarget?: RemoteTarget;
   workspaceIdentity?: string;
   localWorkspacePath?: string;
   workspacePurpose?: WorkspacePurpose;
@@ -157,7 +146,6 @@ function createWorkspaceTab(
     label: labelFromPath(workspacePath),
     availability: options?.availability,
     remoteSessionId: options?.remoteSessionId,
-    remoteTarget: options?.remoteTarget,
     workspaceIdentity: options?.workspaceIdentity,
     localWorkspacePath: options?.localWorkspacePath,
     workspacePurpose: options?.workspacePurpose,
@@ -172,8 +160,6 @@ function mergeWorkspaceTabOptions(
     ...tab,
     availability: options?.availability ?? tab.availability,
     remoteSessionId: options?.remoteSessionId ?? tab.remoteSessionId,
-    remoteTarget: options?.remoteTarget ?? tab.remoteTarget,
-    remoteHistoryId: options?.remoteHistoryId ?? tab.remoteHistoryId,
     workspaceIdentity: options?.workspaceIdentity ?? tab.workspaceIdentity,
     localWorkspacePath: options?.localWorkspacePath ?? tab.localWorkspacePath,
     workspacePurpose: options?.workspacePurpose ?? tab.workspacePurpose,
@@ -577,7 +563,6 @@ export function createTabStore(storage: StorageLike | null | undefined = undefin
         const normalized = normalizeRestorableWorkspaceTab(tab);
         return createWorkspaceTab(normalized.workspacePath, {
           remoteSessionId: normalized.remoteSessionId,
-          remoteTarget: normalized.remoteTarget,
           workspaceIdentity: normalized.workspaceIdentity,
           workspacePurpose: normalized.workspacePurpose,
           availability: normalized.availability,
@@ -609,7 +594,6 @@ export function createTabStore(storage: StorageLike | null | undefined = undefin
           const normalized = normalizeRestorableWorkspaceTab(tabInput);
           const options: WorkspaceTabOptions = {
             remoteSessionId: normalized.remoteSessionId,
-            remoteTarget: normalized.remoteTarget,
             workspaceIdentity: normalized.workspaceIdentity,
             localWorkspacePath: normalized.localWorkspacePath,
             workspacePurpose: normalized.workspacePurpose,

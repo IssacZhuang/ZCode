@@ -1,13 +1,10 @@
 interface WorkspaceRpcAvailabilityTarget {
   workspaceIdentity?: string | null;
   remoteSessionId?: string | null;
-  remoteTarget?: unknown;
 }
 
 function isRemoteWorkspaceRpcTarget(target: WorkspaceRpcAvailabilityTarget): boolean {
-  return Boolean(
-    target.workspaceIdentity?.trim() || target.remoteSessionId?.trim() || target.remoteTarget,
-  );
+  return Boolean(target.workspaceIdentity?.trim() || target.remoteSessionId?.trim());
 }
 
 export function shouldEnableWorkspaceRpc(target: WorkspaceRpcAvailabilityTarget): boolean {
