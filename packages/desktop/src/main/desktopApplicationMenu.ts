@@ -113,10 +113,6 @@ function buildApplicationMenuTemplate(options: {
           {
             label: app.name,
             submenu: [
-              {
-                label: getLabel(desktopMenuMessageIds.helpAbout),
-                click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
-              },
               // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外。
               ...(ZCODE_PRODUCT_FLAVOR === "production"
                 ? [
@@ -255,10 +251,6 @@ function buildApplicationMenuTemplate(options: {
       submenu: [
         ...(process.platform !== "darwin"
           ? [
-              {
-                label: getLabel(desktopMenuMessageIds.helpAbout),
-                click: () => void options.executeDesktopCommand(DesktopCommandIds.ShowAbout),
-              },
               ...(ZCODE_PRODUCT_FLAVOR === "production"
                 ? [
                     {
@@ -272,11 +264,6 @@ function buildApplicationMenuTemplate(options: {
               { type: "separator" as const },
             ]
           : []),
-        {
-          label: getLabel(desktopMenuMessageIds.helpWhatsNew),
-          click: () => void options.executeDesktopCommand(DesktopCommandIds.OpenChangelog),
-        },
-        { type: "separator" as const },
         ...(isLocalDevelopmentRuntime && stdioTapState.visible
           ? [
               {
@@ -333,10 +320,6 @@ function buildApplicationMenuTemplate(options: {
           click: () => void options.executeDesktopCommand(DesktopCommandIds.OpenResourceManager),
         },
         { type: "separator" as const },
-        {
-          label: getLabel(desktopMenuMessageIds.helpFeedback),
-          click: () => void options.executeDesktopCommand(DesktopCommandIds.OpenFeedback),
-        },
         {
           label: getLabel(desktopMenuMessageIds.helpExportLogs),
           click: () => void options.executeDesktopCommand(DesktopCommandIds.ExportLogs),

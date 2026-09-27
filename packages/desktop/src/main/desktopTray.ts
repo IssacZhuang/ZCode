@@ -82,10 +82,6 @@ export function createWindowsDesktopTray(options: {
             ]
           : []),
         {
-          label: getLabel(desktopMenuMessageIds.helpAbout),
-          click: () => executeTrayCommand(DesktopCommandIds.ShowAbout),
-        },
-        {
           label: getLabel(desktopMenuMessageIds.helpClearAllData),
           click: () => executeTrayCommand(DesktopCommandIds.ClearAllData),
         },
