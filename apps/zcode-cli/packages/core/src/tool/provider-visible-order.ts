@@ -7,7 +7,6 @@ const SORTED_PROVIDER_TOOL_NAMES = new Set([
   "CronList",
   "CronUpdate",
   "Edit",
-  "EnterPlanMode",
   "EnterWorktree",
   "ExitPlanMode",
   "ExitWorktree",

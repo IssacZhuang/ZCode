@@ -8,15 +8,7 @@ export function createRuntimeSessionModePort(runtime: AgentRuntimeInternal): Ses
     getMode: () => runtime.config.mode ?? "build",
     getPrePlanMode: () => undefined,
     isPlanEnabled: () => readRuntimeExecutionState(runtime).planEnabled,
-    async enterPlanMode(input) {
-      const previous = readRuntimeExecutionState(runtime);
-      const next = await applyRuntimeExecutionState(
-        runtime,
-        { planEnabled: true },
-        { ...input, source: "tool" },
-      );
-      return { ...next, previousMode: previous.mode, previousPlanEnabled: previous.planEnabled };
-    },
+    // plan mode 的进入只保留命令面（用户手动切换），端口仅承载退出与状态读取。
     async exitPlanMode(input) {
       const previous = readRuntimeExecutionState(runtime);
       if (!previous.planEnabled) {

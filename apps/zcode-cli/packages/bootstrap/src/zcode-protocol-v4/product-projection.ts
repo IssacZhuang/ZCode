@@ -3758,8 +3758,9 @@ export class ProductProjection {
 
   /**
    * switchCollaborationMode：SessionModeChanged → config.mode。
-   * 事件来源覆盖命令面（source=command）与 plan 工具路径（enterPlanMode/exitPlanMode，
+   * 事件来源覆盖命令面（source=command）与 ExitPlanMode 工具路径（exitPlanMode，
    * source=tool）——两条路径共用这条投影，UI 的模式选择器因此也能跟随工具驱动的模式切换。
+   * plan mode 的进入只保留命令面（EnterPlanMode 工具已删除）。
    */
   private onSessionModeChanged(event: SessionEvent): ConversationDelta[] {
     const payload = event.payload as {

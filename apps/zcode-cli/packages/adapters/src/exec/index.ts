@@ -1,6 +1,5 @@
 export { resolveEffectiveBashShellSelection } from "./bash-shell-provider.js";
 export {
-  applyResolvedShellCommandForTest,
   buildExecutionEnv,
   resolveExecutionCommand,
   setResolvedShellLoginMode,

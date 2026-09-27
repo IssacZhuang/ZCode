@@ -65,9 +65,6 @@ export const WorkflowStrategySchema = z.object({
 });
 export type WorkflowStrategy = z.infer<typeof WorkflowStrategySchema>;
 
-export const ExpertWorkflowStrategySchema = WorkflowStrategySchema;
-export type ExpertWorkflowStrategy = WorkflowStrategy;
-
 export const WorkflowPhaseBehaviorSchema = z.enum([
   "agent",
   "scheduled_graph",
@@ -432,7 +429,6 @@ export const WorkflowRunSnapshotSchema = z.object({
 });
 export type WorkflowRunSnapshot = z.infer<typeof WorkflowRunSnapshotSchema>;
 
-export const ExpertWorkflowRunSnapshotSchema = WorkflowRunSnapshotSchema;
 export type ExpertWorkflowRunSnapshot = WorkflowRunSnapshot;
 
 export const WorkflowEventTypeSchema = z.enum([

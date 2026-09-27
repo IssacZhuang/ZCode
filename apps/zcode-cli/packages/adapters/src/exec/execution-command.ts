@@ -204,8 +204,6 @@ export function applyResolvedShellCommand(
   };
 }
 
-export const applyResolvedShellCommandForTest = applyResolvedShellCommand;
-
 export function defaultCwdDialect(platform: NodeJS.Platform): ExecutionShellDialect {
   return platform === "win32" ? "cmd" : "posix";
 }

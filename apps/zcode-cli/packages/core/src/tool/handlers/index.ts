@@ -44,11 +44,7 @@ import {
   cronUpdateToolEntry,
 } from "./cron.js";
 import { offPeakCreateToolEntry, offPeakListToolEntry } from "./off-peak.js";
-import {
-  createEnterPlanModeToolEntry,
-  enterPlanModeToolEntry,
-  exitPlanModeToolEntry,
-} from "./plan-mode.js";
+import { exitPlanModeToolEntry } from "./plan-mode.js";
 import { askUserQuestionToolEntry } from "./ask-user-question.js";
 import { sendMessageToolEntry } from "./send-message.js";
 import { respondToCoordinatorToolEntry } from "./respond-to-coordinator.js";
@@ -91,7 +87,7 @@ export const builtInTools: ToolEntry[] = [
   cronDeleteToolEntry,
   offPeakCreateToolEntry,
   offPeakListToolEntry,
-  enterPlanModeToolEntry,
+  // plan mode 纯手动进入：不注册 EnterPlanMode，模型无法发起模式切换。
   exitPlanModeToolEntry,
   askUserQuestionToolEntry,
   sendMessageToolEntry,
@@ -296,11 +292,6 @@ function resolveBuiltInToolEntryForBranch(
       embeddedSearchEnabled: options.embeddedSearchEnabled,
       profiles: options.agentProfiles,
       dynamicWorkflowEnabled: options.includeDynamicWorkflow !== false,
-    });
-  }
-  if (entry.metadata.name === "EnterPlanMode") {
-    return createEnterPlanModeToolEntry({
-      embeddedSearchEnabled: options.embeddedSearchEnabled,
     });
   }
   if (entry.metadata.name === "js") {

@@ -317,7 +317,7 @@ function CompactLatestValue({ model }: { model: ChartModel }) {
   );
 }
 
-export function ArtifactChartView({
+function ArtifactChartView({
   spec,
   items,
   compact = false,

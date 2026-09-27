@@ -1113,7 +1113,7 @@ export async function emitModelSelected(
 /**
  * （v4 switchCollaborationMode）：命令面切换协作模式后追加 SessionModeChanged 事件。
  * app.setMode 只更新 runtime config + 持久化偏好、不产事件（session-mode-port 的
- * enterPlanMode/exitPlanMode 仅覆盖 plan 工具路径），v4 投影的 config.mode 更新靠这条补发。
+ * exitPlanMode 仅覆盖 ExitPlanMode 工具路径），v4 投影的 config.mode 更新靠这条补发。
  */
 export async function emitModeChanged(
   this: AgentRuntimeInternal,

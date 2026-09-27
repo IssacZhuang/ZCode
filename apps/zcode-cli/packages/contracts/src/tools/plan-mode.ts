@@ -7,28 +7,11 @@ import type { CollaborationMode } from "../interfaces/session.port.js";
 import type { TraceContext } from "../tracing/tracer.js";
 import { toToolJsonSchema } from "./json-schema.js";
 
-export const ENTER_PLAN_MODE_TOOL_NAME = "EnterPlanMode";
+// plan mode 为纯手动进入（命令面 switchCollaborationMode），EnterPlanMode 工具及其
+// 契约已删除；历史 transcript 的渲染由 UI 侧的 "EnterPlanMode" 字面量兼容。
 export const EXIT_PLAN_MODE_TOOL_NAME = "ExitPlanMode";
 
 export const PLAN_MODE_MAX_PLAN_CHARS = 20_000;
-
-export const EnterPlanModeInputSchema = z.object({}).strict();
-export type EnterPlanModeInput = z.infer<typeof EnterPlanModeInputSchema>;
-export const EnterPlanModeInputJsonSchema = toToolJsonSchema(EnterPlanModeInputSchema);
-
-export const EnterPlanModeOutputSchema = z
-  .object({
-    message: z.string().min(1).describe("Confirmation that plan mode was entered."),
-    previousMode: z
-      .enum(["plan", "build", "edit", "yolo", "auto"])
-      .describe("Session mode before EnterPlanMode ran."),
-    mode: z.enum(["plan", "build", "edit", "yolo", "auto"]).describe("Current permission mode."),
-    planEnabled: z.boolean().optional(),
-    previousPlanEnabled: z.boolean().optional(),
-  })
-  .strict();
-export type EnterPlanModeOutput = z.infer<typeof EnterPlanModeOutputSchema>;
-export const EnterPlanModeOutputJsonSchema = toToolJsonSchema(EnterPlanModeOutputSchema);
 
 export const ExitPlanModeAllowedPromptSchema = z
   .object({
@@ -87,13 +70,6 @@ export interface SessionModeTransitionInput {
   traceContext?: TraceContext;
 }
 
-export interface EnterPlanModeTransitionResult {
-  mode: CollaborationMode;
-  previousMode: CollaborationMode;
-  planEnabled?: boolean;
-  previousPlanEnabled?: boolean;
-}
-
 export interface ExitPlanModeTransitionResult {
   mode: Exclude<CollaborationMode, "plan">;
   previousMode: CollaborationMode;
@@ -106,6 +82,5 @@ export interface SessionModePort {
   isPlanEnabled?(): boolean;
   getMode(): CollaborationMode;
   getPrePlanMode(): Exclude<CollaborationMode, "plan"> | undefined;
-  enterPlanMode(input?: SessionModeTransitionInput): Promise<EnterPlanModeTransitionResult>;
   exitPlanMode(input?: SessionModeTransitionInput): Promise<ExitPlanModeTransitionResult>;
 }

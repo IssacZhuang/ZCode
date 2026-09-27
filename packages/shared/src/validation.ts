@@ -11,7 +11,6 @@ import { zcodeProviderSchema } from "./providers.js";
 import { zcodeAgentProviderSchema } from "./zcode-agent-policy.js";
 import { modelSelectionSchema } from "./model-selection.js";
 import {
-  zcodeMcpTelemetryEventSchema,
   zcodeMcpResourceSamplesSchema,
   zcodeToolExecResourceSchema,
   zcodeProcessResourceSampleSchema,
@@ -896,10 +895,6 @@ export const zcodeTaskGoalChangedPatchSchema = z.object({
   target: zcodeTaskGoalSchema.nullable(),
   previousTarget: zcodeTaskGoalSchema.nullable().optional(),
 });
-
-export const zcodeTaskTargetStatusSchema = zcodeTaskGoalStatusSchema;
-export const zcodeTaskTargetSchema = zcodeTaskGoalSchema;
-export const zcodeTaskTargetChangedPatchSchema = zcodeTaskGoalChangedPatchSchema;
 
 export const zcodeTaskMetaSchema = z.object({
   taskId: nonEmptyStringSchema,
