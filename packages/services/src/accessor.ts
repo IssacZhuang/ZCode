@@ -21,7 +21,6 @@ import type { IClientConfigService } from "./client-config/clientConfig.js";
 import type { IClientScenesService } from "./client-scenes/clientScenes.js";
 import type { ISkillsService } from "./skills/skills.js";
 import type { IMcpSyncService } from "./mcp-sync/mcpSync.js";
-import type { IPluginsService } from "./plugins/plugins.js";
 import type { IPluginManagementService } from "./plugins/pluginManagement.js";
 import type { ISubagentsService } from "./subagents/subagents.js";
 import type { ICommandsService } from "./commands/commands.js";
@@ -62,7 +61,6 @@ export interface IServiceAccessor {
   /** 闲时任务管理（独立服务面）。 */
   readonly skillsService: ISkillsService;
   readonly mcpSyncService: IMcpSyncService;
-  readonly pluginsService: IPluginsService;
   /** 设置页插件管理（UI 不再直触 zcodeAgentService 的 plugins/* 面） */
   readonly pluginManagementService: IPluginManagementService;
   readonly subagentsService: ISubagentsService;

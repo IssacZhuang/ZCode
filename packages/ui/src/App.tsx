@@ -18,10 +18,6 @@ import type { TaskChatMessage as TestChatMessage } from "@/lib/taskChatMessageTy
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
 import { getPathLeaf } from "@/lib/path.js";
-import {
-  addPluginStoreOpenListener,
-  type PluginStoreOpenTarget,
-} from "@/lib/pluginStoreNavigation.js";
 import { resolveWorkspaceSwitchDraftProvider } from "@/lib/workspaceDraftProvider.js";
 import { useTestActions } from "@/test-actions.js";
 import type { TestActions } from "@/test-actions.js";
@@ -792,12 +788,11 @@ export function App({
   const [openAutomationTab, setOpenAutomationTab] = useState<NonNullable<
     AutomationsNavigationTarget["automationTab"]
   > | null>(null);
-  const [pluginStoreReturnScopeKey, setPluginStoreReturnScopeKey] = useState("user");
-  const [pluginStoreOpenVersion, setPluginStoreOpenVersion] = useState(0);
   const handleNavigateToTaskMain = useCallback(() => {
     setWorkspaceMainView("chat");
   }, []);
-  const { preserveNextSettingsExit } = useWorkspaceMainViewSettingsExit({
+  // 插件市场主视图已移除：设置退出后统一回到对话视图，不再保留 marketplace 返回语义。
+  useWorkspaceMainViewSettingsExit({
     isWorkspaceVisible,
     workspaceMainView,
     onExitSettings: handleNavigateToTaskMain,
@@ -807,14 +802,6 @@ export function App({
     setOpenAutomationTab(target.automationTab ?? null);
     setWorkspaceMainView("automations");
   }, []);
-  const handleNavigateToPluginStoreMain = useCallback(() => {
-    // 通用入口没有 scope 上下文，默认回到 User；Settings 显式带 scope 的入口会在
-    // 导航完成后覆盖这次默认值，避免沿用上一次 Workspace scope。
-    setPluginStoreReturnScopeKey("user");
-    setPluginStoreOpenVersion((version) => version + 1);
-    preserveNextSettingsExit();
-    setWorkspaceMainView("plugin-store");
-  }, [preserveNextSettingsExit]);
   const handleOpenAutomationConsumed = useCallback(() => {
     setOpenAutomationId(null);
     setOpenAutomationTab(null);
@@ -822,7 +809,6 @@ export function App({
   const {
     handleSelectTask,
     handleOpenAutomations,
-    handleOpenPluginStore,
     handleTaskNavBack,
     handleTaskNavForward,
     canGoBack,
@@ -836,27 +822,7 @@ export function App({
     activateTabByPath,
     onNavigateToTask: handleNavigateToTaskMain,
     onNavigateToAutomations: handleNavigateToAutomationsMain,
-    onNavigateToPluginStore: handleNavigateToPluginStoreMain,
   });
-  const handleOpenPluginStoreForScope = useCallback(
-    (_target: PluginStoreOpenTarget = {}) => {
-      // Workspace Marketplace 已收敛为全局入口。兼容旧事件中的 Workspace key，但返回
-      // 目标统一归一为 User，避免旧 sessionStorage/同窗口事件把设置页带回失效 scope。
-      const returnScopeKey = "user";
-      if (workspaceMainView === "plugin-store") {
-        setPluginStoreReturnScopeKey(returnScopeKey);
-        setPluginStoreOpenVersion((version) => version + 1);
-        return;
-      }
-      handleOpenPluginStore();
-      setPluginStoreReturnScopeKey(returnScopeKey);
-    },
-    [handleOpenPluginStore, workspaceMainView],
-  );
-  useEffect(
-    () => addPluginStoreOpenListener(handleOpenPluginStoreForScope),
-    [handleOpenPluginStoreForScope],
-  );
   const handleSelectAdjacentConversation = useCallback(
     (direction: "previous" | "next") => {
       runVisibleWorkspaceCommand(() => {
@@ -901,16 +867,8 @@ export function App({
   const handleSelectNextConversation = useCallback(() => {
     handleSelectAdjacentConversation("next");
   }, [handleSelectAdjacentConversation]);
-  const handleManageInstalledPlugins = useCallback(() => {
-    setPendingSettingsPluginIntent("plugins", {
-      origin: "plugin-store",
-      scopeKey: pluginStoreReturnScopeKey,
-    });
-    openSettingsTab();
-  }, [openSettingsTab, pluginStoreReturnScopeKey]);
-  const handlePrimaryNavigationBack =
-    workspaceMainView === "plugin-store" ? handleManageInstalledPlugins : handleTaskNavBack;
-  const canPrimaryNavigationBack = workspaceMainView === "plugin-store" || canTaskNavBack;
+  const handlePrimaryNavigationBack = handleTaskNavBack;
+  const canPrimaryNavigationBack = canTaskNavBack;
   const shellPanelIds = useMemo(() => ["sidebar", "content"], []);
 
   useAppKeyboard({
@@ -1084,14 +1042,11 @@ export function App({
         services={services}
         workspaceReadOnlyReason={workspaceReadOnlyReason}
         workspaceMainView={workspaceMainView}
-        pluginStoreOpenVersion={pluginStoreOpenVersion}
         openAutomationId={openAutomationId}
         openAutomationTab={openAutomationTab}
         onWorkspaceMainViewChange={setWorkspaceMainView}
         onOpenAutomationConsumed={handleOpenAutomationConsumed}
         handleOpenAutomations={handleOpenAutomations}
-        handleOpenPluginStore={handleOpenPluginStoreForScope}
-        handleManageInstalledPlugins={handleManageInstalledPlugins}
         onCreateTask={handleCreateTaskIfWritable}
         onCreateConversationTask={onCreateConversationTask}
         onResolveConversationWorkspace={onResolveConversationWorkspace}

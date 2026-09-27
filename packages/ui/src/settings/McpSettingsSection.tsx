@@ -536,8 +536,6 @@ interface McpSettingsSectionProps {
   onVisibleCountChange?: (count: number) => void;
   onEditorOpenChange?: (open: boolean) => void;
   onFormScopeKeyChange?: (scopeKey: string | null) => void;
-  onOpenPluginStore?: () => void;
-  showMarketplaceBreadcrumb?: boolean;
 }
 
 export function McpSettingsSection({
@@ -551,8 +549,6 @@ export function McpSettingsSection({
   onVisibleCountChange,
   onEditorOpenChange,
   onFormScopeKeyChange,
-  onOpenPluginStore,
-  showMarketplaceBreadcrumb = false,
 }: McpSettingsSectionProps) {
   const { intl, locale } = useZCodeIntl();
   const confirmDialog = useConfirmDialog();
@@ -1304,23 +1300,13 @@ export function McpSettingsSection({
       setEditorMode("form");
       onFormScopeKeyChange?.(null);
     };
-    const pluginsBreadcrumbLabel = intl.formatMessage({ id: "settings.plugins.title" });
     const formBreadcrumbLabel =
       editingServer?.name ?? intl.formatMessage({ id: "settings.mcp.form.createTitle" });
     return (
       <div className="space-y-6">
         <SettingsBreadcrumbReporter
-          items={
-            showMarketplaceBreadcrumb
-              ? [
-                  { label: pluginsBreadcrumbLabel, onSelect: closeFormView },
-                  { label: formBreadcrumbLabel },
-                ]
-              : [{ label: formBreadcrumbLabel }]
-          }
-          onSectionSelect={
-            showMarketplaceBreadcrumb && onOpenPluginStore ? onOpenPluginStore : closeFormView
-          }
+          items={[{ label: formBreadcrumbLabel }]}
+          onSectionSelect={closeFormView}
         />
         <div className="space-y-4">
           <div className="flex flex-wrap items-end justify-between gap-3">

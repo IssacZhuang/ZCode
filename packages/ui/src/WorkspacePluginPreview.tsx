@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
 import {
   compareDocumentPluginPriority,
   isPublicStoreMarketplaceId,
@@ -16,7 +15,6 @@ import {
 } from "@/components/ui/command.js";
 import { PluginIcon } from "@/components/PluginIcon.js";
 import { usePluginReferenceCatalog } from "@/hooks/usePluginReferenceCatalog.js";
-import { requestPluginStoreOpen } from "@/lib/pluginStoreNavigation.js";
 import { buildPluginMentionMarkdown } from "@/mentions/mentionMarkdown.js";
 import { Button } from "@/components/ui/button.js";
 import { usePluginStoreOrder } from "@/hooks/usePluginStoreOrder.js";
@@ -46,13 +44,11 @@ function buildWorkspacePluginMention(entry: WorkspacePluginPreviewEntry): Compos
 }
 
 export function WorkspacePluginPreview({
-  onOpen,
   onSelectPlugin,
   workspacePath,
   workspaceIdentity,
   remoteSessionId,
 }: {
-  onOpen: () => void;
   onSelectPlugin: (mention: ComposerMentionPrefill) => void;
   workspacePath: string;
   workspaceIdentity?: string;
@@ -115,11 +111,6 @@ export function WorkspacePluginPreview({
       ...referenceableEntries.filter((entry) => !isPublicStoreMarketplaceId(entry.marketplace)),
     ];
   }, [previewEntries, isOfficeMode, locale, order]);
-  const browse = (pluginId?: string) => {
-    setOpen(false);
-    requestPluginStoreOpen(pluginId);
-    onOpen();
-  };
   const selectPlugin = (entry: (typeof visibleEntries)[number]) => {
     setOpen(false);
     onSelectPlugin(buildWorkspacePluginMention(entry));
@@ -230,16 +221,6 @@ export function WorkspacePluginPreview({
             )}
           </CommandList>
         </Command>
-        <div className="mx-1 mt-3 border-t border-border py-1">
-          <Button
-            variant="ghost"
-            className="h-8 w-full justify-between rounded-xl px-3 py-1 text-ui-base/relaxed"
-            onClick={() => browse()}
-          >
-            {intl.formatMessage({ id: "chat.plugins.browseMarketplace" })}
-            <ArrowUpRight className="size-4" />
-          </Button>
-        </div>
       </PopoverContent>
     </Popover>
   );

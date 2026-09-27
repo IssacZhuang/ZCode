@@ -1,12 +1,4 @@
-import {
-  Crown,
-  Download,
-  Loader2,
-  MoreHorizontal,
-  Power,
-  TriangleAlert,
-  Trash2,
-} from "lucide-react";
+import { Crown, Download, Loader2, MoreHorizontal, Power, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import {
   DropdownMenu,
@@ -17,20 +9,14 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import { PluginStoreAvatar } from "@/settings/PluginStoreAvatar.js";
-import {
-  canUpdatePluginItem,
-  resolveItemDescription,
-  resolveItemDisplayName,
-  type StorePluginItem,
-} from "@/settings/pluginStoreListing.js";
+import { canUpdatePluginItem, type StorePluginItem } from "@/settings/pluginStoreListing.js";
 import { runUserAction } from "@/lib/userActionTelemetry.js";
 
 /** 商店条目的通用动作集：列表卡片、详情页共用同一套回调与进行中态判定。 */
 export interface PluginStoreActions {
   onOpenDetail: (pluginId: string) => void;
-  /** 安装或恢复（restorable 内置插件走 restoreBuiltin，其余走 install）。 */
-  onInstall: (item: StorePluginItem) => void;
+  /** 安装或恢复（restorable 内置插件走 restoreBuiltin，其余走 install）。市场入口移除后仅详情组件类型保留占位。 */
+  onInstall?: (item: StorePluginItem) => void;
   onUninstall: (pluginId: string) => void;
   onSetEnabled?: (pluginId: string, enabled: boolean) => void;
   /** 删除当前 Workspace scope 的显式配置，使其回退到 User。 */
@@ -207,12 +193,15 @@ export function PluginStoreInstallButton({
       variant="secondary"
       size={size}
       className="rounded-full"
-      disabled={installing}
+      // 市场浏览入口移除后管理页不再注入安装回调；无回调时按钮不可用，保留详情页结构完整性。
+      disabled={installing || !actions.onInstall}
       onClick={(event) => {
         event.stopPropagation();
+        const onInstall = actions.onInstall;
+        if (!onInstall) return;
         runUserAction({
           input: { featureId: "extension.plugin", action: "install", trigger: "button" },
-          operation: () => actions.onInstall(item),
+          operation: () => onInstall(item),
           completed: { resultSource: "optimistic_projection" },
           failureStage: "plugin_install",
         });
@@ -282,77 +271,5 @@ export function PluginStoreUpdateButton({
       )}
       {intl.formatMessage({ id: "settings.plugins.detail.update" })}
     </Button>
-  );
-}
-
-/**
- * 商店卡片（双列网格单元）：40px 头像 + 显示名 + 单行截断描述；
- * 尾部动作：已安装 → 「…」菜单，未安装 → 「安装」胶囊。点击主体进入详情页。
- */
-export function PluginStoreCard({
-  item,
-  actions,
-  locale,
-}: {
-  item: StorePluginItem;
-  actions: PluginStoreActions;
-  locale: string;
-}) {
-  const { intl } = useZCodeIntl();
-  const displayName = resolveItemDisplayName(item, locale);
-  const description = resolveItemDescription(item, locale);
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      data-testid="plugin-store-card"
-      data-plugin-id={item.id}
-      className="group/card flex min-w-0 cursor-pointer items-center gap-3 rounded-xl px-2 py-2.5 transition-colors hover:bg-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
-      onClick={() => actions.onOpenDetail(item.id)}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          actions.onOpenDetail(item.id);
-        }
-      }}
-    >
-      <PluginStoreAvatar item={item} className="size-10" />
-      <div className="min-w-0 flex-1">
-        <div className="flex min-w-0 items-center gap-1.5">
-          <span className="min-w-0 truncate text-ui-base font-semibold text-foreground">
-            {displayName}
-          </span>
-          <PluginStorePaidPlanBadge item={item} />
-          <PluginStoreUpdateBadge item={item} />
-        </div>
-        {item.orphaned ? (
-          <div
-            data-testid="plugin-store-source-degraded"
-            data-plugin-id={item.id}
-            className="mt-0.5 flex items-center gap-1 truncate text-ui-sm text-warning"
-          >
-            <TriangleAlert className="size-3 shrink-0" aria-hidden="true" />
-            <span className="truncate">
-              {intl.formatMessage({ id: "settings.plugins.store.sourceMissing" })}
-            </span>
-          </div>
-        ) : null}
-        {description ? (
-          <div className="mt-0.5 truncate text-ui-sm text-foreground-subtle">{description}</div>
-        ) : null}
-      </div>
-      <div className="flex shrink-0 items-center gap-1.5">
-        {item.installed ? (
-          <>
-            <PluginStoreUpdateButton item={item} actions={actions} />
-            {/* 旧版误写 suppression 后可能只剩安装记录、没有运行时 info；
-                此时仍须保留卸载菜单，让用户能清理安装记录与脏 suppression。 */}
-            <PluginStoreItemMenu item={item} actions={actions} />
-          </>
-        ) : (
-          <PluginStoreInstallButton item={item} actions={actions} />
-        )}
-      </div>
-    </div>
   );
 }

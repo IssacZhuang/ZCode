@@ -20,7 +20,8 @@ export function PluginInstallEmptyState({
   description,
   title,
 }: {
-  actions: ReactNode;
+  /** 市场浏览入口移除后，管理页空态可不提供动作（如已装插件列表），保持纯说明展示。 */
+  actions?: ReactNode;
   description: string;
   title: string;
 }) {
@@ -30,7 +31,9 @@ export function PluginInstallEmptyState({
         <div className="text-ui-base font-medium text-foreground">{title}</div>
         <div className="text-ui-sm text-foreground-subtle">{description}</div>
       </div>
-      <div className="flex flex-wrap items-center justify-center gap-2">{actions}</div>
+      {actions ? (
+        <div className="flex flex-wrap items-center justify-center gap-2">{actions}</div>
+      ) : null}
     </div>
   );
 }

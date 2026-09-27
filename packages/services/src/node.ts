@@ -161,7 +161,6 @@ export { createClientConfigService } from "./client-config/clientConfigService.j
 export { createClientScenesService } from "./client-scenes/clientScenesService.js";
 export { createSkillsService } from "./skills/skillsService.js";
 export { createMcpSyncService } from "./mcp-sync/mcpSyncService.js";
-export { createPluginsService } from "./plugins/pluginsService.js";
 export { createPluginManagementService } from "./plugins/pluginManagementService.js";
 export { createSubagentsService } from "./subagents/subagentsService.js";
 export { createCommandsService } from "./commands/commandsService.js";
@@ -241,7 +240,6 @@ import { IUsageStatsService } from "./usage-stats/usageStats.js";
 import { IClientScenesService } from "./client-scenes/clientScenes.js";
 import { ISkillsService } from "./skills/skills.js";
 import { IMcpSyncService } from "./mcp-sync/mcpSync.js";
-import { IPluginsService } from "./plugins/plugins.js";
 import { IPluginManagementService } from "./plugins/pluginManagement.js";
 import { ISubagentsService } from "./subagents/subagents.js";
 import { ICommandsService } from "./commands/commands.js";
@@ -292,7 +290,6 @@ import { IClientConfigService } from "./client-config/clientConfig.js";
 import { createClientScenesService } from "./client-scenes/clientScenesService.js";
 import { createSkillsService } from "./skills/skillsService.js";
 import { createMcpSyncService } from "./mcp-sync/mcpSyncService.js";
-import { createPluginsService } from "./plugins/pluginsService.js";
 import { createPluginManagementService } from "./plugins/pluginManagementService.js";
 import { createSubagentsService } from "./subagents/subagentsService.js";
 import { createCommandsService } from "./commands/commandsService.js";
@@ -2010,7 +2007,6 @@ export function createLocalServices(options: {
     .register(IClientScenesService, createClientScenesService({ apiClient }))
     .register(ISkillsService, skillsService)
     .register(IMcpSyncService, mcpSyncService)
-    .register(IPluginsService, createPluginsService({ isDesktopRuntime: true }))
     // 设置页插件管理薄服务——plugins/* 旧协议词的 host 侧唯一消费点。
     .register(IPluginManagementService, createPluginManagementService({ zcodeAgentService }))
     .register(ISubagentsService, subagentsService)

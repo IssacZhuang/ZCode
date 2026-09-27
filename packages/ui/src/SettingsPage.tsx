@@ -29,11 +29,7 @@ import { usePlatform } from "@/hooks/usePlatform.js";
 import { getPathLeaf } from "@/lib/path.js";
 import {
   addPendingSettingsSectionListener,
-  clearPendingSettingsPluginOrigin,
-  clearPendingSettingsPluginScopeKey,
   consumeInitialSettingsSection,
-  consumePendingSettingsPluginOrigin,
-  consumePendingSettingsPluginScopeKey,
   consumePendingSettingsPluginTab,
   consumePendingSettingsModelProviderTarget,
   resolveSettingsSection,
@@ -83,7 +79,6 @@ import {
 } from "./settingsPageHelpers.js";
 import { AppearanceSectionContent } from "./settingsCodePreview.js";
 import type { SettingsSectionId } from "@/lib/settingsNavigation.js";
-import { requestPluginStoreOpen } from "@/lib/pluginStoreNavigation.js";
 import {
   runUserAction,
   runUserActionAsync,
@@ -198,19 +193,7 @@ export function SettingsPage({
     return visibleInitialSection;
   });
   const [pluginTab, setPluginTab] = useState(() => consumePendingSettingsPluginTab());
-  const [pluginNavigationOrigin, setPluginNavigationOrigin] = useState(() =>
-    consumePendingSettingsPluginOrigin(),
-  );
-  const [pluginScopeKey, setPluginScopeKey] = useState(() =>
-    consumePendingSettingsPluginScopeKey(),
-  );
   const [settingsSectionNavigationVersion, setSettingsSectionNavigationVersion] = useState(0);
-  useEffect(() => {
-    // React Strict Mode 会双执行 state initializer；来源和 scopeKey 都在挂载完成后再清理，
-    // Marketplace 只返回 User 已安装视图；Workspace 仍通过设置页自身的配置层切换进入。
-    clearPendingSettingsPluginOrigin();
-    clearPendingSettingsPluginScopeKey();
-  }, []);
   const [settingsBreadcrumbItems, setSettingsBreadcrumbItems] = useState<
     readonly SettingsBreadcrumbItem[]
   >([]);
@@ -349,10 +332,6 @@ export function SettingsPage({
         // 订阅套餐 usage tab 已随账号体系移除；这里不再消费 usageTab 意图，usage 只保留本地 app 用量。
         if (resolveSettingsSection(section) === "plugin" && detail?.pluginTab) {
           setPluginTab(detail.pluginTab);
-          setPluginNavigationOrigin(detail.pluginOrigin);
-          setPluginScopeKey(detail.pluginScopeKey);
-        } else if (resolveSettingsSection(section) !== "plugin") {
-          setPluginNavigationOrigin(undefined);
         }
         if (section === "modelProvider" && detail?.modelProviderId) {
           setPendingModelProviderTarget({
@@ -942,18 +921,13 @@ export function SettingsPage({
   const activeSectionLabel = intl.formatMessage({
     id: activeSectionMeta.contentTitleId ?? activeSectionMeta.titleId,
   });
-  const settingsBreadcrumbSectionLabel =
-    activeSection === "plugin" && pluginNavigationOrigin === "plugin-store"
-      ? intl.formatMessage({ id: "workspace.openPluginsSettings" })
-      : activeSectionLabel;
+  const settingsBreadcrumbSectionLabel = activeSectionLabel;
   const visibleSettingsBreadcrumbItems =
     settingsBreadcrumbItems[0]?.label === settingsBreadcrumbSectionLabel
       ? settingsBreadcrumbItems
       : [];
   const hasVisibleSettingsBreadcrumb = visibleSettingsBreadcrumbItems.length >= 2;
-  const showActiveSectionTitle =
-    !hasVisibleSettingsBreadcrumb ||
-    (activeSection === "plugin" && pluginNavigationOrigin === "plugin-store");
+  const showActiveSectionTitle = !hasVisibleSettingsBreadcrumb;
 
   return (
     <>
@@ -1010,9 +984,6 @@ export function SettingsPage({
                             trigger: "button",
                           },
                           operation: () => {
-                            if (pluginNavigationOrigin === "plugin-store") {
-                              requestPluginStoreOpen("user");
-                            }
                             onBack?.();
                           },
                           completed: { resultSource: "local_commit" },
@@ -1084,7 +1055,6 @@ export function SettingsPage({
                                     trigger: "button",
                                   },
                                   operation: () => {
-                                    setPluginNavigationOrigin(undefined);
                                     setSettingsSectionNavigationVersion((version) => version + 1);
                                     setActiveSettingsSection(id);
                                   },
@@ -1422,16 +1392,9 @@ export function SettingsPage({
                             isMacDesktop={Boolean(isMacDesktop)}
                             isWindowsDesktop={Boolean(isWindowsDesktop)}
                             initialTab={pluginTab}
-                            initialScopeKey={pluginScopeKey}
                             workspacePath={activeWorkspacePath}
                             workspaceIdentity={activeWorkspaceIdentity}
-                            showMarketplaceBreadcrumb={pluginNavigationOrigin === "plugin-store"}
                             onCreateTask={onCreateTask}
-                            onOpenPluginStore={(_returnScopeKey, intent) => {
-                              // 添加市场与浏览插件都先离开设置层，再显示商店。
-                              requestPluginStoreOpen({ returnScopeKey: "user", intent });
-                              onBack?.();
-                            }}
                           />
                         ) : activeSection === "mcp" ? (
                           <PluginsSection
@@ -1440,11 +1403,6 @@ export function SettingsPage({
                             workspacePath={activeWorkspacePath}
                             workspaceIdentity={activeWorkspaceIdentity}
                             onCreateTask={onCreateTask}
-                            onOpenPluginStore={(_returnScopeKey, intent) => {
-                              // 添加市场与浏览插件都先离开设置层，再显示商店。
-                              requestPluginStoreOpen({ returnScopeKey: "user", intent });
-                              onBack?.();
-                            }}
                           />
                         ) : activeSection === "skill" ? (
                           <PluginsSection
@@ -1453,11 +1411,6 @@ export function SettingsPage({
                             workspacePath={activeWorkspacePath}
                             workspaceIdentity={activeWorkspaceIdentity}
                             onCreateTask={onCreateTask}
-                            onOpenPluginStore={(_returnScopeKey, intent) => {
-                              // 添加市场与浏览插件都先离开设置层，再显示商店。
-                              requestPluginStoreOpen({ returnScopeKey: "user", intent });
-                              onBack?.();
-                            }}
                           />
                         ) : activeSection === "migration" ? (
                           <MigrationSection
@@ -1485,11 +1438,6 @@ export function SettingsPage({
                             workspacePath={activeWorkspacePath}
                             workspaceIdentity={activeWorkspaceIdentity}
                             onCreateTask={onCreateTask}
-                            onOpenPluginStore={(_returnScopeKey, intent) => {
-                              // 添加市场与浏览插件都先离开设置层，再显示商店。
-                              requestPluginStoreOpen({ returnScopeKey: "user", intent });
-                              onBack?.();
-                            }}
                           />
                         ) : activeSection === "hooks" ? (
                           <HooksSection

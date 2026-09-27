@@ -143,8 +143,6 @@ interface SkillsSectionProps {
   onVisibleCountChange?: (count: number) => void;
   onCreateTask?: (request?: CreateTaskRequest) => void;
   onDetailOpenChange?: (open: boolean) => void;
-  onOpenPluginStore?: () => void;
-  showMarketplaceBreadcrumb?: boolean;
   reportDetailBreadcrumb?: boolean;
 }
 
@@ -157,8 +155,6 @@ export function SkillsSection({
   onVisibleCountChange,
   onCreateTask,
   onDetailOpenChange,
-  onOpenPluginStore,
-  showMarketplaceBreadcrumb = false,
   reportDetailBreadcrumb = false,
 }: SkillsSectionProps) {
   const { intl, locale } = useZCodeIntl();
@@ -638,22 +634,8 @@ export function SkillsSection({
       {/* 独立 Skills 分区的详情是弹窗，不属于页面级导航；只有插件容器需要上报详情层级。 */}
       {reportDetailBreadcrumb && detailSkill ? (
         <SettingsBreadcrumbReporter
-          items={
-            showMarketplaceBreadcrumb
-              ? [
-                  {
-                    label: intl.formatMessage({ id: "settings.plugins.title" }),
-                    onSelect: () => setSelectedSkill(null),
-                  },
-                  { label: detailSkill.name },
-                ]
-              : [{ label: detailSkill.name }]
-          }
-          onSectionSelect={
-            showMarketplaceBreadcrumb && onOpenPluginStore
-              ? onOpenPluginStore
-              : () => setSelectedSkill(null)
-          }
+          items={[{ label: detailSkill.name }]}
+          onSectionSelect={() => setSelectedSkill(null)}
         />
       ) : null}
       {targetServiceResolution.rpcReady && diagnostics.length > 0 ? (

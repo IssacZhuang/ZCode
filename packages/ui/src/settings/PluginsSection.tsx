@@ -1,7 +1,6 @@
 /* eslint-disable max-lines -- 共享能力外壳聚合 Scope，并承载 Plugin tabs 与独立 Commands 入口。 */
-import { PluginAddMenu } from "@/settings/PluginAddMenu.js";
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Monitor, MoreHorizontal, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { Loader2, Monitor, MoreHorizontal, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import {
@@ -12,7 +11,6 @@ import {
 } from "@/components/ui/dropdown-menu.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.js";
 import { Switch } from "@/components/ui/switch.js";
-import { TID_PLUGIN_STORE_BROWSE } from "@zcode/shared";
 import type { ZCodePluginInfo, ZCodePluginScope, ZCodePluginUserConfigOption } from "@zcode/shared";
 import type { CreateTaskRequest } from "@/app-shell/types.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
@@ -100,13 +98,10 @@ interface PluginsSectionProps {
   isMacDesktop?: boolean;
   isWindowsDesktop?: boolean;
   initialTab?: PluginTabTarget;
-  initialScopeKey?: string;
   mode?: "plugin" | "mcp" | "skill" | "command";
   workspacePath?: string | null;
   workspaceIdentity?: string;
   onCreateTask?: (request?: CreateTaskRequest) => void;
-  onOpenPluginStore: (returnScopeKey?: string, intent?: "add-marketplace") => void;
-  showMarketplaceBreadcrumb?: boolean;
 }
 
 function workspaceKey(tab: WorkspaceTabState): string {
@@ -120,11 +115,8 @@ function PluginList({
   isDesktop,
   isMacDesktop,
   isWindowsDesktop,
-  onAdd,
   onCreateTask,
   onDetailOpenChange,
-  onOpenPluginStore,
-  showMarketplaceBreadcrumb = false,
   onVisibleCountChange,
 }: {
   target: WorkspaceTabState | null;
@@ -133,11 +125,8 @@ function PluginList({
   isDesktop: boolean;
   isMacDesktop: boolean;
   isWindowsDesktop: boolean;
-  onAdd?: () => void;
   onCreateTask?: (request?: CreateTaskRequest) => void;
   onDetailOpenChange?: (open: boolean) => void;
-  onOpenPluginStore: (returnScopeKey?: string, intent?: "add-marketplace") => void;
-  showMarketplaceBreadcrumb?: boolean;
   onVisibleCountChange?: (count: number) => void;
 }) {
   const { intl, locale } = useZCodeIntl();
@@ -400,7 +389,7 @@ function PluginList({
         setSelectedPluginId(pluginId);
         onDetailOpenChange?.(true);
       },
-      onInstall: () => onOpenPluginStore(),
+      // 市场浏览入口已移除；安装动作只在保留的详情组件类型中占位，管理页不再提供。
       onUninstall: uninstall.requestUninstall,
       onSetEnabled: (pluginId, enabled) => void handleSetEnabled(pluginId, enabled),
       onResetConfig:
@@ -417,7 +406,6 @@ function PluginList({
       handleSetEnabled,
       handleUpdatePlugin,
       onDetailOpenChange,
-      onOpenPluginStore,
       operationId,
       togglingPluginId,
       uninstall.requestUninstall,
@@ -618,21 +606,13 @@ function PluginList({
 
   if (selectedPlugin && selectedStoreItem && targetServiceResolution.rpcReady) {
     const pluginBreadcrumbLabel = resolvePluginDisplayName(selectedStoreItem, locale);
-    const pluginsBreadcrumbLabel = intl.formatMessage({ id: "settings.plugins.title" });
-    // Plugin 不打开仅含管理字段的简化弹窗：那会与插件商店详情形成两套内容模型，
+    // Plugin 不打开仅含管理字段的简化弹窗：那会与插件详情形成两套内容模型，
     // 导致介绍、Hero、示例提示词与能力清单缺失。这里直接复用权威商店详情页，只注入已安装态高级配置。
     return (
       <section className="space-y-5">
         <SettingsBreadcrumbReporter
-          items={
-            showMarketplaceBreadcrumb
-              ? [
-                  { label: pluginsBreadcrumbLabel, onSelect: closeDetail },
-                  { label: pluginBreadcrumbLabel },
-                ]
-              : [{ label: pluginBreadcrumbLabel }]
-          }
-          onSectionSelect={showMarketplaceBreadcrumb ? onOpenPluginStore : closeDetail}
+          items={[{ label: pluginBreadcrumbLabel }]}
+          onSectionSelect={closeDetail}
         />
         <PluginStoreDetailView
           item={selectedStoreItem}
@@ -740,23 +720,6 @@ function PluginList({
           </h3>
           <div className="flex flex-wrap items-center gap-2">
             <SettingsResourceHeaderActions onRefresh={() => void refreshAfterPluginChange()} />
-            {configScope === "user" ? (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  data-testid={TID_PLUGIN_STORE_BROWSE}
-                  onClick={onAdd}
-                >
-                  {intl.formatMessage({ id: "settings.plugin.plugins.browse" })}
-                </Button>
-                <PluginAddMenu
-                  testId="plugin-settings-add"
-                  onCreateTask={onCreateTask}
-                  onAddMarketplace={() => onOpenPluginStore(undefined, "add-marketplace")}
-                />
-              </>
-            ) : null}
           </div>
         </div>
         {configScope === "workspace" && target ? (
@@ -780,6 +743,7 @@ function PluginList({
         ) : visibleInstalledPlugins.length > 0 ? (
           renderPluginRows(visibleInstalledPlugins)
         ) : installedPluginCount === 0 && !showUnavailableComputerUse ? (
+          // 市场浏览入口已移除：无已装插件时仅展示空态说明，不再提供“浏览插件”跳转。
           <PluginInstallEmptyState
             title={intl.formatMessage({
               id: "settings.plugin.plugins.emptyInstalledTitle",
@@ -787,16 +751,6 @@ function PluginList({
             description={intl.formatMessage({
               id: "settings.plugin.plugins.emptyInstalledDescription",
             })}
-            actions={
-              onAdd ? (
-                <Button type="button" variant="default" size="lg" onClick={onAdd}>
-                  <Plus aria-hidden="true" data-icon="inline-start" />
-                  {intl.formatMessage({
-                    id: "settings.plugin.plugins.browse",
-                  })}
-                </Button>
-              ) : undefined
-            }
           />
         ) : null}
       </div>
@@ -852,13 +806,10 @@ export function PluginsSection({
   isMacDesktop = false,
   isWindowsDesktop = false,
   initialTab = "plugins",
-  initialScopeKey,
   mode = "plugin",
   workspacePath,
   workspaceIdentity,
   onCreateTask,
-  onOpenPluginStore,
-  showMarketplaceBreadcrumb = false,
 }: PluginsSectionProps) {
   const { intl } = useZCodeIntl();
   const tabs = useTabStore((state) => state.tabs);
@@ -906,7 +857,7 @@ export function PluginsSection({
       null,
     [activeWorkspaceIdentity, activeWorkspacePath, workspaceTabs],
   );
-  const [pickedScopeKey, setPickedScopeKey] = useState(() => initialScopeKey?.trim() || "user");
+  const [pickedScopeKey, setPickedScopeKey] = useState("user");
   const selectedScopeKey = pickedScopeKey;
   const fixedTab: PluginTabTarget | null =
     mode === "mcp" ? "mcps" : mode === "skill" ? "skills" : mode === "command" ? "commands" : null;
@@ -914,9 +865,6 @@ export function PluginsSection({
     normalizePluginTab(initialTab),
   );
   useEffect(() => setInteractiveTab(normalizePluginTab(initialTab)), [initialTab]);
-  useEffect(() => {
-    setPickedScopeKey(initialScopeKey?.trim() || "user");
-  }, [initialScopeKey]);
   const selectedTab = fixedTab ?? interactiveTab;
   const [searchQueries, setSearchQueries] = useState<Record<PluginTabTarget, string>>({
     plugins: "",
@@ -931,7 +879,8 @@ export function PluginsSection({
     commands: 0,
   });
   const [mcpEditorOpen, setMcpEditorOpen] = useState(false);
-  const [skillDetailOpen, setSkillDetailOpen] = useState(false);
+  // 市场面包屑移除后不再读取 skill 详情开合状态，仅保留 setter 供 SkillsSection 上报。
+  const [, setSkillDetailOpen] = useState(false);
   const [mcpFormScopeKey, setMcpFormScopeKey] = useState<string | null>(null);
   const [pluginDetailOpen, setPluginDetailOpen] = useState(false);
   const [commandEditorOpen, setCommandEditorOpen] = useState(false);
@@ -941,15 +890,6 @@ export function PluginsSection({
     const tab = workspaceTabs.find((candidate) => workspaceKey(candidate) === selectedScopeKey);
     return tab ? { kind: "workspace", key: workspaceKey(tab), tab } : { kind: "user", key: "user" };
   }, [selectedScopeKey, workspaceTabs]);
-  const openPluginStoreForSelectedScope = useCallback(
-    (_returnScopeKey?: string, intent?: "add-marketplace") => {
-      // Workspace 是已安装 Plugin 的配置视图，不提供 Marketplace 入口；市场只在 User
-      // 视图中负责 package/cache 生命周期。
-      if (selectedScope.kind !== "user") return;
-      onOpenPluginStore("user", intent);
-    },
-    [onOpenPluginStore, selectedScope.kind],
-  );
   const target = selectedScope.kind === "workspace" ? selectedScope.tab : preferredHost;
   const effectiveMcpScopeKey =
     mcpEditorOpen && mcpFormScopeKey ? mcpFormScopeKey : selectedScopeKey;
@@ -1045,22 +985,6 @@ export function PluginsSection({
 
   return (
     <div className="space-y-6">
-      {mode === "plugin" &&
-      showMarketplaceBreadcrumb &&
-      !pluginDetailOpen &&
-      !mcpEditorOpen &&
-      !skillDetailOpen ? (
-        <SettingsBreadcrumbReporter
-          items={[
-            {
-              label: intl.formatMessage({
-                id: "settings.plugins.title",
-              }),
-            },
-          ]}
-          onSectionSelect={openPluginStoreForSelectedScope}
-        />
-      ) : null}
       <Tabs
         value={selectedTab}
         onValueChange={(value) => {
@@ -1191,11 +1115,8 @@ export function PluginsSection({
               isMacDesktop={isMacDesktop}
               isWindowsDesktop={isWindowsDesktop}
               searchQuery={searchQueries.plugins}
-              onAdd={selectedScope.kind === "user" ? openPluginStoreForSelectedScope : undefined}
               onCreateTask={onCreateTask}
               onDetailOpenChange={setPluginDetailOpen}
-              onOpenPluginStore={openPluginStoreForSelectedScope}
-              showMarketplaceBreadcrumb={showMarketplaceBreadcrumb}
               onVisibleCountChange={updatePluginCount}
             />
           </TabsContent>
@@ -1220,10 +1141,6 @@ export function PluginsSection({
                 onVisibleCountChange={updateMcpCount}
                 onEditorOpenChange={handleMcpEditorOpenChange}
                 onFormScopeKeyChange={setMcpFormScopeKey}
-                onOpenPluginStore={
-                  selectedScope.kind === "user" ? openPluginStoreForSelectedScope : undefined
-                }
-                showMarketplaceBreadcrumb={showMarketplaceBreadcrumb}
               />
             ) : (
               <EmptyState
@@ -1245,10 +1162,6 @@ export function PluginsSection({
                 searchQuery={searchQueries.skills}
                 onCreateTask={onCreateTask}
                 onDetailOpenChange={setSkillDetailOpen}
-                onOpenPluginStore={
-                  selectedScope.kind === "user" ? openPluginStoreForSelectedScope : undefined
-                }
-                showMarketplaceBreadcrumb={showMarketplaceBreadcrumb}
                 reportDetailBreadcrumb={mode === "plugin"}
                 onVisibleCountChange={updateSkillCount}
               />
