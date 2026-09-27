@@ -1,9 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isPublicStoreMarketplaceId, resolvePluginDisplayName } from "@zcode/shared";
-import {
-  compareDocumentPluginPriority,
-  sortPluginStoreEntries,
-} from "@/lib/pluginStoreOrdering.js";
+import { sortPluginStoreEntries } from "@/lib/pluginStoreOrdering.js";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover.js";
 import {
   Command,
@@ -98,9 +95,7 @@ export function WorkspacePluginPreview({
       locale,
     );
     return [
-      ...publicEntries.toSorted((left, right) =>
-        compareDocumentPluginPriority(left.pluginId, right.pluginId),
-      ),
+      ...publicEntries,
       ...referenceableEntries.filter((entry) => !isPublicStoreMarketplaceId(entry.marketplace)),
     ];
   }, [previewEntries, locale]);

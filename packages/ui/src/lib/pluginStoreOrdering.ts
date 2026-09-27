@@ -1,5 +1,3 @@
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
-
 // 个人本地版排序：远端 pluginStoreOrder 配置已随 clientConfigService 移除，
 // 这里保留原 shared 排序的“无远端配置”默认分支，供商店条目与已安装列表复用。
 export const FALLBACK_PLUGIN_STORE_CATEGORY = "other";
@@ -11,18 +9,6 @@ export const PLUGIN_STORE_CATEGORY_ORDER: readonly string[] = [
   "legal",
   "template",
 ];
-
-// 完整 ID 避免个人市场的同名插件被误置顶；所有展示入口复用同一默认顺序。
-const DOCUMENT_PLUGIN_RANKS = new Map(
-  ["pdf", "presentations", "spreadsheets", "documents"].map((name, index) => [
-    `${name}@${ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID}`,
-    index,
-  ]),
-);
-
-export function compareDocumentPluginPriority(leftId: string, rightId: string): number {
-  return compareRanks(DOCUMENT_PLUGIN_RANKS, leftId, rightId);
-}
 
 /** 分类归并只影响展示，市场与引用 Picker 必须使用同一个排序键。 */
 export function resolvePluginStoreCategory(category: string | undefined): string | undefined {
@@ -36,7 +22,7 @@ interface PluginStoreSortEntry {
   displayName: string;
 }
 
-/** 纯展示排序：剩余分类按产品默认顺序，类内文档插件优先，再按本地化名称稳定兜底。 */
+/** 纯展示排序：剩余分类按产品默认顺序，类内按本地化名称稳定兜底。 */
 export function sortPluginStoreEntries<T>(
   items: readonly T[],
   project: (item: T) => PluginStoreSortEntry,
@@ -55,16 +41,10 @@ export function sortPluginStoreEntries<T>(
     .sort(
       (left, right) =>
         compareCategories(left.category, right.category) ||
-        compareDocumentPluginPriority(left.id, right.id) ||
         left.displayName.localeCompare(right.displayName, locale) ||
         left.index - right.index,
     )
     .map(({ item }) => item);
-}
-
-function compareRanks(order: Map<string, number> | undefined, left: string, right: string): number {
-  if (!order) return 0;
-  return (order.get(left) ?? order.size) - (order.get(right) ?? order.size);
 }
 
 function compareCategories(left: string, right: string): number {

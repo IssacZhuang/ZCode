@@ -144,36 +144,6 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
     // package、manifest、definition 三处版本应保持一致，避免发布内容和安装版本再次分叉。
     version: "0.5.1",
   },
-  ...(
-    [
-      ["documents", "docx", "Documents", "Word文档"],
-      ["pdf", "pdf", "PDF", "PDF"],
-      ["presentations", "pptx", "Presentations", "演示文档"],
-      ["spreadsheets", "xlsx", "Spreadsheets", "电子表格"],
-    ] as const
-  ).map(
-    ([name, skill, displayName, chineseName]): OfficialPluginDefinition => ({
-      defaultEnabled: true,
-      listing: {
-        author: ZAI_AUTHOR,
-        category: "productivity",
-        displayName,
-        displayName_i18n: { "zh-CN": chineseName },
-        // 复用已发布的文档图标，拆分插件无需依赖新 CDN 资源。
-        icon: `${OFFICIAL_PLUGIN_ASSETS_BASE_URL}/document-skills/icon.png`,
-        description_i18n: { "zh-CN": `创建、编辑与审阅${chineseName}（${skill.toUpperCase()}）。` },
-      },
-      name,
-      requiredSeedPaths: ["agents/visual-judge.md", `skills/${skill}/SKILL.md`],
-      rootCandidates: [
-        `packages/${name}-plugin`,
-        `../${name}-plugin`,
-        `../../${name}-plugin`,
-        `../../../${name}-plugin`,
-      ],
-      version: "0.1.7",
-    }),
-  ),
   {
     // 沿用原聚合文档插件的官方搜图能力，仅拆出独立开关；认证仍由官方 MCP adapter 注入。
     defaultEnabled: true,
