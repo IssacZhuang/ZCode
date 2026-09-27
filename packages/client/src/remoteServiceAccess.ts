@@ -15,7 +15,6 @@ import {
   IZCodeSessionService,
   ICuaPermissionService,
   IConversationShareService,
-  IBotsService,
   IFileWatcherService,
   IModelSelectionService,
   IProviderSettingsService,
@@ -32,8 +31,6 @@ import {
   IMemoryService,
   ISettingsSyncService,
   IFeedbackService,
-  IPromptAttachmentTransferService,
-  IWindowControllerService,
   type IServiceAccessor,
 } from "@zcode/services";
 
@@ -54,14 +51,12 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly credentialService: ICredentialService;
   readonly broadcastService: IBroadcastService;
   readonly zcodeTaskService: IZCodeTaskService;
-  readonly windowControllerService: IWindowControllerService;
   readonly zcodeAgentService: IZCodeAgentService;
   readonly zcodeSessionService: IZCodeSessionService;
-  // cuaPermissionService 在 IServiceAccessor 上是可选（远端/bots host 不提供），但桌面 renderer
+  // cuaPermissionService 在 IServiceAccessor 上是可选（部分 host 不提供），但桌面 renderer
   // 经 RPC 一定能拿到（main host 始终注册此 descriptor；非 macOS / 未启用时方法返回 available:false）。
   readonly cuaPermissionService: ICuaPermissionService;
   readonly conversationShareService: IConversationShareService;
-  readonly botsService: IBotsService;
   readonly fileWatcherService: IFileWatcherService;
   readonly providerSettingsService: IProviderSettingsService;
   readonly modelSelectionService: IModelSelectionService;
@@ -78,7 +73,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly memoryService: IMemoryService;
   readonly settingsSyncService: ISettingsSyncService;
   readonly feedbackService: IFeedbackService;
-  readonly promptAttachmentTransferService: IPromptAttachmentTransferService;
 
   constructor(channelClient: IChannelClient) {
     this.fileService = ProxyChannel.toService<IFileService>(
@@ -116,9 +110,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
     this.zcodeTaskService = ProxyChannel.toService<IZCodeTaskService>(
       channelClient.getChannel(IZCodeTaskService.channelName),
     );
-    this.windowControllerService = ProxyChannel.toService<IWindowControllerService>(
-      channelClient.getChannel(IWindowControllerService.channelName),
-    );
     this.zcodeAgentService = ProxyChannel.toService<IZCodeAgentService>(
       channelClient.getChannel(IZCodeAgentService.channelName),
     );
@@ -130,9 +121,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.conversationShareService = ProxyChannel.toService<IConversationShareService>(
       channelClient.getChannel(IConversationShareService.channelName),
-    );
-    this.botsService = ProxyChannel.toService<IBotsService>(
-      channelClient.getChannel(IBotsService.channelName),
     );
     this.fileWatcherService = ProxyChannel.toService<IFileWatcherService>(
       channelClient.getChannel(IFileWatcherService.channelName),
@@ -181,9 +169,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.feedbackService = ProxyChannel.toService<IFeedbackService>(
       channelClient.getChannel(IFeedbackService.channelName),
-    );
-    this.promptAttachmentTransferService = ProxyChannel.toService<IPromptAttachmentTransferService>(
-      channelClient.getChannel(IPromptAttachmentTransferService.channelName),
     );
   }
 }

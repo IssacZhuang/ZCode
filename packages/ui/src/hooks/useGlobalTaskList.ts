@@ -1,26 +1,42 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+// 跨 workspace 任务列表（timeline/pinned/archived/active/command center 搜索）。
+// 手机远控的 window Host Controller 已随 bots 界面移除：数据源回到本地
+// tasks-index（持久行 + membership，经 zcodeTaskService / membership sets）+
+// sessions-index（实时 activity/detail）join，口径与 useWorkspaceTaskLists 一致。
+// 远程 workspace 在本 fork 中 fail closed（resolveWorkspaceServices 返回 null），
+// 携带远程身份的 tab 不参与查询，避免把远端 workspaceKey 误路由到本机 tasks-index。
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
-  WindowHostControllerTaskListItem,
+  ZCodeTaskListItem,
   ZCodeTaskListKind,
+  ZCodeTaskListQuery,
   ZCodeTaskListWorkspaceScope,
 } from "@zcode/services";
 import { logger } from "@/logger.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import { selectWorkspaceZCodeState, useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
-import { attachTaskListRowActivity } from "@/v4/taskListRowActivity.js";
+import { fetchTaskListMembershipSetsForEndpointsCached } from "@/lib/taskListMembershipSets.js";
+import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
+import {
+  buildTaskListResult,
+  mergeTaskIndexRowsWithSessions,
+} from "@/v4/buildTaskListResultFromSessions.js";
 import { stabilizeTaskListItems } from "@/v4/taskListItemStabilization.js";
-import { getWindowControllerTaskListRegistry } from "@/v4/windowControllerTaskListRegistry.js";
-import type { WindowControllerTaskListVersion } from "@/v4/windowControllerTaskListRegistry.js";
+import { useTaskListMembershipVersion } from "@/v4/taskListMembershipVersion.js";
+import { useWorkspaceSessionsIndexItems } from "@/v4/useWorkspaceSessionsIndexItems.js";
+import { isRemoteWorkspaceTarget } from "@/lib/workspaceServiceResolver.js";
 
-type GlobalTaskListItem = WindowHostControllerTaskListItem;
+type MembershipSets = Awaited<ReturnType<typeof fetchTaskListMembershipSetsForEndpointsCached>>;
 
-const subscribeToNothing = () => () => {};
-const zeroRevision = () => 0;
+type GlobalTaskListItem = ZCodeTaskListItem;
 
 function buildWorkspaceScopes(workspaceTabs: WorkspaceTabState[]): ZCodeTaskListWorkspaceScope[] {
   const scopes = new Map<string, ZCodeTaskListWorkspaceScope>();
   for (const tab of workspaceTabs) {
+    // 远程 workspace 无可用远端 session（fail closed），跳过，防止误读本机 tasks-index。
+    if (isRemoteWorkspaceTarget(tab)) {
+      continue;
+    }
     const scope = {
       workspacePath: tab.workspacePath,
       ...(tab.workspaceIdentity ? { workspaceIdentity: tab.workspaceIdentity } : {}),
@@ -42,16 +58,8 @@ export function useGlobalTaskList(params: {
   collapsedLimit: number;
 }) {
   const baseServices = useBaseWorkspaceServices();
-  const controller = baseServices.windowControllerService;
-  const controllerRegistry = useMemo(
-    () => (controller ? getWindowControllerTaskListRegistry(controller) : null),
-    [controller],
-  );
-  const controllerRevision = useSyncExternalStore(
-    controllerRegistry?.subscribe ?? subscribeToNothing,
-    controllerRegistry?.getRevision ?? zeroRevision,
-    controllerRegistry?.getRevision ?? zeroRevision,
-  );
+  const taskService = baseServices.zcodeTaskService;
+  const membershipVersion = useTaskListMembershipVersion();
   const workspaceSignature = JSON.stringify(
     params.workspaceTabs
       .map(
@@ -102,112 +110,159 @@ export function useGlobalTaskList(params: {
         .sort(([left], [right]) => left.localeCompare(right)),
     ),
   );
-  const [items, setItems] = useState<GlobalTaskListItem[]>([]);
-  const itemsRef = useRef<GlobalTaskListItem[]>(items);
-  const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
+  // sessions-index 只承担实时 activity/detail；scope 集合与 tasks-index 查询保持一致。
+  const sessionsIndexItems = useWorkspaceSessionsIndexItems(
+    useMemo(
+      () =>
+        workspaceScopes.map((scope) => ({
+          workspacePath: scope.workspacePath,
+          ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
+        })),
+      [workspaceScopes],
+    ),
+  ).items;
+  const search = params.searchQuery.trim();
+  const [membership, setMembership] = useState<MembershipSets | null>(null);
+  const [searchRows, setSearchRows] = useState<GlobalTaskListItem[] | null>(null);
   const [loading, setLoading] = useState(workspaceScopes.length > 0);
+  const [manualRefreshTick, setManualRefreshTick] = useState(0);
   const requestSerialRef = useRef(0);
   const manualRefreshSerialRef = useRef(0);
+  const refreshResolveRef = useRef<(() => void) | null>(null);
+  const itemsRef = useRef<GlobalTaskListItem[]>([]);
 
-  const query = useMemo(
-    () => ({
-      kind: params.kind,
-      workspaceScopes,
-      sortBy: params.sortBy,
-      search: params.searchQuery.trim() || undefined,
-      limit: params.expanded ? undefined : params.collapsedLimit,
-    }),
-    [
-      params.collapsedLimit,
-      params.expanded,
-      params.kind,
-      params.searchQuery,
-      params.sortBy,
-      workspaceScopes,
-    ],
-  );
-  const queryKey = useMemo(() => JSON.stringify(query), [query]);
-
-  const load = useCallback(
-    async (version: WindowControllerTaskListVersion) => {
-      const requestSerial = ++requestSerialRef.current;
-      if (workspaceScopes.length === 0) {
-        setItems([]);
-        itemsRef.current = [];
-        setTotal(0);
-        setHasMore(false);
-        setLoading(false);
-        return;
-      }
-      if (!controllerRegistry) {
-        // 原子切换后 base attachment 必须提供 Controller；缺失代表 Host/Renderer 版本不一致。
-        logger.error("[useGlobalTaskList] window Host Controller channel unavailable");
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const result = await controllerRegistry.list(queryKey, version, query);
-        if (requestSerialRef.current !== requestSerial) {
+  useEffect(() => {
+    if (workspaceScopes.length === 0) {
+      // scopes 清空时同步清掉稳定化缓存，避免 memo 的 null 兜底继续投影上一组 workspace 的行。
+      itemsRef.current = [];
+      setMembership(null);
+      setSearchRows(null);
+      setLoading(false);
+      return;
+    }
+    let disposed = false;
+    const requestSerial = ++requestSerialRef.current;
+    setLoading(true);
+    // 搜索走 tasks-index 全文查询（title + searchable_text，带 snippets）；
+    // 非搜索走 membership sets（持久行 + pin/archive/unread 权威），与旧 Controller
+    // 投影同口径：kind 判定统一在 buildTaskListResult 的 membership 过滤里完成。
+    const fetchTask: Promise<MembershipSets | { rows: GlobalTaskListItem[] }> = search
+      ? taskService
+          .listTaskList({
+            kind: params.kind,
+            workspaceScopes,
+            sortBy: params.sortBy,
+            search,
+            limit: undefined,
+          } satisfies ZCodeTaskListQuery)
+          .then((result) => ({ rows: result.items as GlobalTaskListItem[] }))
+      : fetchTaskListMembershipSetsForEndpointsCached({
+          cacheKey: `global::${membershipVersion}::${workspaceSignature}::${taskListVersionSignature}::${workspaceSourceGenerationSignature}::m${manualRefreshSerialRef.current}`,
+          endpoints: [{ service: taskService, scopes: workspaceScopes }],
+        });
+    void fetchTask
+      .then((data) => {
+        if (disposed || requestSerialRef.current !== requestSerial) {
           return;
         }
-        // Controller 的每个 activity 帧（运行中任务的 tool 调用等）都会让本 hook 重查，
-        // 而 attachTaskListRowActivity 与 tasks-index join 每次都产生全新对象。下游（grouped 视图）
-        // 只能按引用判等，于是整棵列表树换代重渲染并重测量虚拟器。这里与 sessions-index lane 同款
-        // 逐条引用稳定化：内容等价复用旧对象，整表等价复用旧数组。
-        const nextItems = stabilizeTaskListItems(
-          itemsRef.current,
-          result.items.map((item) =>
-            item.activity ? attachTaskListRowActivity(item, item.activity) : item,
-          ),
-        );
-        itemsRef.current = nextItems;
-        setItems(nextItems);
-        setTotal(result.total);
-        setHasMore(result.hasMore);
-      } catch (error) {
-        if (requestSerialRef.current === requestSerial) {
-          // Controller 查询失败时保留最后可信列表，避免单 source 异常清空其他 workspace。
-          logger.error(`[useGlobalTaskList] Controller 加载 ${params.kind} 列表失败`, error);
+        if ("rows" in data) {
+          setSearchRows(data.rows);
+        } else {
+          setMembership(data);
+          setSearchRows(null);
         }
-      } finally {
+      })
+      .catch((error) => {
         if (requestSerialRef.current === requestSerial) {
-          setLoading(false);
+          // 查询失败时保留最后可信列表，避免单次异常清空所有 workspace 的投影。
+          logger.error(`[useGlobalTaskList] 加载 ${params.kind} 列表失败`, error);
         }
-      }
-    },
-    [controllerRegistry, params.kind, query, queryKey, workspaceScopes],
-  );
+      })
+      .finally(() => {
+        if (disposed || requestSerialRef.current !== requestSerial) {
+          return;
+        }
+        setLoading(false);
+        const resolveRefresh = refreshResolveRef.current;
+        refreshResolveRef.current = null;
+        resolveRefresh?.();
+      });
+    return () => {
+      disposed = true;
+    };
+  }, [
+    manualRefreshTick,
+    membershipVersion,
+    params.kind,
+    params.sortBy,
+    search,
+    taskListVersionSignature,
+    taskService,
+    workspaceScopes,
+    workspaceSignature,
+    workspaceSourceGenerationSignature,
+  ]);
 
   const refresh = useCallback(async () => {
     manualRefreshSerialRef.current += 1;
-    await load({
-      controllerRevision,
-      taskListVersionSignature,
-      workspaceSourceGenerationSignature,
-      manualRefreshSerial: manualRefreshSerialRef.current,
+    await new Promise<void>((resolve) => {
+      // 上一轮 refresh 尚未收口时直接完成旧等待，只让最新一轮负责 resolve。
+      refreshResolveRef.current?.();
+      refreshResolveRef.current = resolve;
+      setManualRefreshTick((tick) => tick + 1);
     });
-  }, [controllerRevision, load, taskListVersionSignature, workspaceSourceGenerationSignature]);
+  }, []);
 
-  useEffect(() => {
-    // 远程 workspace 从断开占位恢复为在线 session 时 identity/path 不变，
-    // taskListVersion 也可能尚未变化，旧缓存因此永久保留连接前的空结果。remoteSessionId
-    // 只作为 source 代际触发重查，不改变 workspaceIdentity 与 Controller 查询契约。
-    void load({
-      controllerRevision,
-      taskListVersionSignature,
-      workspaceSourceGenerationSignature,
-    });
-  }, [controllerRevision, load, taskListVersionSignature, workspaceSourceGenerationSignature]);
+  const limit = params.expanded ? undefined : params.collapsedLimit;
+  const { items, total, hasMore } = useMemo(() => {
+    let result: { items: GlobalTaskListItem[]; total: number };
+    if (search) {
+      if (!searchRows) {
+        return { items: itemsRef.current, total: itemsRef.current.length, hasMore: false };
+      }
+      // 搜索结果行已由 SQL 按 kind 过滤；这里只补 sessions-index activity join 并统一排序。
+      const merged = mergeTaskIndexRowsWithSessions({
+        taskIndexItems: searchRows,
+        sessions: sessionsIndexItems,
+      });
+      merged.sort((left, right) => compareZCodeTaskListItems(left, right, params.sortBy));
+      result = {
+        items: merged,
+        total: merged.length,
+      };
+    } else {
+      if (!membership) {
+        return { items: itemsRef.current, total: itemsRef.current.length, hasMore: false };
+      }
+      result = buildTaskListResult({
+        taskIndexItems: membership.taskIndexItems,
+        sessions: sessionsIndexItems,
+        kind: params.kind,
+        pinnedIds: membership.pinnedIds,
+        archivedIds: membership.archivedIds,
+        deletedIds: membership.deletedIds,
+        sortBy: params.sortBy,
+        limit: undefined,
+        unreadAtByTaskId: membership.unreadAtByTaskId,
+        terminalStatusByTaskId: membership.terminalStatusByTaskId,
+        titleOverrideByTaskId: membership.titleOverrideByTaskId,
+        cronAutomationIdByTaskId: membership.cronAutomationIdByTaskId,
+      });
+    }
+    const visible = limit === undefined ? result.items : result.items.slice(0, limit);
+    // sessions-index 每个 activity 帧都会重建行对象；下游（grouped 视图/虚拟器）按引用判等，
+    // 这里做逐条引用稳定化，与旧 Controller 订阅链路的稳定化口径一致。
+    const nextItems = stabilizeTaskListItems(itemsRef.current, visible);
+    itemsRef.current = nextItems;
+    return { items: nextItems, total: result.total, hasMore: result.total > visible.length };
+    // sessionsIndexItems 为引用稳定化产物； membership / searchRows 为本轮请求结果。
+  }, [search, searchRows, membership, sessionsIndexItems, params.kind, params.sortBy, limit]);
 
-  const hasRemoteScope = params.workspaceTabs.some((tab) => Boolean(tab.workspaceIdentity));
   return {
     items,
     total,
     hasMore,
     loading,
-    syncingRemoteWorkspaces: loading && hasRemoteScope,
     refresh,
   };
 }

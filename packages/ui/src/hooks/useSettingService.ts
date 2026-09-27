@@ -106,7 +106,7 @@ async function refreshSettingsStore(settingService: ISettingService | undefined)
 
 /** 获取和更新应用设置 */
 export function useSettings() {
-  const { botsService, broadcastService, settingService, zcodeAgentService } = useServices();
+  const { broadcastService, settingService, zcodeAgentService } = useServices();
   const platform = usePlatform();
   const settingsStore = getSettingsStore(settingService);
   const [snapshot, setSnapshot] = useState<SettingsSnapshot>(settingsStore.snapshot);
@@ -154,9 +154,9 @@ export function useSettings() {
             patch.modelIoFullRetentionEnabled ??
             settingsStore.snapshot.settings?.modelIoFullRetentionEnabled === true,
         };
+        // 手机远控（bots）界面移除后，运行时偏好只需同步 ZCode Agent 侧。
         const syncResults = await Promise.allSettled([
           zcodeAgentService.syncAppRuntimePreferences(preferences),
-          botsService.syncAppRuntimePreferences(preferences),
         ]);
         const syncError = syncResults.find(
           (result): result is PromiseRejectedResult => result.status === "rejected",
@@ -170,15 +170,7 @@ export function useSettings() {
         }
       }
     },
-    [
-      botsService,
-      broadcastService,
-      settingService,
-      settingsStore,
-      zcodeAgentService,
-      platform,
-      refresh,
-    ],
+    [broadcastService, settingService, settingsStore, zcodeAgentService, platform, refresh],
   );
 
   return {

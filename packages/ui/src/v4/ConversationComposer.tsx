@@ -1394,8 +1394,8 @@ function ConversationComposerImpl({
           return;
         }
         setHeldQueueConfirmation(null);
-        // 暂存内容只有在发送成功后才移交给 task；失败仍保留为可重试草稿。
-        await attachmentsApi.adoptSentAttachments(submittedAttachmentIds);
+        // 远端暂存移交（adoptSentAttachments）已随手机 prompt-attachment-transfer 移除；
+        // 本地附件 ref 在 sendText 成功后直接由 session 持有，失败仍保留为可重试草稿。
         // Bug 原因：发送等待期间产生的新正文属于下一次 Submission，旧 ACK 不能清除。
         if (contentRevisionRef.current === cleanupRevision) {
           inputApiRef.current?.clear();

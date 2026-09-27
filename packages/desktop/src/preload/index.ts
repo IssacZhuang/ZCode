@@ -785,31 +785,8 @@ ipcRenderer.on(
   },
 );
 
-window.addEventListener("message", (event) => {
-  if (event.source !== window || typeof event.data !== "object" || event.data === null) {
-    return;
-  }
-  const payload = event.data as {
-    type?: unknown;
-    attachmentId?: unknown;
-    sessionId?: unknown;
-  };
-  if (
-    payload.type !== InternalChannels.ScopedServicePortReady ||
-    typeof payload.attachmentId !== "string" ||
-    !payload.attachmentId ||
-    typeof payload.sessionId !== "string" ||
-    !payload.sessionId
-  ) {
-    return;
-  }
-  // MessagePort 注册发生在隔离的 renderer world，Main 不能把“已投递”误当作“已可用”。
-  // preload 只把 renderer 的 ready ACK 薄转发给 Main，业务 attachment 状态仍由窗口 session manager 管理。
-  ipcRenderer.send(InternalChannels.ScopedServicePortReady, {
-    attachmentId: payload.attachmentId,
-    sessionId: payload.sessionId,
-  });
-});
+// scoped-service-port-ready 转发块已随手机远控 attachment 确认链移除：
+// main 侧消费者已删除，preload 不再回传 ready ACK。
 
 ipcRenderer.on(PlatformChannels.TaskNotificationSound, () => {
   window.postMessage(InternalChannels.TaskNotificationSound, "*");

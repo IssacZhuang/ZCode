@@ -100,7 +100,8 @@ export const taskRealtimeReasonSchema = z.enum([
   "stream_mirror_owner_lost",
 ]);
 export const taskRealtimeDeliveryPurposeSchema = z.enum(["observer", "relay_owner"]);
-export const taskRealtimeHostDeliveryKindSchema = z.enum(["desktop_window", "relay_bridge"]);
+// 个人分支已移除 Bot/relay 远控：Host 交付只剩桌面自身实时链路（desktop-continuous 语义）。
+export const taskRealtimeHostDeliveryKindSchema = z.enum(["desktop_window"]);
 const taskRealtimeEnvelopeSchema = z
   .object({
     eventId: nonEmptyString,

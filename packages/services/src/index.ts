@@ -117,14 +117,6 @@ export type {
 } from "./session/zcodeTaskService.js";
 export type { ZCodeTaskListItem } from "./session/zcodeTaskListTypes.js";
 
-export { IWindowControllerService } from "./window-controller/windowController.js";
-export type {
-  WindowHostControllerFrame,
-  WindowHostControllerMutation,
-  WindowHostControllerTaskListItem,
-  WindowHostControllerTaskListResult,
-} from "./window-controller/windowController.js";
-
 // ZCode agent service — IZCodeAgentService is both a type (interface) and value (descriptor)
 export {
   IZCodeAgentService,
@@ -187,16 +179,6 @@ export type {
   ZCodeTaskTarget,
   ZCodeSessionWorkspaceTarget,
 } from "./zcode-session/zcodeSession.js";
-
-// Bots service — IBotsService is both a type (interface) and value (descriptor).
-export { IBotsService } from "./bots/bots.js";
-export type {
-  BotBindCodeResult,
-  BotCreateBindCodeParams,
-  BotListWorkspaceRefsParams,
-  BotSaveBotParams,
-  BotTestResult,
-} from "./bots/bots.js";
 
 // Hooks service — IHooksService is both a type (interface) and value (descriptor).
 export { IHooksService } from "./hooks/hooks.js";
@@ -266,13 +248,6 @@ export { ISettingsSyncService } from "./settings-sync/settingsSync.js";
 
 export { IFeedbackService } from "./feedback/feedback.js";
 export type { FeedbackUploadProgress } from "./feedback/feedback.js";
-export { IPromptAttachmentTransferService } from "./prompt-attachment-transfer/promptAttachmentTransfer.js";
-export type {
-  PromptAttachmentStageParams,
-  PromptAttachmentStageResult,
-  PromptAttachmentTransferPhase,
-  PromptAttachmentTransferProgress,
-} from "./prompt-attachment-transfer/promptAttachmentTransfer.js";
 export type {
   CreateFeedbackTicketInput,
   FeedbackAttachment,

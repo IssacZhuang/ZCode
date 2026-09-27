@@ -113,7 +113,6 @@ export type {
   CuaHelperInstaller,
   CuaHelperInstallerOptions,
 } from "./cua-permission-broker/index.js";
-export { createBotsService } from "./bots/botsService.js";
 export { createFileWatcherService } from "./fileWatcher/fileWatcherService.js";
 export { ensureDeviceMid } from "./device/deviceMid.js";
 export type { EnsureDeviceMidOptions } from "./device/deviceMid.js";
@@ -172,7 +171,6 @@ export { createSettingsSyncService } from "./settings-sync/settingsSyncService.j
 export { createFeedbackDiagnosticArchive } from "./feedback/feedbackLogArchive.js";
 export { createFeedbackService } from "./feedback/feedbackService.js";
 export type { CreateFeedbackServiceOptions } from "./feedback/feedbackService.js";
-export { createLocalPromptAttachmentTransferService } from "./prompt-attachment-transfer/promptAttachmentTransferService.js";
 export {
   createLocalConversationShareArtifactSource,
   createRemoteConversationShareArtifactSource,
@@ -238,7 +236,6 @@ import {
 } from "./conversation-share/conversationShareService.js";
 import { createLocalConversationShareArtifactSource } from "./conversation-share/conversationShareArtifactSource.js";
 import { ConversationShareHttpClient } from "./conversation-share/conversationShareHttpClient.js";
-import { IBotsService } from "./bots/bots.js";
 import { IFileWatcherService } from "./fileWatcher/fileWatcher.js";
 import { IUsageStatsService } from "./usage-stats/usageStats.js";
 import { IClientScenesService } from "./client-scenes/clientScenes.js";
@@ -252,7 +249,6 @@ import { IHooksService } from "./hooks/hooks.js";
 import { IMemoryService } from "./memory/memory.js";
 import { ISettingsSyncService } from "./settings-sync/settingsSync.js";
 import { IFeedbackService } from "./feedback/feedback.js";
-import { IPromptAttachmentTransferService } from "./prompt-attachment-transfer/promptAttachmentTransfer.js";
 import { createFileService } from "./file/fileService.js";
 import { createMediaPreviewService } from "./media-preview/mediaPreview.js";
 import type { WorkspaceFileSearchFilter } from "./file/workspaceFileMentionFilter.js";
@@ -274,8 +270,6 @@ import { createZCodeTaskServiceAdapter } from "./zcode-agent/zcodeTaskServiceAda
 import { createZCodeSessionService } from "./zcode-session/zcodeSessionService.js";
 import { createZCodeTaskIndexSyncer } from "./zcode-agent/zcodeTaskIndexSyncer.js";
 import { TaskIndexRepo } from "./session/taskIndexRepo.js";
-import { createBotsService } from "./bots/botsService.js";
-import { createBotRemoteWorkspaceService } from "./bots/botRemoteWorkspaceBridge.js";
 import type { SessionMessageSendRequested } from "#src/session/sessionMailbox.js";
 import { createFileWatcherService } from "./fileWatcher/fileWatcherService.js";
 import { readLegacyZCodeConfigProviders } from "./model-provider/legacyZCodeConfigProviderReader.js";
@@ -309,7 +303,6 @@ import {
   createFeedbackService,
   type CreateFeedbackServiceOptions,
 } from "./feedback/feedbackService.js";
-import { createLocalPromptAttachmentTransferService } from "./prompt-attachment-transfer/promptAttachmentTransferService.js";
 import { createNodeApiClient } from "./providers/api/nodeApiClient.js";
 import {
   createHostApiNetworkTransport,
@@ -1948,11 +1941,6 @@ export function createLocalServices(options: {
     settingService,
     cuaProductMcpServerResolver,
   });
-  const botRemoteWorkspaceService = createBotRemoteWorkspaceService({
-    parentPort: options?.parentPort,
-    settingService,
-    credentialService,
-  });
   // Desktop Host 曾从 Settings View 再扫描一次 Account Provider，既绕开
   const fileService = createFileService({
     workspaceFileSearchFilter: options?.workspaceFileSearchFilter,
@@ -1999,20 +1987,6 @@ export function createLocalServices(options: {
     .register(ICuaPermissionService, cuaPermissionService)
     .register(ICuaPipSessionService, cuaPipSessionService)
     .register(IConversationShareService, conversationShareService)
-    .register(
-      IBotsService,
-      createBotsService({
-        credentialService,
-        zcodeTaskService,
-        broadcastService,
-        settingService,
-        modelSelectionService: providerRuntime.modelSelection,
-        remoteWorkspaceService: botRemoteWorkspaceService,
-        // 远端与本地 Bot 都读取所属 Environment 的 Model Selection View。
-        // 远端启动期不再轮询旧 Preset，避免重新制造一套模型候选事实。
-        runStartupBackgroundTasks: !isDesktopAttachedRemote,
-      }),
-    )
     .register(IFileWatcherService, createFileWatcherService())
     .register(
       IUsageStatsService,
@@ -2056,8 +2030,7 @@ export function createLocalServices(options: {
         apiClient,
         credentialService,
       }),
-    )
-    .register(IPromptAttachmentTransferService, createLocalPromptAttachmentTransferService());
+    );
 
   // 即使初始配置关闭也必须登记 lifecycle disposer：terminal fence 需要早于任意延迟 setting/acquire
   // 恢复，不能把"当前还没有 Helper"误当成"不需要生命周期所有者"。dispose 时串行 stop host。
@@ -2182,7 +2155,6 @@ export function disposeServiceResources(services: ServiceCollection): void {
     services.getOptional(IZCodeTaskService),
     services.getOptional(IZCodeAgentService),
     services.getOptional(IZCodeSessionService),
-    services.getOptional(IBotsService),
     services.getOptional(IFileWatcherService),
   ].filter((service) => service !== undefined);
 
@@ -2212,7 +2184,6 @@ export async function disposeServiceResourcesAndWait(services: ServiceCollection
     services.getOptional(IZCodeTaskService),
     services.getOptional(IZCodeAgentService),
     services.getOptional(IZCodeSessionService),
-    services.getOptional(IBotsService),
     services.getOptional(IFileWatcherService),
   ].filter((service) => service !== undefined);
 

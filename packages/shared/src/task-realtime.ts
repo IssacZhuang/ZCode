@@ -75,7 +75,11 @@ export interface TaskStreamMirrorBatchEvent extends TaskRealtimeEnvelope {
 
 export type TaskRealtimeDeliveryPurpose = "observer" | "relay_owner";
 
-export type TaskRealtimeHostDeliveryKind = "desktop_window" | "relay_bridge";
+/**
+ * Host 交付链路形态。个人分支已移除 Bot/relay 远控：只剩桌面自身实时链路
+ * （desktop_window，对应 desktop-continuous 语义）。
+ */
+export type TaskRealtimeHostDeliveryKind = "desktop_window";
 
 export interface TaskRunLeaseTarget extends TaskStreamMirrorTarget {}
 

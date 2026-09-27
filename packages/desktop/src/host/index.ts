@@ -3,10 +3,10 @@
 /**
  * Host Process 入口 —— 每个窗口对应一个独立的 host process
  *
- * 同一窗口的 Renderer 和手机 都 attachment 到这个 Host：
- *   Renderer / Mobile ←MessagePort→ Window Host
- *                                      ├─ local services
- *                                      └─ remote connection registry
+ * 同一窗口的 Renderer 都 attachment 到这个 Host：
+ *   Renderer ←MessagePort→ Window Host
+ *                          ├─ local services
+ *                          └─ remote connection registry
  *
  * 启动流程：
  * 1. main 进程通过 Electron `utilityProcess.fork()` 创建本进程
@@ -31,13 +31,11 @@ import { createBrowserControlMainBridge } from "./browserControlMainBridge.js";
 import { materializeBrowserRecordingArtifact } from "./browserRecordingArtifactMaterializer.js";
 import {
   ServiceCollection,
-  IBotsService,
   IFileService,
   IClientConfigService,
   IMediaPreviewService,
   IModelSelectionService,
   ISettingService,
-  IWindowControllerService,
   IConversationShareService,
   IZCodeAgentService,
   IZCodeTaskService,
@@ -69,9 +67,7 @@ import {
   resolveWorkspaceKey,
   formatModelPickerValue,
   type ZCodePromptAttachment,
-  type ZCodeStreamEvent,
   type ZCodeTaskMeta,
-  type TaskStreamMirrorableEvent,
   type TraceId,
   type ZCodeTaskMode,
   type WindowHostAttachmentScope,
@@ -89,7 +85,6 @@ import { createTaskRealtimeBridgeForHostInit } from "./taskRealtimeBridge.js";
 import { resolveRpcLogLevel } from "./rpcLogLevel.js";
 import { createHostWorkspaceTaskTracker } from "./hostWorkspaceTaskTracker.js";
 import { createHostRemoteWorkspaceProxyState } from "./hostRemoteWorkspaceProxyState.js";
-import { watchCronRunBotDelivery } from "./cronBotDelivery.js";
 import { shouldReportHostConsoleError, stringifyHostLogArg } from "./hostLog.js";
 import { flushHostE2ECoverage } from "./e2eCoverage.js";
 import { runHostShutdownPhases, type HostShutdownResult } from "./hostShutdownPhases.js";
@@ -103,7 +98,6 @@ import {
 } from "./cronRunLifecycle.js";
 import { createWindowHostAttachmentRegistry } from "./windowHostAttachmentRegistry.js";
 import { scopeConversationShareServiceForAttachment } from "./conversationShareAttachmentService.js";
-import { createWindowHostControllerRuntime } from "./windowHostControllerService.js";
 import { resolveAutomationSubmissionModelSelection } from "./automationModelSelection.js";
 import { startHostSelfResourceTelemetry } from "./hostSelfResourceTelemetry.js";
 
@@ -464,26 +458,6 @@ async function dispatchCronRun(request: CronRunDispatchRequest): Promise<{
         mode: request.mode,
       });
     }
-    const botsService = targetServices.getOptional(IBotsService);
-    if (botsService) {
-      try {
-        await watchCronRunBotDelivery({
-          automationId: request.automationId,
-          workspaceKey,
-          workspacePath: request.workspacePath,
-          ...(request.workspaceIdentity ? { workspaceIdentity: request.workspaceIdentity } : {}),
-          taskId: task.taskId,
-          repo: cronAutomationRepo,
-          botsService,
-        });
-      } catch (error) {
-        // Bot 回推是 best-effort 辅助通道；配置/凭据/订阅失败不能阻断 automation 派发与结算。
-        logger.warn(
-          `automation Bot delivery subscription failed automation=${request.automationId} provider=unknown`,
-          error,
-        );
-      }
-    }
     trackedKey = cronRunSubscriptionKey(task.taskId, promptTraceId);
     trackCronRunOutcome({
       zcodeTaskService,
@@ -699,17 +673,10 @@ function isZCodeTaskMeta(value: unknown): value is ZCodeTaskMeta {
   );
 }
 
-function isRemoteMirrorableStreamEvent(
-  event: ZCodeStreamEvent,
-): event is TaskStreamMirrorableEvent {
-  return event.type !== "task_stream_mirror_batch" && event.type !== "task_snapshot_updated";
-}
-
 function createReportingRemoteZCodeTaskService<T extends object>(
   service: T,
   options?: {
     reportRunningPromptCount?: boolean;
-    taskRealtimePort?: ReturnType<typeof createTaskRealtimeBridgeForHostInit>;
   },
 ): T {
   const workspaceProxyState = createHostRemoteWorkspaceProxyState();
@@ -781,82 +748,6 @@ function createReportingRemoteZCodeTaskService<T extends object>(
       rememberTaskMeta((snapshot as { meta?: unknown }).meta);
     }
     rememberTaskMeta((result as { meta?: unknown }).meta);
-  }
-
-  async function mirrorRemotePrompt(
-    target: T,
-    sendPrompt: (...args: unknown[]) => Promise<unknown>,
-    params: {
-      taskId: string;
-      traceId: TraceId;
-      content: string;
-      attachments?: ZCodePromptAttachment[];
-    },
-  ): Promise<unknown> {
-    const taskRealtimePort = options?.taskRealtimePort;
-    const meta = workspaceProxyState.getTaskMeta(params.taskId);
-    if (!taskRealtimePort || !meta) {
-      return sendPrompt.call(target, params);
-    }
-
-    const mirrorTarget = {
-      workspacePath: meta.workspacePath,
-      workspaceIdentity: meta.workspaceIdentity,
-      workspaceKey: resolveWorkspaceKey(meta),
-      taskId: params.taskId,
-      runId: params.traceId,
-      traceId: params.traceId,
-    };
-    const leaseResult = await taskRealtimePort
-      .acquireTaskRunLease(mirrorTarget)
-      .catch((error: unknown) => {
-        logger.warn("Bot remote runtime realtime lease failed:", error);
-        return null;
-      });
-    if (!leaseResult?.acquired) {
-      return sendPrompt.call(target, params);
-    }
-
-    taskRealtimePort.publishStreamOp(mirrorTarget, {
-      kind: "user_message",
-      messageId: `user-${params.traceId}`,
-      content: params.content,
-      attachments: params.attachments,
-      timestamp: Date.now(),
-    });
-
-    // 写路径（send/stop/交互回执）已收敛 v4 命令面；本镜像属**读路径**——
-    // taskRealtimePort → 手机 relay → 手机端
-    // zcodeSessionStore 的整条消费链词表都是 ZCodeStreamEvent。两个方案的评估结论：
-    // a) relay 直接转发 v4 帧、手机端消费 v4 store（正解）：需要重做 relay stream-op
-    //    协议 + 手机端 store；
-    // b) 帧→ZCodeStreamEvent 薄映射：等价复刻 adapter mapSessionEvent，
-    //    否决。
-    // 结论：本镜像保持 legacy 源不动。
-    const dynamicStreamEvent = Reflect.get(target, "onDynamicStreamEvent");
-    const streamDisposable =
-      typeof dynamicStreamEvent === "function"
-        ? dynamicStreamEvent.call(
-            target,
-            params.taskId,
-          )((event: ZCodeStreamEvent) => {
-            if (isRemoteMirrorableStreamEvent(event)) {
-              taskRealtimePort.publishStreamOp(mirrorTarget, {
-                kind: "stream_event",
-                event,
-              });
-            }
-          })
-        : null;
-
-    try {
-      return await sendPrompt.call(target, params);
-    } finally {
-      // 远端 zcode-server 没有 desktop realtime port；由窗口 Host 内的
-      // remote facade 接管 lease 和 stream mirror，确保 UI 能持续收到远端会话流。
-      streamDisposable?.dispose();
-      taskRealtimePort.releaseTaskRunLease(mirrorTarget);
-    }
   }
 
   function finishWorkspaceTask(taskId: string, meta: ZCodeTaskMeta): void {
@@ -937,8 +828,7 @@ function createReportingRemoteZCodeTaskService<T extends object>(
           return result;
         };
       }
-      const shouldWrapSendPrompt =
-        options?.reportRunningPromptCount !== false || Boolean(options?.taskRealtimePort);
+      const shouldWrapSendPrompt = options?.reportRunningPromptCount !== false;
       if (property !== "sendPrompt" || typeof value !== "function" || !shouldWrapSendPrompt) {
         return value;
       }
@@ -977,11 +867,8 @@ function createReportingRemoteZCodeTaskService<T extends object>(
               untrackedPromptRpcCount += 1;
               reportHostRunningTaskCount();
             }
-            return await mirrorRemotePrompt(
-              target,
-              value.bind(target) as (...promptArgs: unknown[]) => Promise<unknown>,
-              promptParams,
-            );
+            // 手机 relay 的 prompt/stream 镜像分支已随 bot 远控移除；本地仅保留任务跟踪。
+            return await value.apply(target, args);
           }
           if (options?.reportRunningPromptCount !== false) {
             tracksOnlyRpcLifetime = true;
@@ -1105,36 +992,6 @@ function requireActiveHostApiNetworkTransport(): HostApiNetworkTransport {
   return activeHostApiNetworkTransport;
 }
 
-const windowHostControllerRuntime = createWindowHostControllerRuntime({
-  createId: randomUUID,
-  onSourceError: (scope, operation, error) => {
-    logger.warn(
-      `window Controller source ${operation} failed, scope=${scope.kind}, workspaceKey=${scope.workspaceIdentity?.trim() || scope.workspacePath}`,
-      error,
-    );
-  },
-  resolveSource: (scope) => {
-    // 远程工作区已移除；远程 identity 的 history scope 绝不能落回本地 tasks-index。
-    if (scope.workspaceIdentity && isRemoteWorkspaceIdentity(scope.workspaceIdentity)) {
-      return null;
-    }
-    const taskService = activeServices?.getOptional(IZCodeTaskService);
-    if (!taskService) {
-      return null;
-    }
-    return {
-      scope: {
-        kind: "local" as const,
-        workspacePath: scope.workspacePath,
-        ...(scope.workspaceIdentity ? { workspaceIdentity: scope.workspaceIdentity } : {}),
-      },
-      taskService,
-      agentService: activeServices?.getOptional(IZCodeAgentService),
-      sourceAvailability: "online" as const,
-    };
-  },
-});
-
 function wireLocalResourceTelemetry(services: ServiceCollection): void {
   activeLocalResourceTelemetry?.dispose();
   activeLocalResourceTelemetry = registerHostServiceResourceTelemetry({
@@ -1160,117 +1017,11 @@ type ExposedServicePortHandle = {
   dispose(): void;
 };
 
-function createControllerRoutedTaskService(
-  base: IZCodeTaskService,
-  attachmentScope: WindowHostAttachmentScope,
-): IZCodeTaskService {
-  const route = async (
-    params: {
-      taskId: string;
-      workspacePath: string;
-      workspaceIdentity?: string;
-    },
-    mutation:
-      | { kind: "pin"; pinned: boolean }
-      | { kind: "archive"; archived: boolean }
-      | { kind: "delete" }
-      | { kind: "mark-read"; expectedUnreadAt?: number }
-      | { kind: "mark-unread" },
-  ) =>
-    windowHostControllerRuntime.service.mutateTask({
-      address: await windowHostControllerRuntime.resolveTaskAddress({
-        taskId: params.taskId,
-        workspacePath: params.workspacePath,
-        ...(params.workspaceIdentity ? { workspaceIdentity: params.workspaceIdentity } : {}),
-        attachmentScope,
-      }),
-      mutation,
-    });
-
-  return new Proxy(base, {
-    get(target, property, receiver) {
-      if (property === "setTaskPinned") {
-        return async (params: Parameters<IZCodeTaskService["setTaskPinned"]>[0]) => {
-          const meta = await route(params, { kind: "pin", pinned: params.pinned });
-          if (!meta) throw new Error("pin mutation 后 task 投影缺失");
-          return meta;
-        };
-      }
-      if (property === "archiveTask" || property === "unarchiveTask") {
-        return async (
-          params:
-            | Parameters<IZCodeTaskService["archiveTask"]>[0]
-            | Parameters<IZCodeTaskService["unarchiveTask"]>[0],
-        ) => {
-          const meta = await route(params, {
-            kind: "archive",
-            archived: property === "archiveTask",
-          });
-          if (!meta) throw new Error("archive mutation 后 task 投影缺失");
-          return meta;
-        };
-      }
-      if (property === "deleteTask") {
-        return async (params: Parameters<IZCodeTaskService["deleteTask"]>[0]) => {
-          await route(params, { kind: "delete" });
-        };
-      }
-      if (property === "deleteArchivedTasks") {
-        return async (params: Parameters<IZCodeTaskService["deleteArchivedTasks"]>[0]) => {
-          if (params.taskIds.length === 0) {
-            return { deletedTaskIds: [], skippedTaskIds: [], failedTaskIds: [] };
-          }
-          return windowHostControllerRuntime.service.deleteArchivedTasks({
-            address: await windowHostControllerRuntime.resolveTaskAddress({
-              workspacePath: params.workspacePath,
-              workspaceIdentity: params.workspaceIdentity,
-              taskId: params.taskIds[0]!,
-              attachmentScope,
-              allowMissingTask: true,
-            }),
-            taskIds: params.taskIds,
-          });
-        };
-      }
-      if (property === "deleteArchivedTask") {
-        return async (params: Parameters<IZCodeTaskService["deleteArchivedTask"]>[0]) =>
-          windowHostControllerRuntime.service.deleteArchivedTask({
-            address: await windowHostControllerRuntime.resolveTaskAddress({
-              ...params,
-              attachmentScope,
-              allowMissingTask: true,
-            }),
-          });
-      }
-      if (property === "setTaskUnread") {
-        return async (params: Parameters<IZCodeTaskService["setTaskUnread"]>[0]) => {
-          const meta = await route(
-            params,
-            params.unread
-              ? { kind: "mark-unread" }
-              : {
-                  kind: "mark-read",
-                  ...(params.expectedUnreadAt != null
-                    ? { expectedUnreadAt: params.expectedUnreadAt }
-                    : {}),
-                },
-          );
-          if (!meta) throw new Error("unread mutation 后 task 投影缺失");
-          return meta;
-        };
-      }
-      const value = Reflect.get(target, property, receiver) as unknown;
-      return typeof value === "function" ? value.bind(target) : value;
-    },
-  });
-}
-
 function exposeServicesOnMessagePort(
   port: Electron.MessagePortMain,
   services: ServiceCollection,
   deferInit: boolean,
   clientMode: ZCodeAgentV4ClientMode = "desktop-continuous",
-  attachmentScope: WindowHostAttachmentScope = { kind: "local" },
 ): ExposedServicePortHandle {
   const wrappedPort = wrapElectronPort(port);
   const protocol = new MessagePortProtocol(wrappedPort);
@@ -1288,18 +1039,8 @@ function exposeServicesOnMessagePort(
         clientMode,
       })
     : undefined;
-  services.register(IWindowControllerService, windowHostControllerRuntime.service);
-  const controllerAttachment = windowHostControllerRuntime.createAttachmentService();
-  const overrides = new Map<string, unknown>([
-    [IWindowControllerService.channelName, controllerAttachment],
-  ]);
-  const taskService = services.getOptional(IZCodeTaskService);
-  if (taskService) {
-    overrides.set(
-      IZCodeTaskService.channelName,
-      createControllerRoutedTaskService(taskService, attachmentScope),
-    );
-  }
+  // 手机窗口投影的窗口 Controller 服务已随手机远控移除；任务变更直接走本地 task service。
+  const overrides = new Map<string, unknown>();
   if (connectionScope) {
     overrides.set(IZCodeAgentService.channelName, connectionScope.service);
   }
@@ -1342,7 +1083,6 @@ function exposeServicesOnMessagePort(
       if (disposed) return;
       disposed = true;
       flowStateDisposable.dispose();
-      controllerAttachment.dispose();
       // close 排在所有已接收 SAT/DRN 之后；scope.dispose 自身会再次幂等确保 closed，
       // 但绝不让迟到 saturated 在 close 后复活 CLI pause state。
       void forwardFlowState("closed")
@@ -1370,8 +1110,8 @@ const windowHostAttachmentRegistry = createWindowHostAttachmentRegistry<
     }
     throw new Error(`远程工作区已移除，无法 attachment，scope=${scope.kind}`);
   },
-  expose: ({ port, services, clientMode, scope }) =>
-    exposeServicesOnMessagePort(port, services, false, clientMode, scope),
+  expose: ({ port, services, clientMode }) =>
+    exposeServicesOnMessagePort(port, services, false, clientMode),
 });
 
 function logWindowHostTopology(reason: string): void {
@@ -1405,7 +1145,6 @@ async function disposeHostResources(reason: string): Promise<HostShutdownResult>
     hostSelfResourceTelemetry.stop();
     disposeLocalResourceTelemetry();
     disposeAttachedServicePorts();
-    windowHostControllerRuntime.dispose();
     for (const key of Array.from(cronRunSubscriptions.keys())) {
       disposeCronRunSubscription(key);
     }
@@ -1464,7 +1203,6 @@ function disposeHostResourcesBestEffort(reason: string): void {
   stopHostNetworkTelemetry();
   disposeLocalResourceTelemetry();
   disposeAttachedServicePorts();
-  windowHostControllerRuntime.dispose();
   for (const key of Array.from(cronRunSubscriptions.keys())) {
     disposeCronRunSubscription(key);
   }
@@ -1707,16 +1445,6 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
     void zcodeTaskService.sendSessionMessageDeliveryResult(msg.result).catch((error) => {
       logger.warn("failed to forward session message delivery result:", error);
     });
-    return;
-  }
-
-  if (
-    msg.type === HostMessageTypes.BotRemoteWorkspaceReconnectResult ||
-    msg.type === HostMessageTypes.BotRemoteWorkspaceConnectionStatusResult ||
-    msg.type === HostMessageTypes.BotRemoteWorkspaceRuntimePort
-  ) {
-    // Bugfix: Bot bridge 也监听 parentPort，main 回传的 runtime MessagePort 是给 Bot 作为
-    // 远端 RPC client 使用的。host 入口必须跳过这些控制消息，避免误把同一个端口注册成 ChannelServer。
     return;
   }
 
