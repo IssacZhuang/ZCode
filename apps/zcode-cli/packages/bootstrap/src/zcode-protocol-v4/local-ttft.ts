@@ -14,6 +14,7 @@ import {
 import {
   ConversationTelemetryFactNormalizer,
   streamingParentToolCallId,
+  type ConversationTelemetryFact,
 } from "./conversation-telemetry-facts.js";
 import { randomUUID } from "node:crypto";
 import {
@@ -22,7 +23,6 @@ import {
   LOCAL_TTFT_TTL_MS,
   localTtftNow,
   type CommandEnvelope,
-  type ConversationTelemetryFact,
   type LocalTtftFacts,
   type LocalTtftOutputKind,
 } from "@zcode/shared/zcode-protocol-v4";

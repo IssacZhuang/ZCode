@@ -865,28 +865,6 @@ export function createZCodeAgentConnectionScope(
         return RpcEvent.None;
       return base.onDynamicLocalTtftFacts(workspaceTarget(params));
     },
-    onDynamicConversationTelemetryFact(params) {
-      assertOpen();
-      // 可信 clientMode 来自 host attachment；Web/mobile/relay 即使能读权威对话态，
-      // 也不能借共享 workspace emitter 安装生产 telemetry reporter。
-      const downstream = readTrustedZCodeAgentV4Connection(params);
-      const relayDesktopDownstream =
-        role === "trusted-host-relay" && downstream?.clientMode === "desktop-continuous";
-      if (
-        context.clientMode !== "desktop-continuous" ||
-        (role !== "terminal-client" && !relayDesktopDownstream)
-      ) {
-        return RpcEvent.None;
-      }
-      // renderer 的 workspace supervisor 会先于 V4 hello/initialize 挂载。
-      // telemetry emitter 本身不发起协议请求，允许可信 desktop 提前监听，避免动态
-      // Event 在 handshake 前抛错并让 host channel 退出；live fact 仍只会在 ingest 后产生。
-      // 远程 workspace 还会经过 trusted host relay；这里沿用已有 trusted carrier 传递
-      // 下游 clientMode/namespace connectionId，relay 自身没有可信下游时仍保持拒绝。
-      return base.onDynamicConversationTelemetryFact(
-        withTrustedConnection(workspaceTarget(params), forwardedConnection(params)),
-      );
-    },
     onDynamicProcessResourceSample() {
       assertOpen();
       // CLI 资源样本只供远端 Desktop Host relay 回传 main；renderer/mobile attachment

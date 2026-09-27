@@ -71,7 +71,6 @@ import type {
   CommandKey,
   CommandsQueryResult,
   ConversationTopicWireCandidate,
-  ConversationTelemetryFact,
   ConversationRowTarget,
   HelloMessage,
   SessionsIndexTopicWireCandidate,
@@ -806,9 +805,6 @@ export interface IZCodeAgentService {
   onDynamicLocalTtftFacts(
     params: ZCodeAgentWorkspaceTarget,
   ): Event<import("@zcode/shared").LocalTtftFacts>;
-  onDynamicConversationTelemetryFact(
-    params: ZCodeAgentWorkspaceTarget,
-  ): Event<ConversationTelemetryFact>;
   // ── sessions-index 通道（列表活性）──
   subscribeSessionsIndexV4(
     params: ZCodeAgentSessionsIndexSubscribeParams,

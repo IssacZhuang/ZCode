@@ -68,7 +68,6 @@ import type {
   V4ConversationRowsRangeResult,
   WorkspaceConfigState,
   WorkspaceConfigTopicFrame,
-  ConversationTelemetryFact,
   ConversationOpenTiming,
 } from "@zcode/shared/zcode-protocol-v4";
 import {
@@ -142,7 +141,6 @@ import { SessionsIndexPublisher } from "./sessions-index-publisher.js";
 import { SessionsIndexPublisherRegistry } from "./sessions-index-publisher-registry.js";
 import { WorkspaceConfigPublisher } from "./workspace-config-publisher.js";
 import type { TopicFrameReservation } from "./topic-frame-reservation.js";
-import { ConversationTelemetryFactNormalizer } from "./conversation-telemetry-facts.js";
 import { V4CapabilityUnsupportedError } from "./commands/handlers/interaction-background.js";
 
 function toRuntimeTurnId(turnId: string | null): TurnId | null {
@@ -223,8 +221,6 @@ export interface V4GatewayHost {
    * host 与测试 host 都必须显式接收 physical wire，类型层不再允许退回逻辑帧。
    */
   emitWireFrame(frame: RoutedTopicWireFrame): void;
-  /** 当前进程 live ingest 的无正文事实；不缓存、不进入 topic replay。 */
-  emitConversationTelemetryFact?(fact: ConversationTelemetryFact): void;
   emitLocalTtftFacts?(facts: import("@zcode/shared").LocalTtftFacts): void;
   /**
    * sessions-index：会话 → 所属 workspaceId（列表 topic 的分桶键）。
@@ -473,7 +469,6 @@ interface ProjectionEventCommitWaiter {
 }
 
 const PROJECTION_EVENT_COMMIT_TIMEOUT_MS = 25_000;
-const MAX_TELEMETRY_EVENT_IDS = 2_000;
 /** detached subagent child 终态后无订阅者时，publisher 由低频 tick 释放前的保留时长。 */
 const DETACHED_CHILD_PUBLISHER_GRACE_MS = 120_000;
 
@@ -616,8 +611,6 @@ export class ConversationV4Gateway {
   private readonly attachmentPruneTimer: ReturnType<typeof setInterval>;
   private readonly now: () => number;
   private readonly createLogEpoch: (sessionId: string) => string;
-  private readonly telemetryNormalizer = new ConversationTelemetryFactNormalizer();
-  private readonly telemetryEventIds = new Set<string>();
   private disposed = false;
 
   /** session entry 状态变更后的轻量 metadata 更新，不重放 conversation event。 */
@@ -748,7 +741,6 @@ export class ConversationV4Gateway {
       hydrationBuffer.eventIds.add(eventId);
       hydrationBuffer.rawEvents.push(event);
     }
-    this.emitLiveTelemetryFact(sessionId, event);
     for (const normalizedEvent of this.normalizeRuntimeEventSequence(sessionId, event)) {
       try {
         this.localTtft.event(sessionId, normalizedEvent);
@@ -760,37 +752,6 @@ export class ConversationV4Gateway {
         }
       }
       this.ingestNormalizedEvent(sessionId, normalizedEvent);
-    }
-  }
-
-  private emitLiveTelemetryFact(sessionId: string, event: SessionEvent): void {
-    const eventId = String(event.id);
-    // 主 session 与 detached child 各自维护事件序列，eventId 不能假设跨
-    // session 全局唯一。旧去重只用 eventId，会把 child 的同号事件误判成主会话重放，
-    // 导致前台 Subagent 的真实轮次事实被静默丢弃。
-    const telemetryEventKey = `${sessionId}\0${eventId}`;
-    if (this.telemetryEventIds.has(telemetryEventKey)) return;
-    this.telemetryEventIds.add(telemetryEventKey);
-    if (this.telemetryEventIds.size > MAX_TELEMETRY_EVENT_IDS) {
-      const oldest = this.telemetryEventIds.values().next().value;
-      if (typeof oldest === "string") this.telemetryEventIds.delete(oldest);
-    }
-    try {
-      const config =
-        this.publishers.get(sessionId)?.getSnapshot().config ??
-        this.host.getSessionConfigSeed?.(sessionId) ??
-        undefined;
-      const fact = this.telemetryNormalizer.normalize(sessionId, event, {
-        memoryEnabled: this.host.getSessionMemoryEnabled?.(sessionId),
-        modelName: config?.model,
-        modelProvider: config?.provider,
-      });
-      if (fact) {
-        this.host.emitConversationTelemetryFact?.(fact);
-      }
-    } catch (error) {
-      // 轮次事实绝不能反向阻断 conversation 投影；严格 schema 失败只记录诊断。
-      this.host.onError?.("v4.telemetry.normalize", error);
     }
   }
 
@@ -2768,7 +2729,6 @@ export class ConversationV4Gateway {
     this.readyFlights.delete(sessionId);
     this.rawSequenceStates.delete(sessionId);
     if (options.clearCommandInbox) this.inbox.clearSession(sessionId);
-    this.telemetryNormalizer.clearSession(sessionId);
     this.detachedLiveSessions.delete(sessionId);
     this.projectionFaultedSessions.delete(sessionId);
     // detached child 归属清理：自己作为 child 从父表摘除；作为父则连带释放没有 record 的 child。
@@ -2819,7 +2779,6 @@ export class ConversationV4Gateway {
     this.hydrationInFlight.clear();
     this.readyFlights.clear();
     this.rawSequenceStates.clear();
-    this.telemetryEventIds.clear();
     this.detachedLiveSessions.clear();
     this.detachedChildParent.clear();
     this.detachedChildrenByParent.clear();

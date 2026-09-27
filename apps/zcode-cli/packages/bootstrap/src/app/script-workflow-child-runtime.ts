@@ -36,7 +36,8 @@ import { parseProviderQualifiedModelSelection } from "./provider-registry-select
 import type { ZCodeAppOptions } from "./types.js";
 
 export interface ScriptWorkflowAgentRuntimeDeps {
-  agentTelemetry: AgentExecutionTelemetryPort;
+  /** 本地个人版不再装配进程级遥测 Owner；缺省时 core 的 RuntimeTelemetryFacade 走 noop。 */
+  agentTelemetry?: AgentExecutionTelemetryPort;
   appOptions: ZCodeAppOptions;
   appVersion: string;
   artifactStore?: ToolArtifactStorePort;
@@ -142,9 +143,7 @@ export function createScriptWorkflowAgentRuntime(input: {
       ...(input.workflowSubmitPort && input.workflowSubmitSchema
         ? { workflowSubmitSchema: input.workflowSubmitSchema }
         : {}),
-      ...(input.workflowEscalatePort
-        ? { workflowEscalatePort: input.workflowEscalatePort }
-        : {}),
+      ...(input.workflowEscalatePort ? { workflowEscalatePort: input.workflowEscalatePort } : {}),
       ...(input.modelRequestAdmission
         ? { modelRequestAdmission: input.modelRequestAdmission }
         : {}),
@@ -160,7 +159,7 @@ function createRuntimeDeps(
 ): ConstructorParameters<typeof AgentRuntime>[2] {
   return {
     agentTelemetry: deps.agentTelemetry,
-    agentTelemetryCausation: deps.agentTelemetry.captureCausation(),
+    agentTelemetryCausation: deps.agentTelemetry?.captureCausation(),
     // Script workflow child 具有独立生命周期；用 Link 保留发起关系。
     agentTelemetryCausationMode: "linked_root",
     appVersion: deps.appVersion,

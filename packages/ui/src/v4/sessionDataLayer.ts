@@ -5,10 +5,12 @@
 // Map<workspaceKey, SessionDataLayer>，本层不感知 workspace。
 import { ConversationProjectionStore } from "@/v4/conversationProjectionStore.js";
 import { shouldExposeE2EStoreBridge } from "@/lib/e2eStoreBridge.js";
-import type { SessionOpenKind } from "@/lib/sessionOpenArmsTelemetry.js";
 import { conversationTopic, type ConversationTransport } from "@/v4/transport.js";
 import { logger } from "@/logger.js";
 import type { CommandsQueryParams, CommandsQueryResult } from "@zcode/shared/zcode-protocol-v4";
+
+/** lease 获取路径的投影生命周期状态；仅用于本地 lifecycle 日志，不属于上报维度。 */
+type SessionOpenKind = "cold" | "warm" | "keep_warm";
 
 /** pane 持有的租约；release 幂等。 */
 export interface SessionLease {

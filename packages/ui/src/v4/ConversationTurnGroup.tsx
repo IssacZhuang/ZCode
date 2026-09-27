@@ -1318,7 +1318,6 @@ function ConversationTurnGroupImpl({
               text={assistantCopyText}
               createdAt={latestAssistantTextRow.createdAt}
               feedback={readAssistantFeedback(latestAssistantTextRow)}
-              sessionId={context.sessionId}
               onFork={canForkLatestAssistant ? onFork : undefined}
               onRetry={canRetryLatestAssistant ? onRetry : undefined}
               onFeedbackChange={onFeedbackChange}

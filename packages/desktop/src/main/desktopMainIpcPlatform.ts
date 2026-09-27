@@ -127,8 +127,8 @@ export function registerPlatformIpcHandlers(options: {
   reportBrowserScreenshotSurfaceReady?: ReportBrowserScreenshotSurfaceReady;
   /** Browser tab 关闭、挂起、恢复与跨重启 shell IPC。 */
   browserViewResidencyHandlers?: BrowserViewResidencyIpcHandlers;
-  /** renderer 就绪回调（遥测上下文登记）；深链 pending 投递在处理器内部完成。 */
-  onRendererReady: (input: { rendererId: number }) => void;
+  /** renderer 就绪回调；深链 pending 投递在处理器内部完成。 */
+  onRendererReady?: (input: { rendererId: number }) => void;
 }) {
   ipcMain.handle(PlatformChannels.SelectDirectory, async () => {
     const result = await dialog.showOpenDialog({
@@ -437,7 +437,7 @@ export function registerPlatformIpcHandlers(options: {
   ipcMain.on(PlatformChannels.RendererReady, (event) => {
     // 冷启动期间到达的 workspace 深链在这里补投给已就绪的 renderer。
     deliverPendingDeepLink(event.sender);
-    options.onRendererReady({ rendererId: event.sender.id });
+    options.onRendererReady?.({ rendererId: event.sender.id });
   });
 
   ipcMain.on(PlatformChannels.ShowTaskNotification, (event, payload: unknown) => {

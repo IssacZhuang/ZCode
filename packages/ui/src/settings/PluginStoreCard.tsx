@@ -10,7 +10,6 @@ import {
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { canUpdatePluginItem, type StorePluginItem } from "@/settings/pluginStoreListing.js";
-import { runUserAction } from "@/lib/userActionTelemetry.js";
 
 /** 商店条目的通用动作集：列表卡片、详情页共用同一套回调与进行中态判定。 */
 export interface PluginStoreActions {
@@ -197,14 +196,7 @@ export function PluginStoreInstallButton({
       disabled={installing || !actions.onInstall}
       onClick={(event) => {
         event.stopPropagation();
-        const onInstall = actions.onInstall;
-        if (!onInstall) return;
-        runUserAction({
-          input: { featureId: "extension.plugin", action: "install", trigger: "button" },
-          operation: () => onInstall(item),
-          completed: { resultSource: "optimistic_projection" },
-          failureStage: "plugin_install",
-        });
+        actions.onInstall?.(item);
       }}
     >
       {installing ? <Loader2 className="size-3.5 animate-spin" aria-hidden="true" /> : null}

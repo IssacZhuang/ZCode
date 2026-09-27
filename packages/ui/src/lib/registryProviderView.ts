@@ -14,18 +14,3 @@ export function resolveProviderLabel(
   }
   return normalizedId;
 }
-
-export function resolveProviderBaseURL(
-  providerId: string | undefined,
-  registryView: ModelSelectionView | null,
-): string | undefined {
-  const normalizedId = providerId?.trim() ?? "";
-  if (!normalizedId) return undefined;
-  const registryProvider = registryView?.providers.find(
-    (provider) => provider.providerId === normalizedId,
-  );
-  if (registryProvider) {
-    return registryProvider.config.api?.baseUrl?.trim() || undefined;
-  }
-  return undefined;
-}

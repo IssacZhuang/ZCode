@@ -214,7 +214,6 @@ import {
   commandsQueryResultSchema,
   conversationTopic,
   conversationTopicWireCandidateSchema,
-  conversationTelemetryFactSchema,
   sessionsIndexTopic,
   sessionsIndexTopicWireCandidateSchema,
   MAX_LEGACY_TASK_IDS_PER_SUBSCRIBE,
@@ -257,7 +256,6 @@ import {
   ZCodeAttachmentFaultError,
   type CommandAck,
   type ConversationTopicWireCandidate,
-  type ConversationTelemetryFact,
   type SessionsIndexTopicWireCandidate,
   type WorkspaceConfigTopicWireCandidate,
   type CommandEnvelope,
@@ -898,7 +896,6 @@ export function createZCodeAgentService(
   // v4 conversation 帧 fan-out：workspace 级 emitter，renderer 侧按 topic 自行路由。
   const conversationFrameEmitters = new Map<string, Emitter<ConversationTopicWireCandidate>>();
   const localTtftFactsEmitter = new Emitter<{ workspaceKey: string; facts: LocalTtftFacts }>();
-  const conversationTelemetryFactEmitters = new Map<string, Emitter<ConversationTelemetryFact>>();
   // sessions-index 帧 fan-out：与 conversation 同一 conversationFrame 通知，按 topic 前缀分流到此 emitter。
   const sessionsIndexFrameEmitters = new Map<string, Emitter<SessionsIndexTopicWireCandidate>>();
   // workspace-config 帧 fan-out：配置目录活性（task-index syncer 消费），同一通知按前缀分流。
@@ -1183,15 +1180,6 @@ export function createZCodeAgentService(
     }
     const created = new Emitter<ConversationTopicWireCandidate>();
     conversationFrameEmitters.set(key, created);
-    return created;
-  }
-
-  function getConversationTelemetryFactEmitter(workspace: ZCodeAgentWorkspaceTarget) {
-    const key = resolveWorkspaceKey(workspace);
-    const existing = conversationTelemetryFactEmitters.get(key);
-    if (existing) return existing;
-    const created = new Emitter<ConversationTelemetryFact>();
-    conversationTelemetryFactEmitters.set(key, created);
     return created;
   }
 
@@ -1602,24 +1590,6 @@ export function createZCodeAgentService(
             });
           return;
         }
-        if (message.method === V4_NOTIFICATIONS.conversationTelemetryFact) {
-          const parsed = conversationTelemetryFactSchema.safeParse(message.params);
-          if (parsed.success) {
-            getConversationTelemetryFactEmitter(workspace).fire(parsed.data);
-          } else {
-            // 严格丢弃未知字段，避免 CLI runtime 新字段未经审计穿透到 renderer reporter。
-            logger.warn(undefined, "丢弃无效 v4 conversation telemetry fact", {
-              issues: parsed.error.issues.map((issue) => ({
-                code: issue.code,
-                message: issue.message,
-                path: issue.path.join("."),
-              })),
-              workspaceKey: resolveWorkspaceKey(workspace),
-            });
-          }
-          return;
-        }
-
         if (message.method === V4_NOTIFICATIONS.conversationFrame) {
           // 同一通知也载 sessions-index 帧，按 topic 前缀分流到列表 emitter
           // （否则会被 conversation schema 校验丢弃）。
@@ -2472,10 +2442,6 @@ export function createZCodeAgentService(
       emitter.dispose();
     }
     conversationFrameEmitters.clear();
-    for (const emitter of conversationTelemetryFactEmitters.values()) {
-      emitter.dispose();
-    }
-    conversationTelemetryFactEmitters.clear();
     localTtftFactsEmitter.dispose();
     for (const emitter of workspaceConfigFrameEmitters.values()) {
       emitter.dispose();
@@ -4646,10 +4612,6 @@ export function createZCodeAgentService(
           if (event.workspaceKey === resolveWorkspaceKey(params)) listener(event.facts);
         });
     },
-    onDynamicConversationTelemetryFact(params: ZCodeAgentWorkspaceTarget) {
-      return getConversationTelemetryFactEmitter(params).event;
-    },
-
     // ── sessions-index 通道（列表活性）：复用 conversationSubscribe RPC，
     // 按 topic 前缀由 CLI server 分派 ──
 

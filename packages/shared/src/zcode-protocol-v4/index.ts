@@ -47,7 +47,6 @@ export * from "./shared-context-import.js";
 export * from "./input-intent.js";
 export * from "./submission.js";
 export * from "./fork.js";
-export * from "./telemetry.js";
 export * from "./task-list-membership.js";
 export * from "./workspace-hook-review.js";
 export * from "./cuaPermission.js";

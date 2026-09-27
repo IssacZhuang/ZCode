@@ -31,8 +31,6 @@ import { AutomationScheduledTemplateIcon } from "@/settings/AutomationScheduledT
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
-import { usePlatform } from "@/hooks/usePlatform.js";
-import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { logger } from "@/logger.js";
 import {
@@ -65,11 +63,6 @@ import { SETTINGS_FRAME_CONTENT_CLASSNAME } from "@/settings/SettingsPageParts.j
 import { useTabStore } from "@/store/TabStoreProvider.js";
 import { isWorkspaceTab } from "@/store/tabStore.js";
 import { isRemoteAutomationWorkspace } from "@/hooks/useAutomationProjectOptions.js";
-import {
-  reportAutomationActionClick,
-  reportAutomationCreateResult,
-  resolveAutomationSelectionTelemetry,
-} from "@/lib/automationTelemetry.js";
 import {
   materializeScheduledTemplateDraft,
   resolveAutomationTemplateText,
@@ -388,12 +381,8 @@ export function AutomationsSection({
   onOpenSession,
 }: AutomationsSectionProps) {
   const { intl, locale } = useZCodeIntl();
-  const platform = usePlatform();
   const { clientScenesService, zcodeAgentService } = useServices();
   const confirmDialog = useConfirmDialog();
-  const providerSettingsRead = useProviderSettingsView();
-  const providerSettingsView =
-    providerSettingsRead.state.status === "ready" ? providerSettingsRead.state.view : null;
   const { settings: sharedSettings, update: updateSharedSettings } = useSettings();
 
   const automations = useAutomationManagementStore((state) => state.automations);
@@ -612,16 +601,6 @@ export function AutomationsSection({
         },
         zcodeAgentService,
       );
-      void reportAutomationCreateResult(platform, {
-        automationId: created?.automationId,
-        cronExpr: input.cronExpr ?? "",
-        templateId: view.mode === "create" ? view.draft?.templateId : undefined,
-        error: useAutomationManagementStore.getState().error,
-        modelFields: resolveAutomationSelectionTelemetry(
-          input.modelSelection,
-          providerSettingsView,
-        ),
-      });
       if (!created) {
         const createError = useAutomationManagementStore.getState().error;
         toast(
@@ -639,8 +618,6 @@ export function AutomationsSection({
       automationCreateLimitReached,
       createAutomation,
       intl,
-      platform,
-      providerSettingsView,
       showAutomationCreateLimitToast,
       updateAutomation,
       view,
@@ -695,12 +672,6 @@ export function AutomationsSection({
         automationId: automation.automationId,
         source,
       });
-      void reportAutomationActionClick(platform, {
-        action: "run_now",
-        source,
-        automation,
-        providerSettingsView,
-      });
       const result = await runAutomationNow(automation.automationId, zcodeAgentService);
       logger.debug("[automations] 立即运行交互结束", {
         automationId: automation.automationId,
@@ -746,19 +717,11 @@ export function AutomationsSection({
         toast(intl.formatMessage({ id: getAutomationRunNowToastId(result) }));
       }
     },
-    [
-      intl,
-      loadRuns,
-      onOpenSession,
-      platform,
-      providerSettingsView,
-      runAutomationNow,
-      zcodeAgentService,
-    ],
+    [intl, loadRuns, onOpenSession, runAutomationNow, zcodeAgentService],
   );
 
   const handleDelete = useCallback(
-    async (automation: ZCodeAutomation, source: "list" | "editor" = "list") => {
+    async (automation: ZCodeAutomation) => {
       const confirmed = await confirmDialog({
         presentation: "automation-confirmation",
         title: intl.formatMessage({ id: "automations.delete.title" }),
@@ -773,12 +736,6 @@ export function AutomationsSection({
         showKeyboardHints: false,
       });
       if (!confirmed) return;
-      void reportAutomationActionClick(platform, {
-        action: "delete",
-        source,
-        automation,
-        providerSettingsView,
-      });
       await deleteAutomation(automation.automationId, zcodeAgentService);
       const message = useAutomationManagementStore.getState().error;
       if (message) toast(intl.formatMessage({ id: getAutomationActionErrorToastId("delete") }));
@@ -789,7 +746,7 @@ export function AutomationsSection({
           : prev,
       );
     },
-    [confirmDialog, deleteAutomation, intl, platform, providerSettingsView, zcodeAgentService],
+    [confirmDialog, deleteAutomation, intl, zcodeAgentService],
   );
 
   if (!workspacePath) {
@@ -818,7 +775,7 @@ export function AutomationsSection({
           onSubmit={handleEditSubmit}
           onRunNow={(automation) => handleRunNow(automation, "editor")}
           onToggle={handleToggle}
-          onDelete={(automation) => handleDelete(automation, "editor")}
+          onDelete={handleDelete}
           runsEntry={view.mode === "edit" ? runsCache[view.automation.automationId] : undefined}
           onLoadRuns={() => {
             if (view.mode === "edit")
