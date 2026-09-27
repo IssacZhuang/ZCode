@@ -35,8 +35,6 @@ import { logger } from "@/logger.js";
 import { RootShell } from "@/root/RootShell.js";
 import { RootWorkspaceContent } from "@/root/RootWorkspaceContent.js";
 import { resolveRootWorkspaceShellTarget } from "@/root/rootWorkspaceShellTarget.js";
-import { OccupationOnboarding } from "@/onboarding/OccupationOnboarding.js";
-import { OnboardingDialog } from "@/onboarding/OnboardingDialog.js";
 import { useRootProviderStateRefresh } from "@/root/useRootProviderStateRefresh.js";
 import { useModelSelectionServiceView } from "@/hooks/useModelSelectionView.js";
 import { useRootProviderSettingsSnapshot } from "@/root/useRootProviderSettingsSnapshot.js";
@@ -676,59 +674,42 @@ function RootInner({
     <RootShell>
       {rootModelSelectionErrorNode}
       {directoryBrowserDialog}
-      <OccupationOnboarding
-        showWindowControls={Boolean(isWindowsDesktop || (isDesktop && !isMacDesktop))}
-        showChildrenWhileLoading={!workspaceShellPath && isSettingsTabActive}
-        isMacDesktop={isMacDesktop}
-        isWindowsDesktop={isWindowsDesktop}
-      >
-        {/* 新引导属于应用级偏好；无项目时也要挂载，才能响应设置页的手动打开请求。 */}
-        {!workspaceShellPath ? (
-          isSettingsTabActive ? (
-            <ScopedErrorBoundary
-              scope="settings-page"
-              resetKeys={["settings-root"]}
-              variant="panel"
-              className="h-full"
-            >
-              <SettingsPage {...settingsLayerProps} />
-            </ScopedErrorBoundary>
-          ) : null
-        ) : (
-          <RootWorkspaceContent
-            workspaceScopedServices={workspaceScopedServices}
-            baseFeedbackService={services.feedbackService}
-            workspaceShellPath={workspaceShellPath}
-            workspaceIdentity={workspaceShellIdentity}
-            workspaceRemoteSessionId={workspaceShellRemoteSessionId}
-            activeWorkspacePath={activeWorkspacePath}
-            isSettingsTabActive={isSettingsTabActive}
-            handleCreateTask={handleCreateTask}
-            handleCreateConversationTask={handleCreateConversationTask}
-            handleResolveConversationWorkspace={handleResolveConversationWorkspace}
-            handleOpenWorkspace={handleOpenWorkspace}
-            handleOpenFolderFromWorkspaceMenu={handleOpenFolderFromWorkspaceMenu}
-            handleCreateScratchWorkspace={handleCreateScratchWorkspace}
-            handleBackFromSettings={handleBackFromSettings}
-            allowOpenWorkspace={allowOpenWorkspace}
-            isDesktop={isDesktop}
-            isMacDesktop={isMacDesktop}
-            isWindowsDesktop={isWindowsDesktop}
-            supportsEmbeddedBrowser={supportsEmbeddedBrowser}
-          />
-        )}
-        <ScopedErrorBoundary
-          scope="onboarding-dialog"
-          resetKeys={[workspaceShellIdentity?.trim() || workspaceShellPath]}
-          variant="silent"
-        >
-          <OnboardingDialog
-            workspacePath={workspaceShellPath || undefined}
-            workspaceIdentity={workspaceShellIdentity}
-            isDesktop={isDesktop}
-          />
-        </ScopedErrorBoundary>
-      </OccupationOnboarding>
+      {/* 新用户引导（职业选择 + Claude 迁移向导）已随个人分支瘦身移除，
+          这里直接渲染设置页 / workspace 内容。 */}
+      {!workspaceShellPath ? (
+        isSettingsTabActive ? (
+          <ScopedErrorBoundary
+            scope="settings-page"
+            resetKeys={["settings-root"]}
+            variant="panel"
+            className="h-full"
+          >
+            <SettingsPage {...settingsLayerProps} />
+          </ScopedErrorBoundary>
+        ) : null
+      ) : (
+        <RootWorkspaceContent
+          workspaceScopedServices={workspaceScopedServices}
+          baseFeedbackService={services.feedbackService}
+          workspaceShellPath={workspaceShellPath}
+          workspaceIdentity={workspaceShellIdentity}
+          workspaceRemoteSessionId={workspaceShellRemoteSessionId}
+          activeWorkspacePath={activeWorkspacePath}
+          isSettingsTabActive={isSettingsTabActive}
+          handleCreateTask={handleCreateTask}
+          handleCreateConversationTask={handleCreateConversationTask}
+          handleResolveConversationWorkspace={handleResolveConversationWorkspace}
+          handleOpenWorkspace={handleOpenWorkspace}
+          handleOpenFolderFromWorkspaceMenu={handleOpenFolderFromWorkspaceMenu}
+          handleCreateScratchWorkspace={handleCreateScratchWorkspace}
+          handleBackFromSettings={handleBackFromSettings}
+          allowOpenWorkspace={allowOpenWorkspace}
+          isDesktop={isDesktop}
+          isMacDesktop={isMacDesktop}
+          isWindowsDesktop={isWindowsDesktop}
+          supportsEmbeddedBrowser={supportsEmbeddedBrowser}
+        />
+      )}
     </RootShell>
   );
 }

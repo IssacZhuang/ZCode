@@ -29,9 +29,6 @@ export { useTerminal } from "./useTerminalService.js";
 export { useSettings, useRecentProjects } from "./useSettingService.js";
 export { useSkills } from "./useSkills.js";
 
-// Onboarding 完成记录服务（本地持久化，后续上传服务器）
-export { useOnboardingRecordService } from "./useOnboardingRecordService.js";
-
 // 通用确认弹窗
 export { useConfirmDialog } from "./useConfirmDialog.js";
 export { useAlertDialog } from "./useAlertDialog.js";

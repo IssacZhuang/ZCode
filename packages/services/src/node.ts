@@ -217,7 +217,6 @@ import { IGitCheckpointService } from "./git/gitCheckpoint.js";
 import { ISystemService } from "./system/system.js";
 import { ITerminalService } from "./terminal/terminal.js";
 import { ISettingService } from "./setting/setting.js";
-import { IOnboardingRecordService } from "./onboarding/onboardingRecord.js";
 import { ICredentialService } from "./credential/credential.js";
 import { IBroadcastService } from "./broadcast/broadcast.js";
 import { IZCodeTaskService } from "./session/zcodeTaskService.js";
@@ -256,7 +255,6 @@ import { createGitCheckpointService } from "./git/gitCheckpointService.js";
 import { createSystemService } from "./system/systemService.js";
 import { createTerminalService } from "./terminal/terminalService.js";
 import { createSettingService } from "./setting/settingService.js";
-import { createOnboardingRecordService } from "./onboarding/onboardingRecordService.js";
 import { createObservableSettingService } from "./setting/observableSettingService.js";
 import { createCredentialService } from "./credential/credentialService.js";
 import { createBroadcastService } from "./broadcast/broadcastService.js";
@@ -1230,13 +1228,9 @@ export function createLocalServices(options: {
     resolveZCodeEndpointOrigin: resolveCurrentZCodeEndpointOrigin,
   });
   const systemService = createSystemService();
-  // onboarding 资格与任务列表共用同一份全局 tasks-index；repo 懒加载数据库，提前构造不会
-  // 增加启动 I/O，后续 session syncer 也继续复用这一实例。
+  // 任务列表的全局 tasks-index；repo 懒加载数据库，提前构造不会增加启动 I/O，
+  // 后续 session syncer 继续复用这一实例（onboarding 资格判断已随引导体系移除）。
   const taskIndexRepo = new TaskIndexRepo();
-  // onboarding 完成记录：userId 由登录态补全（apikey/未登录为 null）。
-  const onboardingRecordService = createOnboardingRecordService({
-    hasExistingLocalTask: async () => (await taskIndexRepo.listTaskMetas({})).length > 0,
-  });
   const providerConfigLog = createServiceLogger("provider-config");
   const clientConfigPlatform = resolveClientConfigPlatform();
   const providerConfigRuntime = createProviderConfigRuntime({
@@ -1975,7 +1969,6 @@ export function createLocalServices(options: {
     .register(ISystemService, systemService)
     .register(ITerminalService, createTerminalService({ settingService }))
     .register(ISettingService, settingService)
-    .register(IOnboardingRecordService, onboardingRecordService)
     .register(ICredentialService, credentialService)
     .register(IBroadcastService, broadcastService)
     .register(IZCodeTaskService, zcodeTaskService)

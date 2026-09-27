@@ -53,7 +53,8 @@ export const CORE_USER_ACTION_FEATURES = {
 } as const;
 
 export const SETTINGS_USER_ACTION_FEATURES = {
-  "settings.navigation": ["open_section", "back_to_workspace", "open_onboarding"],
+  // 新用户引导入口已随 Onboarding 体系移除，"open_onboarding" 不再上报。
+  "settings.navigation": ["open_section", "back_to_workspace"],
   "settings.locale": ["change_locale"],
   "settings.appearance": [
     "change_theme",
