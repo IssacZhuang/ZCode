@@ -46,7 +46,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import type { Locale, UserInfo, ZCodeTaskMeta } from "@zcode/shared";
+import type { Locale, ZCodeTaskMeta } from "@zcode/shared";
 import {
   TID_CONVERSATION_NEW_TASK,
   TID_CONVERSATION_SECTION,
@@ -126,7 +126,6 @@ import {
 } from "@/WorkspaceSidebar/taskGroupTogglePresentation.js";
 import { WorkspacePurposeSection } from "@/WorkspaceSidebar/WorkspacePurposeSection.js";
 import { cn } from "@/components/lib/utils.js";
-import { useCodingPlanUpgradeDialog } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import {
   resolveWorkspaceDragGlobalIndices,
   resolveWorkspaceDragExpanded,
@@ -212,7 +211,6 @@ function resolveSidebarTaskViewMode(params: {
 
 export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   workspacePath,
-  workspaceRemoteSessionId,
   activePreviewPath,
   onSelectTask,
   onStartDraftInWorkspace,
@@ -223,9 +221,6 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   onCreateConversationTask,
   onOpenFolderFromWorkspaceMenu,
   theme,
-  onLogout,
-  onLogin,
-  user,
   isDesktop = false,
   isMacDesktop: _isMacDesktop = false,
   isWindowsDesktop = false,
@@ -246,7 +241,6 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   onFileTreeOpenChange,
 }: {
   workspacePath: string;
-  workspaceRemoteSessionId?: string;
   activePreviewPath?: string | null;
   onSelectTask: (
     targetWorkspacePath: string,
@@ -263,9 +257,6 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   onCreateConversationTask: () => void;
   onOpenFolderFromWorkspaceMenu: () => void;
   theme: Theme;
-  onLogout?: () => void;
-  onLogin?: () => void;
-  user?: UserInfo | null;
   isDesktop?: boolean;
   isMacDesktop?: boolean;
   isWindowsDesktop?: boolean;
@@ -305,7 +296,6 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
     },
     [onSelectTask],
   );
-  const { openCodingPlanUpgrade } = useCodingPlanUpgradeDialog();
   const bumpTaskListVersion = useZCodeSessionStore((state) => state.bumpTaskListVersion);
   const workspaceIdentity = useTabStore((state) => {
     if (!state.activeTabId) {
@@ -725,18 +715,6 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
   const handleOpenAutomationsMain = useCallback(() => {
     onOpenAutomations?.();
   }, [onOpenAutomations]);
-  const handleOpenCodingPlanUpgrade = useCallback(
-    (
-      providerId: string,
-      funnelContext?: import("@/lib/codingPlanFunnelTelemetry.js").CodingPlanFunnelContext,
-    ) => {
-      openCodingPlanUpgrade({
-        providerId,
-        funnelContext,
-      });
-    },
-    [openCodingPlanUpgrade],
-  );
   const activeTaskId = useZCodeSessionStore(
     (state) =>
       // Web 远程控制从全局 task 入口进入远端 workspace 时，会先按
@@ -1583,15 +1561,8 @@ export const WorkspaceSidebar = memo(function WorkspaceSidebarComponent({
             onLocaleChange={handleLocaleChange}
             onThemeChange={handleThemeChange}
             onSettingsButtonClick={openSettingsTab}
-            onUsageClick={openSettingsTab}
-            onUpgradeClick={handleOpenCodingPlanUpgrade}
-            onLogin={onLogin}
-            onLogout={onLogout}
-            user={user}
             workspacePath={workspacePath}
             workspaceIdentity={workspaceIdentity}
-            workspaceRemoteSessionId={workspaceRemoteSessionId}
-            activeTaskId={activeTaskId}
             isDesktop={isDesktop}
           />
         </div>

@@ -49,7 +49,6 @@ import type {
   DesktopTitleBarTheme,
   EmbeddedBrowserOpenUrlRequest,
   Locale,
-  OAuthStateRegistration,
   OpenInEditorOptions,
   RemoteTarget,
   TaskNotificationPayload,
@@ -80,7 +79,6 @@ import {
   formatZCodeRendererProcessName,
   shouldEnableE2ETestBridge,
 } from "@zcode/shared";
-import { createOAuthCallbackHandler } from "./oauthCallbackBridge.js";
 
 if (shouldEnableE2ETestBridge(process.env)) {
   contextBridge.exposeInMainWorld("__zcodeFinalArmsCustomEventsE2E", {
@@ -542,23 +540,7 @@ contextBridge.exposeInMainWorld("zcode", {
   /** 从权限浮窗拖拽 Helper.app 到 macOS 权限列表。必须是 send —— invoke 的往返会错过手势。 */
   startCuaHelperPermissionDrag: () =>
     ipcRenderer.send(PlatformChannels.StartCuaHelperPermissionDrag),
-  /** 上报 OAuth state 用于 deep link 路由 */
-  registerOAuthState: (payload: OAuthStateRegistration) =>
-    ipcRenderer.send(PlatformChannels.OAuthRegisterState, payload),
-  /** 注册 OAuth deep link 回调，返回 disposer */
-  onOAuthCallback: (cb: (url: string) => void): (() => void) => {
-    const handler = createOAuthCallbackHandler(cb, () => {
-      ipcRenderer.send(PlatformChannels.OAuthCallbackHandled);
-    });
-    ipcRenderer.on(PlatformChannels.OAuthCallback, handler);
-    return () => ipcRenderer.removeListener(PlatformChannels.OAuthCallback, handler);
-  },
-  /** 注册支付 deep link 回调，返回 disposer */
-  onPaymentCallback: (callback: (url: string) => void): (() => void) => {
-    const handler = (_event: unknown, url: string) => callback(url);
-    ipcRenderer.on(PlatformChannels.PaymentCallback, handler);
-    return () => ipcRenderer.removeListener(PlatformChannels.PaymentCallback, handler);
-  },
+  /** 注册外部分享页导入回调，返回 disposer */
   onShareImport: (callback: (payload: { shareCode: string }) => void): (() => void) => {
     shareImportCallbacks.add(callback);
     while (pendingShareImports.length > 0) {

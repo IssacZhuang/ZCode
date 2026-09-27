@@ -188,9 +188,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
   handleOpenAutomations,
   handleOpenPluginStore,
   handleManageInstalledPlugins,
-  onLogout,
-  onLogin,
-  user,
   onCreateTask,
   onCreateConversationTask,
   onResolveConversationWorkspace,
@@ -1509,7 +1506,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                 <WorkflowRunOpenProvider onOpenRun={handleOpenSidebarWorkflowRun}>
                   <WorkspaceSidebar
                     workspacePath={workspaceAbsPath}
-                    workspaceRemoteSessionId={workspaceRemoteSessionId}
                     activePreviewPath={activePreviewPath}
                     onSelectTask={handleSelectTaskInChat}
                     onStartDraftInWorkspace={handleCreateProjectDraft}
@@ -1520,9 +1516,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                     onCreateConversationTask={onCreateConversationTask ?? handleCreateTaskInChat}
                     onOpenFolderFromWorkspaceMenu={onOpenFolderFromWorkspaceMenu}
                     theme={theme}
-                    onLogout={onLogout}
-                    onLogin={onLogin}
-                    user={user}
                     isDesktop={isDesktop}
                     isMacDesktop={isMacDesktop}
                     isWindowsDesktop={isWindowsDesktop}
@@ -1646,7 +1639,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                           activeTaskChangeSummary={activeTaskChangeSummary}
                           hasUpdateReady={hasUpdateStatusButton}
                           activeTaskId={activeTaskId}
-                          user={user}
                           activeTraceId={activeTraceId}
                           activeSessionId={activeSessionId}
                           activeTaskProvider={activeTaskProvider}

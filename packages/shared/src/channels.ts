@@ -7,7 +7,6 @@ import type {
   MigrateLegacyCommonMcpResult,
   SaveCliMcpToUserDirectoryRequest,
 } from "./index.js";
-import type { OAuthStateRegistration } from "./oauth.js";
 import type { AppSettings, Locale } from "./protocol.js";
 import type { StorageCleanRequest, StorageCleanResult, StorageUsageSnapshot } from "./storage.js";
 import type {
@@ -95,13 +94,11 @@ export const ServiceChannels = {
   /** 文件系统监视服务 */
   FileWatcher: "file-watcher",
   /** OAuth 认证服务 */
-  OAuth: "oauth",
   /** 新 Provider Config 的设置读写 Facade */
   ProviderSettings: "provider-settings",
   /** 新 Provider Registry 的模型选择 Facade */
   ModelSelection: "model-selection",
   /** 远端 Environment 内部 Provider Provisioning target */
-  ProviderProvisioningTarget: "provider-provisioning-target",
   /** 本地 usage 统计服务 */
   UsageStats: "usage-stats",
   /** Coding Plan 订阅购买服务 */
@@ -284,15 +281,12 @@ export const PlatformChannels = {
    */
   NotifyCuaHelperPermissionDragEnded: "zcode:notify-cua-helper-permission-drag-ended",
   /** Renderer → Main：上报 OAuth state 用于 deep link 路由 */
-  OAuthRegisterState: "zcode:oauth-register-state",
   /** Main → Renderer：转发 deep link URL */
-  OAuthCallback: "zcode:oauth-callback",
   /** Main → Renderer：转发支付 deep link URL */
   PaymentCallback: "zcode:payment-callback",
   /** Main → Renderer：外部分享页请求导入 share code。 */
   ShareImport: "zcode:share-import",
   /** Renderer → Main：OAuth 回调已处理完成，可继续后置启动流程 */
-  OAuthCallbackHandled: "zcode:oauth-callback-handled",
   /** Renderer → Main：renderer 已就绪，可接收缓存的 deep link */
   RendererReady: "zcode:renderer-ready",
   /** Renderer → Main：同步当前 renderer 的 telemetry 上下文 */
@@ -533,7 +527,6 @@ export const HostMessageTypes = {
   /** Main → Host：全局前台 ZCode 窗口派生的 producer focus fact。 */
   CuaPipFocusChanged: "cua-pip-focus-changed",
   /** main → host：要求 Host 现读本地 Source，并同步指定 Remote Environment。 */
-  ProviderProvisioningExecute: "provider-provisioning-execute",
   /** main → host：资源管理器请求 Host 采样其后代进程（Agent / MCP / 终端）的 CPU 与内存 */
   ResourceUsageSnapshotRequest: "resource-usage-snapshot-request",
   ResourceUsageSnapshotCancel: "resource-usage-snapshot-cancel",
@@ -613,8 +606,6 @@ export const HostResponseTypes = {
   OffPeakRunResult: "off-peak-run-result",
   /** host → main：manual run 已落库，请立即唤醒 scheduler 认领派发 */
   CronSchedulerWakeRequest: "cron-scheduler-wake-request",
-  /** host → main：闲时任务翻 schedulable，请立即唤醒 scheduler 认领派发（与 cron 消息独立） */
-  OffPeakSchedulerWakeRequest: "off-peak-scheduler-wake-request",
   /** host → main：执行一条 browser-use 命令（main 用 WebContentsView+CDP 执行，按 requestId 关联） */
   BrowserExecuteRequest: "browser-execute-request",
   /** host → main：请求授权 Agent 已精确校验的本地视频路径 */
@@ -622,9 +613,7 @@ export const HostResponseTypes = {
   /** host → main：RPC 网络遥测批次（channel.command 成功率/耗时） */
   NetworkTelemetryBatch: "network-telemetry-batch",
   /** host → main：本地 Provisioning Source 成功持久化。 */
-  ProviderProvisioningSourceChanged: "provider-provisioning-source-changed",
   /** host → main：一次 Remote Environment 同步执行完毕。 */
-  ProviderProvisioningExecutionResult: "provider-provisioning-execution-result",
 } as const;
 
 // ============================================================================
@@ -809,24 +798,12 @@ export interface PlatformChannelMap {
     request: { operationId: string };
     response: void;
   };
-  [PlatformChannels.OAuthRegisterState]: {
-    request: OAuthStateRegistration;
-    response: void;
-  };
-  [PlatformChannels.OAuthCallback]: {
-    request: string;
-    response: void;
-  };
   [PlatformChannels.PaymentCallback]: {
     request: string;
     response: void;
   };
   [PlatformChannels.ShareImport]: {
     request: { shareCode: string };
-    response: void;
-  };
-  [PlatformChannels.OAuthCallbackHandled]: {
-    request: void;
     response: void;
   };
   [PlatformChannels.RendererReady]: {

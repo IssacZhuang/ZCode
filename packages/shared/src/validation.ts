@@ -1,8 +1,5 @@
 import { databaseStartupControlSchema, databaseStartupStateSchema } from "./database-startup.js";
-import {
-  sessionCreateTelemetrySchema,
-  automationSessionCreateTelemetrySchema,
-} from "./sessionCreateTelemetry.js";
+import { automationSessionCreateTelemetrySchema } from "./sessionCreateTelemetry.js";
 /* eslint-disable max-lines -- 运行时 schema 当前集中在共享包入口，外部 relay payload 校验加入后先保持单一导出面。 */
 import { z } from "zod";
 import { zcodeProcessDiagnosticSchema } from "./process-diagnostic.js";
@@ -14,7 +11,6 @@ import { isKnownRemoteResourcePackageId } from "./remoteResourcePackages.js";
 import { zcodeProviderSchema } from "./providers.js";
 import { zcodeAgentProviderSchema } from "./zcode-agent-policy.js";
 import { modelSelectionSchema } from "./model-selection.js";
-import { providerProvisioningTriggerSchema } from "./provider-provisioning.js";
 import {
   zcodeMcpTelemetryEventSchema,
   zcodeMcpResourceSamplesSchema,
@@ -22,9 +18,7 @@ import {
   zcodeProcessResourceSampleSchema,
 } from "./zcode-protocol/index.js";
 import { zcodeTaskModeSchema } from "./zcode-task-mode-schema.js";
-import { PROTOCOL_V4_LIMITS } from "./zcode-protocol-v4/core.js";
 import { errorAttributionSchema } from "./zcode-protocol-v4/snapshot.js";
-import { sessionWorkflowActivitySchema } from "./zcode-protocol-v4/sessions-index-workflow-activity.js";
 import {
   taskOwnerCommandDeliverySchema,
   taskOwnerCommandRequestSchema,
@@ -391,16 +385,6 @@ export const hostCuaPipFocusChangedMessageSchema = z
   })
   .strict();
 
-export const hostProviderProvisioningExecuteMessageSchema = z
-  .object({
-    type: z.literal("provider-provisioning-execute"),
-    requestId: nonEmptyStringSchema,
-    environmentKey: nonEmptyStringSchema,
-    remoteSessionId: nonEmptyStringSchema,
-    trigger: providerProvisioningTriggerSchema,
-  })
-  .strict();
-
 export const hostResourceUsageSnapshotRequestMessageSchema = z
   .object({
     type: z.literal("resource-usage-snapshot-request"),
@@ -440,7 +424,6 @@ export const hostIncomingMessageSchema = z.discriminatedUnion("type", [
   hostBrowserExecuteResultMessageSchema,
   hostLocalMediaPreviewPathAuthorizeResultMessageSchema,
   hostCuaPipFocusChangedMessageSchema,
-  hostProviderProvisioningExecuteMessageSchema,
 ]);
 
 export const hostLogResponseSchema = z.object({
@@ -793,12 +776,6 @@ export const hostCronSchedulerWakeRequestResponseSchema = z.object({
   automationId: nonEmptyStringSchema,
 });
 
-// host → main：闲时任务 schedulable 翻转后的 scheduler 唤醒；业务数据仍由 scheduler 从 sqlite 读取。
-export const hostOffPeakSchedulerWakeRequestResponseSchema = z.object({
-  type: z.literal("off-peak-scheduler-wake-request"),
-  offPeakTaskId: z.string().optional(),
-});
-
 // host → main：执行一条 browser-use 命令（main 用 WebContentsView+CDP 执行）。
 export const hostBrowserExecuteRequestResponseSchema = z.object({
   type: z.literal("browser-execute-request"),
@@ -844,23 +821,6 @@ export const hostNetworkTelemetryBatchResponseSchema = z.object({
   type: z.literal("network-telemetry-batch"),
   observations: z.array(networkObservationSchema).max(500),
 });
-
-export const hostProviderProvisioningSourceChangedResponseSchema = z
-  .object({
-    type: z.literal("provider-provisioning-source-changed"),
-    trigger: providerProvisioningTriggerSchema.exclude(["environment-online"]),
-  })
-  .strict();
-
-export const hostProviderProvisioningExecutionResultResponseSchema = z
-  .object({
-    type: z.literal("provider-provisioning-execution-result"),
-    requestId: nonEmptyStringSchema,
-    environmentKey: nonEmptyStringSchema,
-    status: z.enum(["applied", "already-applied", "unsupported", "failed", "rollback_failed"]),
-    error: z.string().optional(),
-  })
-  .strict();
 
 export const hostResourceUsageProcessSchema = z
   .object({
@@ -926,12 +886,9 @@ export const hostResponseMessageSchema = z.discriminatedUnion("type", [
   hostBrowserExecuteRequestResponseSchema,
   hostLocalMediaPreviewPathAuthorizeRequestResponseSchema,
   hostNetworkTelemetryBatchResponseSchema,
-  hostProviderProvisioningSourceChangedResponseSchema,
-  hostProviderProvisioningExecutionResultResponseSchema,
   hostCronRunResultResponseSchema,
   hostOffPeakRunResultResponseSchema,
   hostCronSchedulerWakeRequestResponseSchema,
-  hostOffPeakSchedulerWakeRequestResponseSchema,
 ]);
 
 export const zcodeTaskPersistStatusSchema = z.enum(["running", "completed", "error"]);

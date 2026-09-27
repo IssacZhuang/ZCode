@@ -38,7 +38,6 @@ export { useConfirmDialog } from "./useConfirmDialog.js";
 export { useAlertDialog } from "./useAlertDialog.js";
 
 // 凭据服务
-export { useCredentials, useAuthToken } from "./useCredentials.js";
 export { useZCodeAgentService } from "./useZCodeAgentService.js";
 
 // Git pane
@@ -48,4 +47,4 @@ export { useGitActions } from "./useGitActions.js";
 // workspace provider 配置路径
 export { useTaskNativeSessionLogFile } from "./useTaskNativeSessionLogFile.js";
 export { useTaskSessionFilePath } from "./useTaskSessionFilePath.js";
-export { useUsageStats } from "./useUsageStats.js";
+export { useAppUsageStats as useUsageStats } from "./useUsageStats.js";

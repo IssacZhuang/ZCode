@@ -1,8 +1,7 @@
 import type { TelemetryRendererContext } from "@zcode/shared";
 
-interface StartupCoordinatorLike {
-  onRendererReady(input: { hasPendingOAuthCallback: boolean; rendererId: number }): boolean;
-  onOAuthCallbackHandled(input: { rendererId: number }): boolean;
+interface AppLaunchGateLike {
+  consume(): boolean;
 }
 
 interface TelemetryCoreLike {
@@ -14,7 +13,7 @@ type DailyActiveInterval = ReturnType<typeof setInterval> | number;
 
 interface AppTelemetryRuntimeDependencies {
   telemetryCore: TelemetryCoreLike;
-  appLaunchCoordinator: StartupCoordinatorLike;
+  appLaunchGate: AppLaunchGateLike;
   onError?: (error: unknown) => void;
   dailyActiveHeartbeatIntervalMs?: number;
   setInterval?: (handler: () => void, timeout: number) => DailyActiveInterval;
@@ -25,7 +24,7 @@ const DEFAULT_DAILY_ACTIVE_HEARTBEAT_INTERVAL_MS = 15 * 60 * 1000;
 
 export function createAppTelemetryRuntime({
   telemetryCore,
-  appLaunchCoordinator,
+  appLaunchGate,
   onError,
   dailyActiveHeartbeatIntervalMs = DEFAULT_DAILY_ACTIVE_HEARTBEAT_INTERVAL_MS,
   setInterval: setIntervalFn = setInterval,
@@ -103,14 +102,8 @@ export function createAppTelemetryRuntime({
       }
     },
 
-    onRendererReady(input: { hasPendingOAuthCallback: boolean; rendererId: number }): void {
-      if (appLaunchCoordinator.onRendererReady(input)) {
-        markStartupTelemetryPending(input.rendererId);
-      }
-    },
-
-    onOAuthCallbackHandled(input: { rendererId: number }): void {
-      if (appLaunchCoordinator.onOAuthCallbackHandled(input)) {
+    onRendererReady(input: { rendererId: number }): void {
+      if (appLaunchGate.consume()) {
         markStartupTelemetryPending(input.rendererId);
       }
     },

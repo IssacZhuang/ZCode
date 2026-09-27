@@ -12,7 +12,6 @@ export type { WorkspaceHeaderActionSectionProps } from "@/WorkspaceHeaderSection
 export function WorkspaceHeaderActionSection({
   variant = "task",
   activeTaskId,
-  user,
   readOnlyReason,
   workspaceAbsPath,
   workspaceIdentity,
@@ -45,8 +44,8 @@ export function WorkspaceHeaderActionSection({
           onSelectedEditorChange={onSelectedEditorChange}
         />
       ) : null}
-      {/* 分享发布接口依赖登录态；未登录时隐藏入口，避免用户打开后只能得到鉴权失败。 */}
-      {activeTaskId && user && isDesktop !== false ? (
+      {/* 账号体系移除后不再按登录态隐藏分享；鉴权与否由分享服务自身结果决定。 */}
+      {activeTaskId && isDesktop !== false ? (
         <ConversationShareMenu
           taskId={activeTaskId}
           useWindowsCaptionSpacing={useWindowsCaptionSpacing}

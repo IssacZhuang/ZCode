@@ -63,7 +63,6 @@ import { useTaskSidePaneMemoryBridge } from "@/app-shell/useTaskSidePaneMemoryBr
 import { resolveAppWorkspaceRpcTarget } from "@/app-shell/workspaceRpcTarget.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
 import { useWorkspaceTerminalTaskNotifications } from "@/hooks/useTaskNotifications.js";
-import { useOffPeakTaskNotifications } from "@/hooks/useOffPeakTaskNotifications.js";
 import type { AppProps, WorkspaceMainView } from "@/app-shell/types.js";
 import type {
   ChatSearchResultHighlightRequest,
@@ -85,9 +84,6 @@ import { startMemoryDiagnosticsLogger } from "@/lib/memoryDiagnostics.js";
 export function App({
   services,
   baseFeedbackService,
-  onLogout,
-  onLogin,
-  user,
   onCreateTask,
   onCreateConversationTask,
   onResolveConversationWorkspace,
@@ -257,13 +253,6 @@ export function App({
     enabled: notificationEnabled,
     rpcReady: workspaceRpcReady,
     platform,
-    formatMessage: intl.formatMessage,
-  });
-  // 闲时任务终态/等确认通知：仅桌面本地链路，main 进程按 status:taskId 去重多窗口重复。
-  useOffPeakTaskNotifications({
-    offPeakTaskService: services.offPeakTaskService,
-    platform,
-    enabled: Boolean(notificationEnabled && isDesktop),
     formatMessage: intl.formatMessage,
   });
   const lastHandledDraftSidePaneCloseRef = useRef({
@@ -636,7 +625,6 @@ export function App({
   }, []);
   const openFeedbackSubmit = useFeedbackStore((state) => state.openSubmit);
   const openFeedbackTickets = useFeedbackStore((state) => state.openTickets);
-  const isLoggedIn = Boolean(user);
   const handleOpenFeedback = useCallback(() => {
     void platform.openFeedback();
   }, [platform]);
@@ -976,9 +964,8 @@ export function App({
         canOpenCommunity: canOpenCommunityFromQuickPick,
         isSidebarVisible,
         supportsEmbeddedBrowser,
-        // quick pick 命令只关心登录态布尔值。
-        // 如果依赖完整 user 对象，auth store 返回等价新引用时会重建整组 command/run 闭包。
-        isLoggedIn,
+        // 账号体系已移除：不传 login/logout handler，quick pick 里的登录/退出条目自动隐藏。
+        isLoggedIn: false,
         themeTarget,
         shortcuts: {
           newTask: newTaskShortcutLabel,
@@ -1002,8 +989,6 @@ export function App({
           openFeedback: handleOpenFeedback,
           openCommunity: handleOpenCommunity,
           openProductDocs: handleOpenProductDocs,
-          login: onLogin,
-          logout: onLogout,
           toggleSidebar: () => runVisibleWorkspaceCommand(handleToggleSidebar),
           toggleTerminal: () => runVisibleWorkspaceCommand(handleToggleTerminalIfWritable),
           togglePreview: () => runVisibleWorkspaceCommand(handleToggleBrowser),
@@ -1027,12 +1012,9 @@ export function App({
       handleToggleBrowser,
       handleToggleSidebar,
       handleToggleTerminalIfWritable,
-      isLoggedIn,
       isSidebarVisible,
       newTaskShortcutLabel,
       handleCreateTaskIfWritable,
-      onLogin,
-      onLogout,
       onOpenWorkspace,
       runVisibleWorkspaceCommand,
       openSettingsTab,
@@ -1110,9 +1092,6 @@ export function App({
         handleOpenAutomations={handleOpenAutomations}
         handleOpenPluginStore={handleOpenPluginStoreForScope}
         handleManageInstalledPlugins={handleManageInstalledPlugins}
-        onLogout={onLogout}
-        onLogin={onLogin}
-        user={user}
         onCreateTask={handleCreateTaskIfWritable}
         onCreateConversationTask={onCreateConversationTask}
         onResolveConversationWorkspace={onResolveConversationWorkspace}

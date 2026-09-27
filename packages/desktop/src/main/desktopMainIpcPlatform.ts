@@ -1,5 +1,5 @@
 /* eslint-disable max-lines -- 桌面平台 IPC 集中装配，拆散会让权限边界更难审计；行数随平台能力增长。 */
-import { BrowserWindow, dialog, ipcMain, nativeTheme } from "electron";
+import { BrowserWindow, dialog, ipcMain, nativeTheme, shell } from "electron";
 import { readZCodeStdioTapDevState } from "@zcode/services/node";
 import {
   DesktopCommandIds,
@@ -37,7 +37,13 @@ import { syncWindowControlsOverlayForZoomLevel } from "./desktopWindowButtonPosi
 import { resolveDesktopZoomLevelFromFactor } from "./desktopZoom.js";
 import { resolveDesktopWindowChromeState } from "./desktopWindowChromeState.js";
 import { handleWindowUnreadCountSync } from "./desktopWindowLifecycle.js";
-import { captureWindowScreenshot, openPathInFileManager } from "./desktopMainIpcHelpers.js";
+import {
+  captureWindowScreenshot,
+  openPathInDefaultApp,
+  openPathInFileManager,
+} from "./desktopMainIpcHelpers.js";
+import { dispatchTaskNotification } from "./desktopNotifications.js";
+import { deliverPendingDeepLink } from "./desktopDeepLinkRouter.js";
 import { registerCuaPermissionIpcHandlers } from "./desktopCuaPermissionIpc.js";
 import {
   registerDesktopBrowserIpcHandlers,
@@ -55,6 +61,37 @@ import { createTempTextAttachment } from "./tempTextAttachment.js";
 import { registerDesktopSaveFileIpcHandler } from "./desktopSaveFile.js";
 import { registerDesktopPrintToPdfIpcHandler } from "./desktopPrintToPdf.js";
 import { registerCuaPipActiveSessionIpc } from "./desktopCuaPipIpc.js";
+
+function isAllowedExternalOpenUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:" || url.protocol === "file:";
+  } catch {
+    return false;
+  }
+}
+
+interface OpenExternalRequest {
+  sourceUrl?: string;
+  url: string;
+}
+
+function parseOpenExternalRequest(payload: unknown): OpenExternalRequest | null {
+  if (typeof payload === "string") {
+    return { url: payload };
+  }
+  if (!payload || typeof payload !== "object") {
+    return null;
+  }
+  const record = payload as Record<string, unknown>;
+  if (typeof record.url !== "string") {
+    return null;
+  }
+  return {
+    sourceUrl: typeof record.sourceUrl === "string" ? record.sourceUrl : undefined,
+    url: record.url,
+  };
+}
 
 export function registerPlatformIpcHandlers(options: {
   fetchHelpConfig?: () => Promise<unknown>;
@@ -100,6 +137,8 @@ export function registerPlatformIpcHandlers(options: {
   reportBrowserScreenshotSurfaceReady?: ReportBrowserScreenshotSurfaceReady;
   /** Browser tab 关闭、挂起、恢复与跨重启 shell IPC。 */
   browserViewResidencyHandlers?: BrowserViewResidencyIpcHandlers;
+  /** renderer 就绪回调（遥测上下文登记）；深链 pending 投递在处理器内部完成。 */
+  onRendererReady: (input: { rendererId: number }) => void;
 }) {
   ipcMain.handle(PlatformChannels.SelectDirectory, async () => {
     const result = await dialog.showOpenDialog({
@@ -407,4 +446,43 @@ export function registerPlatformIpcHandlers(options: {
     // 返回值直通 renderer 的 executeDesktopCommand promise（GetCuaOsSupport 依赖此行为）。
     return await options.executeDesktopCommand(command as DesktopCommandId, senderWindow);
   });
+
+  // 以下四个处理器原挂在 desktopMainIpcRemote.ts（阶段1删除远程工作区时被整体移除），
+  // 但它们是本地桌面自身链路：外链打开、文件打开、renderer 就绪深链投递、任务通知。
+  // preload 仍在发送这些 channel，缺失会导致 renderer 调用静默失效，因此在此恢复。
+  ipcMain.on(PlatformChannels.OpenExternal, (event, payload: unknown) => {
+    const request = parseOpenExternalRequest(payload);
+    if (!request) {
+      options.logger.warn("[open-external] blocked unsupported request", payload);
+      return;
+    }
+    const { url } = request;
+    if (!isAllowedExternalOpenUrl(url)) {
+      options.logger.warn("[open-external] blocked unsupported url", url);
+      return;
+    }
+    void Promise.resolve(shell.openExternal(url)).catch((error: unknown) => {
+      options.logger.warn("[open-external] 外部 URL 打开失败", {
+        url,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
+  });
+
+  ipcMain.handle(PlatformChannels.OpenExternalFile, async (_event, rawPath: string) =>
+    openPathInDefaultApp(rawPath, options.logger),
+  );
+
+  ipcMain.on(PlatformChannels.RendererReady, (event) => {
+    // 冷启动期间到达的 workspace 深链在这里补投给已就绪的 renderer。
+    deliverPendingDeepLink(event.sender);
+    options.onRendererReady({ rendererId: event.sender.id });
+  });
+
+  ipcMain.on(PlatformChannels.ShowTaskNotification, (event, payload: unknown) => {
+    dispatchTaskNotification({ event, payload, logger: options.logger });
+  });
+  ipcMain.handle(PlatformChannels.ShowTaskNotification, (event, payload: unknown) =>
+    dispatchTaskNotification({ event, payload, logger: options.logger }),
+  );
 }

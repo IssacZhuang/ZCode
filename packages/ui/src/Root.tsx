@@ -13,20 +13,15 @@ import { ServiceProvider } from "@/hooks/useServices.js";
 import { useDynamicWorkflowAvailabilityLoader } from "@/hooks/useDynamicWorkflowAvailability.js";
 import { DirectoryBrowser } from "@/DirectoryBrowser.js";
 import { useTabPersistence } from "@/hooks/useTabPersistence.js";
-import { useTokenRefresh } from "@/hooks/useTokenRefresh.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SettingsPage } from "@/SettingsPage.js";
-import { CodingPlanUpgradeDialogProvider } from "@/settings/CodingPlanUpgradeDialogProvider.js";
-import { WelcomeScreen, type LoginCompleteReason } from "@/WelcomeScreen.js";
 import { setDefaultFileDisplayBasePath } from "@/lib/fileDisplay.js";
 import { readRendererLaunchTimings, shouldReportLaunchToInput } from "@/lib/launchToInputReport.js";
 import { reportUiLaunchToInput } from "@/lib/uiPerfArmsTelemetry.js";
 import { countAllUnreadTasks } from "@/lib/unreadTaskCount.js";
 import {
   isProviderStartupSyncPending,
-  shouldEnableProviderAvailabilityLoginEntryGuard,
-  shouldResolveProviderStartupState,
   shouldBlockRootRender,
   shouldShowRootStartupLoading,
   shouldOpenFallbackWorkspaceAfterCreate,
@@ -45,8 +40,6 @@ import { OnboardingDialog } from "@/onboarding/OnboardingDialog.js";
 import { useRootProviderStateRefresh } from "@/root/useRootProviderStateRefresh.js";
 import { useModelSelectionServiceView } from "@/hooks/useModelSelectionView.js";
 import { useRootProviderSettingsSnapshot } from "@/root/useRootProviderSettingsSnapshot.js";
-import { useRootOAuthEffects } from "@/root/useRootOAuthEffects.js";
-import { consumeZcodeJwtInvalidRestartMarker } from "@/root/zcodeJwtInvalidRestartMarker.js";
 import { useDesktopNativeThemeSync } from "@/root/useDesktopNativeThemeSync.js";
 import { useRootPlatformEffects } from "@/root/useRootPlatformEffects.js";
 import { useRootWorkspaceActions } from "@/root/useRootWorkspaceActions.js";
@@ -68,8 +61,6 @@ import { setSessionOpenArmsReporter } from "@/lib/sessionOpenArmsTelemetry.js";
 import { setSendFunnelArmsReporter } from "@/lib/sendFunnelArmsTelemetry.js";
 import { RootStartupLoading } from "@/root/RootStartupLoading.js";
 import { resolveProviderAvailabilityState } from "@/lib/modelProviderAvailability.js";
-import { useProviderAvailabilityLoginEntryGuard } from "@/root/useProviderAvailabilityLoginEntryGuard.js";
-import { ensureProviderFamilyDomainMigration } from "@/lib/providerFamilyDomainMigration.js";
 import { useSettings } from "@/hooks/useSettingService.js";
 import { CLOSE_ACTIVE_CONTEXT_REQUEST_EVENT } from "@/lib/closeActiveContext.js";
 import { AssistantCodeCommentFeatureProvider } from "@/AssistantCodeCommentFeatureProvider.js";
@@ -80,17 +71,10 @@ import {
 
 const DEFAULT_LUCIDE_STROKE_WIDTH = 1.5;
 
-type WelcomeScreenOpenReason =
-  | "startup-provider-required"
-  | "manual-login"
-  | "provider-request"
-  | "logout-provider-required"
-  | "session-expired";
-
 /**
  * Root —— 应用根组件
  *
- * 外层挂载 StoreProvider（连接广播服务）+ TabStoreProvider，内层处理认证和路由。
+ * 外层挂载 StoreProvider（连接广播服务）+ TabStoreProvider，内层处理启动门禁和路由。
  */
 export function Root(props: RootProps) {
   return (
@@ -108,18 +92,13 @@ export function Root(props: RootProps) {
          */}
         <ServiceProvider services={props.services}>
           <PlatformProvider platform={props.platform}>
-            <StoreProvider
-              broadcastService={props.services.broadcastService}
-              initialIsRestoringOAuthSession
-            >
+            <StoreProvider broadcastService={props.services.broadcastService}>
               <TabStoreProvider>
                 <DiffsWorkerPoolProvider>
                   <AssistantCodeCommentFeatureProvider
                     enabled={props.assistantCodeCommentCardsEnabled}
                   >
-                    <CodingPlanUpgradeDialogProvider>
-                      <RootInner {...props} />
-                    </CodingPlanUpgradeDialogProvider>
+                    <RootInner {...props} />
                   </AssistantCodeCommentFeatureProvider>
                 </DiffsWorkerPoolProvider>
               </TabStoreProvider>
@@ -173,30 +152,11 @@ function RootInner({
   // 动态工作流灰度快照的唯一取数点：
   // 放在 app 级 ServiceProvider 这一层取一次，自动化页与 run 面板只读。消费方可能位于
   // 工作区级 ServiceProvider 内（远程 Host 的 accessor），由它们取数会拿到另一台 Host 的答案。
-  useDynamicWorkflowAvailabilityLoader(services.codingPlanSubscriptionService);
+  useDynamicWorkflowAvailabilityLoader();
 
   const { intl, locale } = useZCodeIntl();
   const theme = useZCodeStore((state) => state.theme);
-  const user = useZCodeStore((state) => state.user);
-  const isRestoringOAuthSession = useZCodeStore((state) => state.isRestoringOAuthSession);
-  const setUser = useZCodeStore((state) => state.setUser);
-  const setIsRestoringOAuthSession = useZCodeStore((state) => state.setIsRestoringOAuthSession);
-  const setOAuthError = useZCodeStore((state) => state.setOAuthError);
-  const oauthPollingActive = useZCodeStore((state) => state.oauthPollingActive);
-  const setOAuthPollingActive = useZCodeStore((state) => state.setOAuthPollingActive);
-  const markOAuthSuccess = useZCodeStore((state) => state.markOAuthSuccess);
-  const {
-    settings: appSettings,
-    refresh: refreshAppSettings,
-    update: updateAppSettings,
-  } = useSettings();
-  const [welcomeScreenOpenReason, setWelcomeScreenOpenReason] =
-    useState<WelcomeScreenOpenReason | null>(() =>
-      consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
-    );
-  const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
-    useState(false);
-  const loginEntryRequest = useZCodeStore((state) => state.loginEntryRequest);
+  const { settings: appSettings, refresh: refreshAppSettings } = useSettings();
   const rootModelSelectionRead = useModelSelectionServiceView(services.modelSelectionService);
   const rootModelSelectionView =
     rootModelSelectionRead.state.status === "ready" ? rootModelSelectionRead.state.view : null;
@@ -212,10 +172,6 @@ function RootInner({
         </Button>
       </div>
     ) : null;
-  const readRootModelSelectionView = useCallback(
-    () => services.modelSelectionService.getView(),
-    [services.modelSelectionService],
-  );
   const [directoryBrowserOpen, setDirectoryBrowserOpen] = useState(false);
   const [isCreatingFallbackWorkspace, setIsCreatingFallbackWorkspace] = useState(false);
   const [isBootstrappingInitialWorkspace, setIsBootstrappingInitialWorkspace] = useState(
@@ -354,82 +310,42 @@ function RootInner({
   useEffect(() => {
     let disposed = false;
 
+    // 账号体系移除后不再执行 provider family domain 迁移；
+    // 启动时仍需刷新一次应用设置与 Provider Runtime，保证 provider 启动门禁有权威数据。
     void (async () => {
       try {
-        await ensureProviderFamilyDomainMigration(services);
+        await refreshAppSettings();
       } catch (error) {
-        logger.warn("[Root] provider family domain 迁移失败，继续启动", {
-          error,
-        });
-      } finally {
-        if (!disposed) {
-          setProviderFamilyDomainMigrationComplete(true);
-          try {
-            await refreshAppSettings();
-            await refreshProviderState();
-          } catch (refreshError) {
-            logger.warn("[Root] provider family domain 迁移后刷新状态失败", {
-              error: refreshError,
-            });
-          }
-        }
+        logger.warn("[Root] 启动刷新应用设置失败", { error });
+      }
+      if (disposed) {
+        return;
+      }
+      try {
+        await refreshProviderState();
+      } catch (error) {
+        logger.warn("[Root] 启动刷新 Provider 状态失败", { error });
       }
     })();
 
     return () => {
       disposed = true;
     };
-  }, [refreshAppSettings, refreshProviderState, services]);
+  }, [refreshAppSettings, refreshProviderState]);
 
   const shouldPreferDirectoryBrowser = Boolean(preferDirectoryBrowser);
   const supportsEmbeddedBrowser = explicitSupportsEmbeddedBrowser ?? Boolean(isDesktop);
-  const isResolvingStartupAuthState = isRestoringOAuthSession;
   const rootProviderAvailability = resolveProviderAvailabilityState({
     modelSelectionView: rootModelSelectionView,
   });
   const providerStartupSyncPending = isProviderStartupSyncPending({
-    providerFamilyDomainMigrationComplete,
     modelSelectionViewHydrated:
       rootProviderAvailability.hydrated || rootModelSelectionRead.state.status === "error",
   });
-  const providerAvailabilityLoginEntryGuardEnabled =
-    shouldEnableProviderAvailabilityLoginEntryGuard();
-  const { startupCheckCompleted: providerAvailabilityStartupCheckCompleted } =
-    useProviderAvailabilityLoginEntryGuard({
-      enabled: providerAvailabilityLoginEntryGuardEnabled,
-      user,
-      isRestoringOAuthSession: isResolvingStartupAuthState || providerStartupSyncPending,
-      providerFamilyDomain: appSettings?.providerFamilyDomain,
-      modelSelectionView: rootModelSelectionView,
-      modelSelectionError:
-        rootModelSelectionRead.state.status === "error"
-          ? rootModelSelectionRead.state.error
-          : undefined,
-      refreshProviderState,
-      readModelSelectionView: readRootModelSelectionView,
-      setLoginEntryOpen: (open) => {
-        setWelcomeScreenOpenReason((currentReason) => {
-          if (open) {
-            return "startup-provider-required";
-          }
-          // JWT 过期提示确认后会先写入 session-expired，随后 provider
-          // 启动门禁以 open=false 收尾。这里若无条件清空，会覆盖重新登录页并回到工作区。
-          // 门禁只能关闭自己拥有的启动登录态，不能清理其它交互来源的 reason。
-          return currentReason === "startup-provider-required" ? null : currentReason;
-        });
-      },
-    });
-  const isResolvingProviderStartupState = shouldResolveProviderStartupState({
-    providerStartupSyncPending,
-    providerAvailabilityStartupCheckCompleted,
-  });
-  const isStartupProviderLoginEntryOpen = welcomeScreenOpenReason === "startup-provider-required";
-  // 首次安装时 provider 登录入口判定晚于 workspace 注入，ChatView 会先 mount 并触发草稿预热。
-  // 这里把 provider 启动检查纳入 workspace 恢复门禁，避免未连接账号前启动 ZCode session。
-  const canRestoreWorkspaceSession =
-    !isResolvingStartupAuthState &&
-    !isResolvingProviderStartupState &&
-    !isStartupProviderLoginEntryOpen;
+  const isResolvingProviderStartupState = providerStartupSyncPending;
+  // provider registry hydration 晚于 workspace 注入时，ChatView 会先 mount 并触发草稿预热。
+  // 这里把 provider 启动检查纳入 workspace 恢复门禁，避免 provider 未就绪前启动 ZCode session。
+  const canRestoreWorkspaceSession = !isResolvingProviderStartupState;
 
   useEffect(() => {
     // 跨 workspace 任务列表需要一个稳定的“本地/root services”入口。
@@ -443,18 +359,13 @@ function RootInner({
   const handleOpenDirectoryBrowser = useCallback(() => {
     setDirectoryBrowserOpen(true);
   }, []);
-  const handleReauthenticationRequired = useCallback(() => {
-    setWelcomeScreenOpenReason("session-expired");
-  }, []);
   const {
     setWorkspaceActionError,
     startDraftInWorkspace,
     startNewTaskFromActiveWorkspace,
-    handleLogout,
     handleSelectProject,
     handleSelectConversationWorkspace,
     handleResolveConversationWorkspace,
-    handleEnsureConversationWorkspace,
     handleCreateConversationTask,
     handleOpenWorkspace,
     handleOpenFolderFromWorkspaceMenu,
@@ -473,14 +384,6 @@ function RootInner({
     allowOpenWorkspace,
     preferDirectoryBrowser: shouldPreferDirectoryBrowser,
     openDirectoryBrowser: handleOpenDirectoryBrowser,
-    refreshProviderState,
-    updateAppSettings,
-    setOAuthError,
-    setUser,
-    onProviderFamilyDomainClearedAfterLogout: () => {
-      setWelcomeScreenOpenReason("logout-provider-required");
-    },
-    userId: user?.id,
   });
 
   useEffect(() => {
@@ -500,8 +403,6 @@ function RootInner({
 
   const { isRestoring, hasCompletedInitialRestore, hasCompletedFullRestore } = useTabPersistence({
     settingService: supportsSettings ? services.settingService : undefined,
-    // 首次安装未连接账号时，provider 登录入口判定会晚于 workspace 恢复。
-    // 如果这里先恢复 workspace，ChatView mount 会触发草稿 session 预热并在登录页背后报错。
     restoreSession: restoreSession && canRestoreWorkspaceSession,
     persistSession: restoreSession && canRestoreWorkspaceSession,
   });
@@ -519,15 +420,10 @@ function RootInner({
     );
   }, [hasCompletedFullRestore, isDesktop, windowWorkspaceTabs]);
 
-  const { tryRefresh, clearCredentials } = useTokenRefresh();
-  void tryRefresh;
-  void clearCredentials;
   // 启动阻塞是桌面窗口保护期，手机 Web 远控在进入 Root 前已有配对/加载页。
   // Web 端继续使用该 gate 会在 workspace tab 注入前渲染空 RootShell，露出浏览器白底。
   const isStartupRenderBlocked = shouldShowRootStartupLoading({
     isDesktop,
-    welcomeScreenOpen: Boolean(welcomeScreenOpenReason),
-    isResolvingStartupAuthState,
     isResolvingProviderStartupState,
     isRestoring,
     isBootstrappingInitialWorkspace: isBootstrappingInitialWorkspace || isCreatingFallbackWorkspace,
@@ -538,7 +434,6 @@ function RootInner({
     if (
       !shouldReportLaunchToInput({
         isStartupRenderBlocked,
-        welcomeScreenOpen: Boolean(welcomeScreenOpenReason),
         alreadyReported: launchReportedRef.current,
       })
     ) {
@@ -556,7 +451,7 @@ function RootInner({
       inputReady: Date.now(), // T6
       sessionId: `launch-${timings.marks.createdAt}`,
     });
-  }, [isStartupRenderBlocked, welcomeScreenOpenReason]);
+  }, [isStartupRenderBlocked]);
 
   useRootPlatformEffects({
     initialWorkspaceAbsPath,
@@ -587,7 +482,6 @@ function RootInner({
     totalUnreadTaskCount,
     hasCompletedFullTabRestore: hasCompletedFullRestore,
     intl,
-    isRestoringOAuthSession: isResolvingStartupAuthState || providerStartupSyncPending,
   });
 
   useEffect(() => {
@@ -607,25 +501,6 @@ function RootInner({
       void platform.executeDesktopCommand(DesktopCommandIds.CloseWindow);
     });
   }, [platform]);
-
-  useRootOAuthEffects({
-    accountIntentKey: JSON.stringify([
-      user?.id,
-      appSettings?.providerFamilyDomain,
-      appSettings?.providerFamilyConnectionSelections,
-    ]),
-    platform,
-    services,
-    refreshProviderState,
-    refreshAppSettings,
-    setUser,
-    setIsRestoringOAuthSession,
-    setOAuthError,
-    oauthPollingActive,
-    setOAuthPollingActive,
-    markOAuthSuccess,
-    onReauthenticationRequired: handleReauthenticationRequired,
-  });
 
   useEffect(
     () =>
@@ -666,9 +541,7 @@ function RootInner({
   );
 
   const canEnterNativeThemeSyncSurface = Boolean(
-    !isStartupRenderBlocked &&
-    !welcomeScreenOpenReason &&
-    (workspaceShellPath || isSettingsTabActive),
+    !isStartupRenderBlocked && (workspaceShellPath || isSettingsTabActive),
   );
 
   useEffect(() => {
@@ -691,12 +564,10 @@ function RootInner({
   useEffect(() => {
     if (
       shouldBlockRootRender({
-        isResolvingStartupAuthState,
         isResolvingProviderStartupState,
         isRestoring,
         isBootstrappingInitialWorkspace,
       }) ||
-      isStartupProviderLoginEntryOpen ||
       workspaceShellPath ||
       isSettingsTabActive ||
       !allowOpenWorkspace ||
@@ -745,10 +616,8 @@ function RootInner({
     handleSelectConversationWorkspace,
     isBootstrappingInitialWorkspace,
     isResolvingProviderStartupState,
-    isResolvingStartupAuthState,
     isRestoring,
     isSettingsTabActive,
-    isStartupProviderLoginEntryOpen,
     services.fileService,
     setWorkspaceActionError,
     tabStoreApi,
@@ -765,49 +634,6 @@ function RootInner({
     );
   }, [isSettingsTabActive, workspaceShellPath]);
 
-  useEffect(() => {
-    if (!loginEntryRequest) {
-      return;
-    }
-    // 登录入口已从模态弹窗收敛为 WelcomeScreen。
-    // provider 连接请求仍要先退出首次启动引导语义，避免连接完成后误创建默认 workspace。
-    setWelcomeScreenOpenReason("provider-request");
-  }, [loginEntryRequest]);
-
-  const handleOpenLoginEntry = () => {
-    setWelcomeScreenOpenReason("manual-login");
-  };
-  const handleWelcomeScreenComplete = useCallback(
-    async (reason: LoginCompleteReason) => {
-      await refreshAppSettings();
-      if (
-        welcomeScreenOpenReason !== "startup-provider-required" ||
-        workspaceShellPath ||
-        !allowOpenWorkspace
-      ) {
-        setWelcomeScreenOpenReason(null);
-        return;
-      }
-
-      try {
-        await handleEnsureConversationWorkspace();
-      } catch (error) {
-        logger.error("[Root] 登录后创建默认 workspace 失败", {
-          error,
-          reason,
-        });
-      } finally {
-        setWelcomeScreenOpenReason(null);
-      }
-    },
-    [
-      allowOpenWorkspace,
-      handleEnsureConversationWorkspace,
-      refreshAppSettings,
-      welcomeScreenOpenReason,
-      workspaceShellPath,
-    ],
-  );
   const directoryBrowserDialog = directoryBrowserOpen ? (
     <ScopedErrorBoundary
       scope="directory-browser"
@@ -834,9 +660,6 @@ function RootInner({
     onCreateTask: handleCreateTask,
     onOpenWorkspace: handleOpenWorkspace,
     allowOpenWorkspace,
-    onLogin: !user ? handleOpenLoginEntry : undefined,
-    onLogout: user ? handleLogout : undefined,
-    user,
   };
 
   if (isStartupRenderBlocked) {
@@ -849,16 +672,6 @@ function RootInner({
             之前阻塞恢复 tab / 初始 workspace 注入时重新渲染纯文字“加载中...”，所以启动被拆成两套 loading。
             这里复用同一套 SVG 启动画面，只把文案保留到 aria-label，保证视觉始终连续且不牺牲可访问性。 */}
         <RootStartupLoading label={loadingLabel} />
-      </RootShell>
-    );
-  }
-
-  if (welcomeScreenOpenReason) {
-    return (
-      <RootShell>
-        {rootModelSelectionErrorNode}
-        {directoryBrowserDialog}
-        <WelcomeScreen onComplete={handleWelcomeScreenComplete} />
       </RootShell>
     );
   }
@@ -918,9 +731,6 @@ function RootInner({
             handleOpenFolderFromWorkspaceMenu={handleOpenFolderFromWorkspaceMenu}
             handleCreateScratchWorkspace={handleCreateScratchWorkspace}
             handleBackFromSettings={handleBackFromSettings}
-            handleLogout={user ? handleLogout : undefined}
-            onLogin={!user ? handleOpenLoginEntry : undefined}
-            user={user}
             allowOpenWorkspace={allowOpenWorkspace}
             isDesktop={isDesktop}
             isMacDesktop={isMacDesktop}

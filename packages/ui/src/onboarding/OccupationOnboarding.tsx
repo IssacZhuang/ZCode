@@ -53,8 +53,8 @@ export function OccupationOnboarding({
   const shortcutBindings = useEffectiveShortcutBindings();
   const requested = useZCodeStore((state) => state.newUserOnboardingOpen);
   const setRequested = useZCodeStore((state) => state.setNewUserOnboardingOpen);
-  // 登录态变化（useRootOAuthEffects 登录成功后 setUser）时按 userId 重新判定是否触发引导。
-  const userId = useZCodeStore((state) => state.user?.id) ?? null;
+  // 账号体系已移除：引导触发不再按登录用户区分，保持设备级判定（userId 恒为 null）。
+  const userId: string | null = null;
   const { intl } = useZCodeIntl();
   const t = (key: string) => intl.formatMessage({ id: `occupationOnboarding.${key}` });
   const [occupation, setOccupation] = useState<OccupationValue | null>("developer");

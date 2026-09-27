@@ -26,9 +26,6 @@ interface RootWorkspaceContentProps {
   handleOpenFolderFromWorkspaceMenu: AppProps["onOpenFolderFromWorkspaceMenu"];
   handleCreateScratchWorkspace: AppProps["onCreateScratchWorkspace"];
   handleBackFromSettings: () => void;
-  handleLogout?: () => void;
-  onLogin?: () => void;
-  user: AppProps["user"];
   allowOpenWorkspace: NonNullable<RootProps["allowOpenWorkspace"]>;
   isDesktop?: RootProps["isDesktop"];
   isMacDesktop?: RootProps["isMacDesktop"];
@@ -52,9 +49,6 @@ export function RootWorkspaceContent({
   handleOpenFolderFromWorkspaceMenu,
   handleCreateScratchWorkspace,
   handleBackFromSettings,
-  handleLogout,
-  onLogin,
-  user,
   allowOpenWorkspace,
   isDesktop,
   isMacDesktop,
@@ -115,9 +109,6 @@ export function RootWorkspaceContent({
               <StableWorkspaceApp
                 services={workspaceScopedServices}
                 baseFeedbackService={baseFeedbackService}
-                onLogout={handleLogout}
-                onLogin={onLogin}
-                user={user}
                 workspaceAbsPath={workspaceShellPath}
                 workspaceRemoteSessionId={workspaceRemoteSessionId}
                 workspaceIdentity={workspaceIdentity}
@@ -158,9 +149,6 @@ export function RootWorkspaceContent({
             onCreateTask={handleCreateTask}
             onOpenWorkspace={handleOpenWorkspace}
             allowOpenWorkspace={allowOpenWorkspace}
-            onLogin={onLogin}
-            onLogout={handleLogout}
-            user={user}
           />
         </ScopedErrorBoundary>
       ) : null}

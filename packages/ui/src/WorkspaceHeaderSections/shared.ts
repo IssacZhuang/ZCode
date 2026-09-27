@@ -4,7 +4,6 @@ import type {
   ZCodeTaskChangeSummary,
   EditorInfo,
   GitRepositorySummary,
-  UserInfo,
 } from "@zcode/shared";
 
 export interface WorkspaceHeaderState {
@@ -56,7 +55,6 @@ export interface WorkspaceHeaderTitleSectionProps {
 export interface WorkspaceHeaderActionSectionProps {
   variant?: WorkspaceHeaderVariant;
   activeTaskId?: string | null;
-  user?: UserInfo | null;
   readOnlyReason?: string;
   workspaceAbsPath: string;
   workspaceIdentity?: string;

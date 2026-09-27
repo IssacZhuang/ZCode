@@ -10,10 +10,9 @@
  * | 安全校验拒绝   | 3007 | 403  | 客户端无法完成安全校验，提示联系支持 |
  * | 模型并发上限   | 3010 | 429  | Start Plan 下走升级横幅 |
  * | 请求过频       | 3002/429 | 429 | 限流提示，稍后重试 |
- * | 闲时票据不可用 | 3102 | 400  | 单段运行时间到顶，提示新建闲时任务续跑 |
+ * | 闲时票据不可用 | 3102 | 400  | 历史任务错误归位文案（闲时链路已下线） |
  * | 上游 HTTP 异常 | 2007 | 500  | 可重试；刷新配额，勿本地扣额度 |
  */
-import { isOffPeakTicketExpiredError } from "@zcode/shared";
 
 const PROVIDER_BUSINESS_ERROR_CODES = [
   "1006",
@@ -238,18 +237,17 @@ export const SUSPICIOUS_EMPTY_MODEL_RESULT_MESSAGE =
 
 /**
  * 闲时票据不可用（上游 3102：票据失效或过期）。
- * 适配层会把该业务码包成 `off-peak-ticket-expired: <上游原文>` 落到 turn 错误里，
- * 外层 code 被压成 PROVIDER_BUSINESS_ERROR 等包装码时靠稳定标记兜底，
- * 否则横幅会把 "off peak ticket is invaliad or expired" 原文直接怼给用户。
+ * 个人分支已移除闲时任务链路（isOffPeakTicketExpiredError 随 shared 删除），
+ * 这里只保留业务码本身的判定，供历史任务错误展示继续归位到 3102 文案。
  */
 export function resolveOffPeakTicketExpiredBusinessCode(
   code: string | undefined,
-  message: string | undefined,
+  _message: string | undefined,
 ): "3102" | undefined {
   if (code?.trim() === "3102") {
     return "3102";
   }
-  return isOffPeakTicketExpiredError(message) ? "3102" : undefined;
+  return undefined;
 }
 
 export function isSuspiciousEmptyModelResultMessage(message: string | undefined): boolean {

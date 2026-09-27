@@ -8,9 +8,7 @@ export function createPresetProviderNodeKey(id: BuiltinModelProviderId): string 
   return `preset:${id}`;
 }
 
-export function createCodingPlanProviderNodeKey(id: BuiltinModelProviderId): string {
-  return `coding-plan:${id}`;
-}
+// 账号体系移除：Coding Plan 导航节点 key 构造已无消费方，随订阅入口一并删除。
 
 export function createCustomProviderNodeKey(id: string): string {
   return `custom:${id}`;

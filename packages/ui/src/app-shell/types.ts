@@ -8,7 +8,6 @@ import type {
   DesktopWindowChromeState,
   IPlatformService,
   UpdateStatePayload,
-  UserInfo,
 } from "@zcode/shared";
 import type { IFeedbackService, IServiceAccessor } from "@zcode/services";
 import type { BrowserNavigationRequest, RecentClosedSidePaneTab } from "@/hooks/useAppPanels.js";
@@ -72,9 +71,6 @@ export type CreateTaskRequest = ZCodeProvider | CreateTaskOptions;
 export interface AppProps {
   services: IServiceAccessor;
   baseFeedbackService: IFeedbackService;
-  onLogout?: () => void;
-  onLogin?: () => void;
-  user?: UserInfo | null;
   onCreateTask: (request?: CreateTaskRequest) => void;
   onCreateConversationTask?: () => void;
   onResolveConversationWorkspace?: () => Promise<string>;
