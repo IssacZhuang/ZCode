@@ -169,8 +169,9 @@ function rememberDeviceMid(deviceStateFile: string, deviceMid: string): string {
  *
  * 遥测上报等场景在自身临界区内已持有同一把锁并维护完整 state，需要把 deviceMid 的生成
  * 合并进同一次落盘；此时不能走会重新抢锁的 ensureDeviceMid，改用本入口。
+ * 远端遥测（telemetryCore）移除后仅剩 ensureDeviceMid 内部调用，不再对外导出。
  */
-export async function ensureDeviceMidInLockedState(
+async function ensureDeviceMidInLockedState(
   state: DeviceState,
   options: EnsureDeviceMidOptions,
 ): Promise<string> {

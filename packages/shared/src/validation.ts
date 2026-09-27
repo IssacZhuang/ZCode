@@ -1,5 +1,4 @@
 import { databaseStartupControlSchema, databaseStartupStateSchema } from "./database-startup.js";
-import { automationSessionCreateTelemetrySchema } from "./sessionCreateTelemetry.js";
 /* eslint-disable max-lines -- 运行时 schema 当前集中在共享包入口，外部 relay payload 校验加入后先保持单一导出面。 */
 import { z } from "zod";
 import { zcodeProcessDiagnosticSchema } from "./process-diagnostic.js";
@@ -515,7 +514,6 @@ export const nodeSelfResourceSampleSchema = z
     heapUsedKb: z.number().finite().nonnegative().max(Number.MAX_SAFE_INTEGER),
   })
   .strict();
-export type NodeSelfResourceSample = z.infer<typeof nodeSelfResourceSampleSchema>;
 
 export const hostResourceSampleResponseSchema = z
   .object({
@@ -543,25 +541,6 @@ export const hostToolExecResourceResponseSchema = z
   })
   .strict();
 export type HostToolExecResourceResponse = z.infer<typeof hostToolExecResourceResponseSchema>;
-
-export const hostMcpTelemetryResponseSchema = z
-  .object({
-    type: z.literal("mcp-telemetry"),
-    runtimeSurface: z.enum(["local", "remote"]),
-    event: zcodeMcpTelemetryEventSchema,
-  })
-  .strict();
-export type HostMcpTelemetryResponse = z.infer<typeof hostMcpTelemetryResponseSchema>;
-
-export const hostSessionCreateTelemetryResponseSchema = z
-  .object({
-    type: z.literal("session-create-telemetry"),
-    event: automationSessionCreateTelemetrySchema,
-  })
-  .strict();
-export type HostSessionCreateTelemetryResponse = z.infer<
-  typeof hostSessionCreateTelemetryResponseSchema
->;
 
 export const hostAgentRunningTaskCountChangedResponseSchema = z.object({
   type: z.literal("agent-running-task-count-changed"),
@@ -693,26 +672,6 @@ export const hostLocalMediaPreviewPathAuthorizeRequestResponseSchema = z
   })
   .strict();
 
-export const networkObservationSchema = z.object({
-  transport: z.enum(["http", "websocket", "rpc"]),
-  interface: z.string(),
-  durationMs: z.number(),
-  ok: z.boolean(),
-  statusCode: z.number().optional(),
-  errorKind: z.string().optional(),
-  attempt: z.number().int().positive().optional(),
-  dnsMs: z.number().optional(),
-  tcpMs: z.number().optional(),
-  tlsMs: z.number().optional(),
-  ttfbMs: z.number().optional(),
-  downloadMs: z.number().optional(),
-});
-
-export const hostNetworkTelemetryBatchResponseSchema = z.object({
-  type: z.literal("network-telemetry-batch"),
-  observations: z.array(networkObservationSchema).max(500),
-});
-
 export const hostResourceUsageProcessSchema = z
   .object({
     pid: z.number().int().positive(),
@@ -750,10 +709,8 @@ export const hostResponseMessageSchema = z.discriminatedUnion("type", [
   hostAgentProcessExceptionResponseSchema,
   hostAgentResourceSampleResponseSchema,
   hostResourceSampleResponseSchema,
-  hostMcpTelemetryResponseSchema,
   hostMcpResourceSamplesResponseSchema,
   hostToolExecResourceResponseSchema,
-  hostSessionCreateTelemetryResponseSchema,
   hostAgentRunningTaskCountChangedResponseSchema,
   hostWorkspaceRunningTaskCountChangedResponseSchema,
   hostBroadcastEnvelopeSchema,
@@ -771,7 +728,6 @@ export const hostResponseMessageSchema = z.discriminatedUnion("type", [
   hostSessionMessageDeliverResultResponseSchema,
   hostBrowserExecuteRequestResponseSchema,
   hostLocalMediaPreviewPathAuthorizeRequestResponseSchema,
-  hostNetworkTelemetryBatchResponseSchema,
   hostCronRunResultResponseSchema,
   hostOffPeakRunResultResponseSchema,
   hostCronSchedulerWakeRequestResponseSchema,

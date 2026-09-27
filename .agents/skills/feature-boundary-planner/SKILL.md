@@ -17,7 +17,7 @@ Use the mode implied by the request. Clarify only unknown decisions that materia
 
 ## Find Current Evidence
 
-1. Search aliases and node IDs in [zcode-feature-graph.yaml](references/zcode-feature-graph.yaml) for the user's terms. Read only matched nodes and their one-hop relationships, then verify the declared files, symbols and semantics against the current checkout. The graph is a curated seed index, not a complete feature inventory. Use [source-discovery.md](references/source-discovery.md) to fill gaps or start when there is no match. Read the relevant existing contracts and package scripts; read `DESIGN.md` for UI work and `CONTEXT.md` for plugin-store work.
+1. Search aliases and node IDs in [zcode-feature-graph.yaml](references/zcode-feature-graph.yaml) for the user's terms. Read only matched nodes and their one-hop relationships, then verify the declared files, symbols and semantics against the current checkout. The graph is a curated seed index, not a complete feature inventory. Use [source-discovery.md](references/source-discovery.md) to fill gaps or start when there is no match. Read the relevant existing contracts and package scripts; read `DESIGN.md` for UI work and `CONTEXT.md` for plugin management work.
 2. Locate the entrypoint with `rg --files` and focused `rg -n` searches. Trace direct callers with `pnpm dep:refs <file>:<symbol>` when the symbol is a TypeScript export. If an indexed codegraph tool is available, use it as additional evidence and verify its paths against the checkout.
 3. Classify the change: presentation, option source, draft/default, validation, commit effect, persistence, or recovery.
 4. Trace each user surface separately through validation and the command that commits the change. Shared UI components do not establish shared state or side effects.
@@ -35,7 +35,7 @@ user action → surface draft → validation → owner command → event / persi
 
 Keep existing node IDs for unchanged semantic boundaries and add aliases for new terminology. Report missing seeds or changed relationships as `graph-drift-candidate`; static reachability alone does not establish a product dependency.
 
-In `impact-only` mode, report proposed graph changes without editing files. In planning or implementation, update only verified entries within the task's scope. Follow the [graph contract](../../../docs/skills/feature-boundary-graph.md): check YAML parsing, unique IDs, relationship endpoints and ranks, and tracked source paths and symbols. Do not restore missing historical docs or claim test coverage from a graph entry.
+In `impact-only` mode, report proposed graph changes without editing files. In planning or implementation, update only verified entries within the task's scope. Follow the graph contract: check YAML parsing, unique IDs, relationship endpoints and ranks, and tracked source paths and symbols. Do not restore missing historical docs or claim test coverage from a graph entry.
 
 ## Plan And Prune
 
@@ -61,7 +61,7 @@ Use [impact-brief-template.md](references/impact-brief-template.md) for the rele
 ## Boundaries
 
 - Preserve `workspaceIdentity?.trim() || workspacePath` for isolation and `workspacePath` for execution/display.
-- Keep desktop `desktop-continuous` delivery separate from mobile `web-remote-replayable` recovery.
+- Keep desktop `desktop-continuous` delivery semantics intact when changing stream, snapshot, or reconnect paths.
 - Trace accepted commands to their authoritative owner; do not turn a client draft or optimistic overlay into another accepted queue.
 - Treat runtime state, snapshots, indexes, settings and caches as distinct until their synchronization is proven.
 - Do not infer current functionality from a directory left behind by build artifacts, an old document, or a historical branch.

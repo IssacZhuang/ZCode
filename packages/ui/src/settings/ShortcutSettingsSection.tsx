@@ -59,7 +59,7 @@ export function ShortcutSettingsSection({ isDesktop = false }: { isDesktop?: boo
     const keyBinding = keySearch.binding;
     return SHORTCUT_COMMANDS.filter((entry) => {
       // 这些快捷键保留注册和冲突检测，但不在用户可见列表中展示。
-      if (entry.id === "openOnboarding" || entry.id === "toggleInterfaceMode") return false;
+      if (entry.id === "toggleInterfaceMode") return false;
       const matchesText =
         !keyword ||
         entry.id.toLowerCase().includes(keyword) ||

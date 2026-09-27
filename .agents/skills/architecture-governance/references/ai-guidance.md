@@ -10,7 +10,7 @@ Architecture governance is a pre-code decision protocol. A coding agent should b
 | Layer    | Which layer owns the new code, and which direction may imports travel?                                        |
 | Reuse    | Which existing path already performs part of this work, and why is a new path necessary?                      |
 | Time     | What is the event order, idempotency key, stale-result rule, and retry boundary?                              |
-| Remote   | Does this preserve desktop continuous delivery and mobile replayable recovery separately?                     |
+| Delivery | Does this preserve desktop continuous delivery semantics?                                                     |
 | Context  | Which contracts, specs, and tests are sufficient for the agent to work without reading whole implementations? |
 
 The agent should reject these shapes during design:
@@ -20,7 +20,7 @@ The agent should reject these shapes during design:
 - a new cache, event bus, adapter, or helper that duplicates an existing path;
 - a domain object importing filesystem, process, network, timer, or platform APIs;
 - a cross-module deep import added only to avoid defining a contract;
-- a remote stream change that mixes desktop `continuous` and mobile `replayable` semantics;
+- a stream change that breaks desktop `continuous` delivery semantics;
 - a broad refactor that changes unrelated modules without an explicit migration boundary.
 
 The patch description should include a small decision record:
@@ -30,7 +30,7 @@ owner: <single state owner>
 command path: <entrypoint → owner>
 derived views: <what is projected and from where>
 ordering/idempotency: <sequence and duplicate handling>
-delivery: <desktop-continuous | web-remote-replayable | both>
+delivery: desktop-continuous
 contracts/spec/tests: <bounded reading and validation set>
 ```
 

@@ -430,11 +430,8 @@ export const HostResponseTypes = {
   /** host → main：Host 进程自身每 60 秒自采的 CPU / RSS / heap（资源遥测 host 角色的 heap 来源） */
   HostResourceSample: "host-resource-sample",
   /** host → main：CLI 内 MCP 进程生命周期与内存遥测 */
-  McpTelemetry: "mcp-telemetry",
   McpResourceSamples: "mcp-resource-samples",
   ToolExecResource: "tool-exec-resource",
-  /** 自动化 Host 首次输入 accepted 后报告新建 Session。 */
-  SessionCreateTelemetry: "session-create-telemetry",
   /** host → main：资源管理器采样结果（按 requestId 关联） */
   ResourceUsageSnapshotResult: "resource-usage-snapshot-result",
   /** host 内当前正在执行 prompt 的 agent session 数量变化 */
@@ -479,8 +476,6 @@ export const HostResponseTypes = {
   BrowserExecuteRequest: "browser-execute-request",
   /** host → main：请求授权 Agent 已精确校验的本地视频路径 */
   LocalMediaPreviewPathAuthorizeRequest: "local-media-preview-path-authorize-request",
-  /** host → main：RPC 网络遥测批次（channel.command 成功率/耗时） */
-  NetworkTelemetryBatch: "network-telemetry-batch",
   /** host → main：本地 Provisioning Source 成功持久化。 */
   /** host → main：一次 Remote Environment 同步执行完毕。 */
 } as const;
