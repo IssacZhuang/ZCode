@@ -2158,7 +2158,6 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.newProviderName": "New provider",
   "settings.modelProvider.modelsPlaceholder": "One model name per line",
   "settings.modelProvider.modelsCount": "{count} models",
-  "settings.modelProvider.presetTitle": "Providers",
   "usage.error.entitlement.credential":
     "No Coding Plan entitlement was found. Reconnect the Coding Plan account or confirm that the account has an active plan.",
   "usage.error.entitlement.generic":
@@ -2207,9 +2206,6 @@ const enUS: Record<string, string> = {
   "settings.usage.duration.day": "d",
   "settings.usage.duration.hour": "h",
   "settings.usage.duration.minute": "m",
-  "settings.modelProvider.presetDescription":
-    "Built-in Z.ai and BigModel providers with OAuth-assisted configuration.",
-  "settings.modelProvider.presetEmpty": "Not synced yet. Complete OAuth login first.",
   "settings.modelProvider.customTitle": "Custom providers",
   "settings.modelProvider.refresh": "Refresh",
   "settings.modelProvider.reorderProvider": "Drag to reorder provider",

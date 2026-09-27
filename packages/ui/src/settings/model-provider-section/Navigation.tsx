@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- 设置页 provider 导航同时承载分组、卡片化预置入口和拖拽排序，当前先集中维护交互边界。 */
 import {
   closestCenter,
   DndContext,
@@ -20,11 +19,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Loader2Icon } from "lucide-react";
 import { ProviderStatusIndicator } from "./ProviderStatusIndicator.js";
 
-import {
-  resolveModelProviderFamilySpecByProviderId,
-  TID_MODEL_PROVIDER_NAV_ITEM,
-  testId,
-} from "@zcode/shared";
+import { TID_MODEL_PROVIDER_NAV_ITEM, testId } from "@zcode/shared";
 import { useCallback, useMemo, type KeyboardEvent } from "react";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import type { ModelProviderNavGroup, ModelProviderNavItem } from "./constants.js";
@@ -38,12 +33,9 @@ function getSortableProviderId(
   item: ModelProviderNavItem,
   reorderableProviderIds?: ReadonlySet<string>,
 ): string | null {
-  if ((item.type === "custom" || item.type === "preset") && item.provider) {
-    return !reorderableProviderIds || reorderableProviderIds.has(item.provider.providerId)
-      ? item.provider.providerId
-      : null;
-  }
-  return null;
+  return !reorderableProviderIds || reorderableProviderIds.has(item.provider.providerId)
+    ? item.provider.providerId
+    : null;
 }
 
 function resolveReorderedProviderIdsForGroup(params: {
@@ -57,24 +49,6 @@ function resolveReorderedProviderIdsForGroup(params: {
     return [...params.providerIds];
   }
   return arrayMove([...params.providerIds], activeIndex, overIndex);
-}
-
-function shouldShowModelProviderGroupLoadingIndicator(params: {
-  groupId: ModelProviderNavGroup["id"];
-  presetLoading: boolean;
-  customLoading: boolean;
-}): boolean {
-  if (params.groupId === "preset") {
-    return params.presetLoading;
-  }
-  return params.customLoading;
-}
-
-function resolveModelProviderSideNavLabel(item: ModelProviderNavItem): string {
-  if (item.type === "preset") {
-    return resolveModelProviderFamilySpecByProviderId(item.presetId)?.label ?? item.label;
-  }
-  return item.label;
 }
 
 function ModelProviderNavigationButton({
@@ -116,11 +90,7 @@ function ModelProviderNavigationButton({
         <span className="flex min-w-0 flex-1 items-center gap-1.5 max-md:sr-only">
           <span className="min-w-0 truncate">{label}</span>
         </span>
-        {"provider" in item ? (
-          <ProviderStatusIndicator
-            provider={item.type === "preset" ? item.statusProvider : item.provider}
-          />
-        ) : null}
+        {"provider" in item ? <ProviderStatusIndicator provider={item.provider} /> : null}
       </button>
     </ControlHintTooltip>
   );
@@ -196,37 +166,9 @@ function SortableModelProviderNavigationButton({
         <span className="flex min-w-0 flex-1 items-center gap-1.5 max-md:sr-only">
           <span className="min-w-0 truncate">{label}</span>
         </span>
-        {"provider" in item ? (
-          <ProviderStatusIndicator
-            provider={item.type === "preset" ? item.statusProvider : item.provider}
-          />
-        ) : null}
+        {"provider" in item ? <ProviderStatusIndicator provider={item.provider} /> : null}
       </div>
     </ControlHintTooltip>
-  );
-}
-
-function PresetProviderCardNavigation({
-  group,
-  selectedNodeKey,
-  onSelectNavItem,
-}: {
-  group: ModelProviderNavGroup;
-  selectedNodeKey: string | null;
-  onSelectNavItem: (item: ModelProviderNavItem) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2 max-md:items-center max-md:gap-1">
-      {group.items.map((item) => (
-        <ModelProviderNavigationButton
-          key={item.key}
-          item={item}
-          label={resolveModelProviderSideNavLabel(item)}
-          selectedNodeKey={selectedNodeKey}
-          onSelectNavItem={onSelectNavItem}
-        />
-      ))}
-    </div>
   );
 }
 
@@ -351,16 +293,14 @@ function projectItemsToOptimisticProviderOrder({
 export function ModelProviderSectionNavigation({
   navigationGroups,
   selectedNodeKey,
-  presetLoading,
-  customLoading,
+  loading,
   onSelectNavItem,
   onReorderProviderIds,
   reorderableProviderIds,
 }: {
   navigationGroups: ModelProviderNavGroup[];
   selectedNodeKey: string | null;
-  presetLoading: boolean;
-  customLoading: boolean;
+  loading: boolean;
   onSelectNavItem: (item: ModelProviderNavItem) => void;
   onReorderProviderIds?: (providerIds: string[]) => Promise<void>;
   reorderableProviderIds?: ReadonlySet<string>;
@@ -381,31 +321,19 @@ export function ModelProviderSectionNavigation({
             <div key={group.id} className="flex flex-col gap-2 max-md:gap-1">
               <div className="flex h-7 items-center justify-between px-2 py-1 max-md:hidden">
                 <h3 className="text-ui-sm font-semibold text-foreground-subtlest">{group.title}</h3>
-                {shouldShowModelProviderGroupLoadingIndicator({
-                  groupId: group.id,
-                  presetLoading,
-                  customLoading,
-                }) ? (
+                {loading ? (
                   <Loader2Icon className="size-3 animate-spin text-foreground-subtlest" />
                 ) : null}
               </div>
 
-              {group.id === "preset" ? (
-                <PresetProviderCardNavigation
-                  group={group}
-                  selectedNodeKey={selectedNodeKey}
-                  onSelectNavItem={onSelectNavItem}
-                />
-              ) : (
-                <SortableProviderNavigationGroup
-                  group={group}
-                  selectedNodeKey={selectedNodeKey}
-                  onSelectNavItem={onSelectNavItem}
-                  onReorderProviderIds={onReorderProviderIds}
-                  reorderableProviderIds={reorderableProviderIds}
-                  sensors={sensors}
-                />
-              )}
+              <SortableProviderNavigationGroup
+                group={group}
+                selectedNodeKey={selectedNodeKey}
+                onSelectNavItem={onSelectNavItem}
+                onReorderProviderIds={onReorderProviderIds}
+                reorderableProviderIds={reorderableProviderIds}
+                sensors={sensors}
+              />
             </div>
           ))}
       </div>

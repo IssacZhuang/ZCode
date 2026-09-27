@@ -1,5 +1,4 @@
-/* eslint-disable max-lines -- Model Provider 设置页需要集中编排导航和 API Key 表单，后续整体拆分时再收敛。 */
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { ProviderSettingsFormProvider } from "@/lib/providerSettingsFormTypes.js";
 import type { ModelConnectivityResult } from "@zcode/shared";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
@@ -8,15 +7,11 @@ import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useModelProviders } from "@/hooks/useModelProviders.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { logger } from "@/logger.js";
-import { PRESET_PROVIDER_SPECS } from "./model-provider-section/constants.js";
 import { ModelProviderSectionDetail } from "./model-provider-section/Detail.js";
 import { ModelProviderSectionLayout } from "./model-provider-section/SectionLayout.js";
 import { ProviderTemplatePicker } from "./model-provider-section/ProviderTemplatePicker.js";
 import { useModelProviderNavigation } from "./model-provider-section/useModelProviderNavigation.js";
-import {
-  createCustomProviderNodeKey,
-  createPresetProviderNodeKey,
-} from "./model-provider-section/utils.js";
+import { createCustomProviderNodeKey } from "./model-provider-section/utils.js";
 import { confirmAndDeleteModelProvider } from "./model-provider-section/modelProviderActions.js";
 import { refreshModelProviderSection } from "./model-provider-section/modelProviderActions.js";
 import { sortModelProvidersForDisplay } from "@/lib/modelProviderOrdering.js";
@@ -37,11 +32,6 @@ function resolveProviderTargetNodeKey(
 ): string | null {
   if (!target) {
     return null;
-  }
-  // 账号体系移除后目标只区分品牌预置入口与自定义供应商。
-  const presetSpec = PRESET_PROVIDER_SPECS.find((preset) => preset.id === target.providerId);
-  if (presetSpec) {
-    return createPresetProviderNodeKey(presetSpec.id);
   }
   return createCustomProviderNodeKey(target.providerId);
 }
@@ -95,11 +85,9 @@ export function ModelProviderSection({
     }),
   });
   const [initialModelProviderTarget] = useState(() => consumePendingSettingsModelProviderTarget());
+  // 目标只可能是自定义供应商；挂载时列表未就绪无法同步判定，先按存在处理，由下方 apply 校正。
   const [invalidProviderTarget, setInvalidProviderTarget] = useState(() =>
-    Boolean(
-      initialModelProviderTarget &&
-      !PRESET_PROVIDER_SPECS.some((preset) => preset.id === initialModelProviderTarget.providerId),
-    ),
+    Boolean(initialModelProviderTarget),
   );
   const [selectedNodeKey, setSelectedNodeKey] = useState<string | null>(() =>
     resolveProviderTargetNodeKey(initialModelProviderTarget),
@@ -125,12 +113,9 @@ export function ModelProviderSection({
   const applyModelProviderTarget = useCallback(
     (target: SettingsModelProviderTarget | undefined) => {
       if (!target) return false;
-      const isPresetTarget = PRESET_PROVIDER_SPECS.some(
-        (preset) => preset.id === target.providerId,
-      );
       // 未知 ID 不能只静默忽略：pending 指令不消费的话，外部输入错误会困住导航。
       // 仅显示错误，保留当前可操作页面和持久连接，后续合法导航/手动选择可恢复。
-      if (!isPresetTarget && !modelProviders.some((p) => p.providerId === target.providerId)) {
+      if (!modelProviders.some((p) => p.providerId === target.providerId)) {
         logger.warn("[ModelProviderSection] 无法打开目标供应商", {
           providerId: target.providerId,
         });
@@ -173,19 +158,8 @@ export function ModelProviderSection({
     [applyModelProviderTarget],
   );
 
-  const presetProviders = useMemo(
-    () =>
-      PRESET_PROVIDER_SPECS.map((preset) => ({
-        ...preset,
-        provider: modelProviders.find((provider) => provider.providerId === preset.id) ?? null,
-      })),
-    [modelProviders],
-  );
-
   const { navigationGroups, navigationItems, selectedNavItem } = useModelProviderNavigation({
-    presetProviders,
     modelProviders,
-    modelProvidersLoading: loading,
     displayOrder,
     selectedNodeKey,
     setSelectedNodeKey,
@@ -284,8 +258,7 @@ export function ModelProviderSection({
   // 首屏慢网时之前直接 return null，导致整块模型供应商页空白，
   // 已有的左侧分组 loading 和刷新按钮 loading 都没有机会渲染。
   // 这里改为始终先渲染布局壳子，再按分组展示 loading，避免用户误以为页面坏了。
-  const presetLoading = loading || modelProvidersRefreshing;
-  const customLoading = loading || modelProvidersRefreshing;
+  const providersLoading = loading || modelProvidersRefreshing;
 
   if (loadError) {
     return (
@@ -303,8 +276,7 @@ export function ModelProviderSection({
       description={intl.formatMessage({ id: "settings.modelProviderDescription" })}
       refreshLabel={intl.formatMessage({ id: "settings.modelProvider.refresh" })}
       loadingLabel={intl.formatMessage({ id: "common.loading" })}
-      presetLoading={presetLoading}
-      customLoading={customLoading}
+      providersLoading={providersLoading}
       onRefresh={() => {
         void refreshModelProviderSection({
           refresh,
@@ -338,7 +310,6 @@ export function ModelProviderSection({
       ) : (
         <ModelProviderSectionDetail
           selectedNavItem={selectedNavItem}
-          presetLoading={presetLoading}
           onSave={handleSave}
           onAddPersonalModel={addPersonalModel}
           onSavePersonalModelDraft={savePersonalModelDraft}

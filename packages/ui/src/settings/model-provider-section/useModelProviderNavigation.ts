@@ -1,29 +1,16 @@
 import { useEffect, useMemo } from "react";
 import type { ProviderSettingsFormProvider } from "@/lib/providerSettingsFormTypes.js";
 import { getProviderFormLabel } from "@/lib/providerSettingsFormTypes.js";
-import { resolveModelProviderFamilySpecByProviderId } from "@zcode/shared";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import type {
-  ModelProviderNavGroup,
-  PresetProviderSpec,
-} from "@/settings/model-provider-section/constants.js";
-import {
-  createCustomProviderNodeKey,
-  createPresetProviderNodeKey,
-} from "@/settings/model-provider-section/utils.js";
+import type { ModelProviderNavGroup } from "@/settings/model-provider-section/constants.js";
+import { createCustomProviderNodeKey } from "@/settings/model-provider-section/utils.js";
 import {
   sortModelProvidersForDisplay,
   type ProviderOrderView,
 } from "@/lib/modelProviderOrdering.js";
 
-interface PresetProviderWithConfig extends PresetProviderSpec {
-  provider: ProviderSettingsFormProvider | null;
-}
-
 interface UseModelProviderNavigationOptions {
-  presetProviders: PresetProviderWithConfig[];
   modelProviders: ProviderSettingsFormProvider[];
-  modelProvidersLoading?: boolean;
   displayOrder?: ProviderOrderView;
   selectedNodeKey: string | null;
   setSelectedNodeKey: (key: string | null) => void;
@@ -31,7 +18,6 @@ interface UseModelProviderNavigationOptions {
 }
 
 export function useModelProviderNavigation({
-  presetProviders,
   modelProviders,
   displayOrder,
   selectedNodeKey,
@@ -46,28 +32,8 @@ export function useModelProviderNavigation({
     return sortModelProvidersForDisplay(allCustomProviders, displayOrder);
   }, [displayOrder, modelProviders]);
 
-  const navigationGroups = useMemo<ModelProviderNavGroup[]>(() => {
-    // 账号/订阅体系移除后导航只保留品牌预置入口与自定义 api-key 供应商两组。
-    const groups: ModelProviderNavGroup[] = [
-      {
-        id: "preset",
-        title: intl.formatMessage({ id: "settings.modelProvider.presetTitle" }),
-        items: presetProviders.map(({ id, displayName, provider }) => ({
-          key: createPresetProviderNodeKey(id),
-          type: "preset" as const,
-          presetId: id,
-          label: displayName,
-          logo: modelProviders.find(
-            (candidate) =>
-              candidate.providerId ===
-              resolveModelProviderFamilySpecByProviderId(id)?.individualCodingPlanProviderId,
-          )?.config.logo,
-          provider,
-          statusProvider: provider,
-          displayName,
-          statusActive: provider?.executable === true,
-        })),
-      },
+  const navigationGroups = useMemo<ModelProviderNavGroup[]>(
+    () => [
       {
         id: "custom",
         title: intl.formatMessage({ id: "settings.modelProvider.customTitle" }),
@@ -79,17 +45,14 @@ export function useModelProviderNavigation({
           statusActive: provider.executable === true,
         })),
       },
-    ];
-
-    return groups;
-  }, [
-    customProviders,
-    // 左侧导航分组标题在这个 memo 内格式化。
-    // 语言切换时 provider 引用可能不变，必须依赖 intl 才能刷新旧 locale 的文案。
-    intl,
-    presetProviders,
-    modelProviders,
-  ]);
+    ],
+    [
+      customProviders,
+      // 左侧导航分组标题在这个 memo 内格式化。
+      // 语言切换时 provider 引用可能不变，必须依赖 intl 才能刷新旧 locale 的文案。
+      intl,
+    ],
+  );
 
   const navigationItems = useMemo(
     () => navigationGroups.flatMap((group) => group.items),

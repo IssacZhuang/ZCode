@@ -1,4 +1,3 @@
-/* eslint-disable max-lines -- Model Provider 详情页集中编排预置/自定义供应商的 API Key 表单；后续稳定后再按表单域拆分。 */
 import { type ModelConnectivityResult } from "@zcode/shared";
 import {
   getProviderFormApiKeyManagementUrl,
@@ -7,13 +6,12 @@ import {
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import type { ModelProviderNavItem } from "./constants.js";
 import { InlineEditableProviderCard } from "./InlineEditableProviderCard.js";
-import { ModelProviderLoadingCard, PresetProviderPlaceholderCard } from "./StatusCards.js";
+import { ModelProviderLoadingCard } from "./StatusCards.js";
 import { useProviderSettingsView } from "@/hooks/useProviderSettingsView.js";
 import type { SavePersonalModelDraftInput } from "@zcode/provider";
 
 export function ModelProviderSectionDetail({
   selectedNavItem,
-  presetLoading,
   onSave,
   onAddPersonalModel,
   onSavePersonalModelDraft,
@@ -25,7 +23,6 @@ export function ModelProviderSectionDetail({
   onOpenApiKeyUrl,
 }: {
   selectedNavItem: ModelProviderNavItem | null;
-  presetLoading: boolean;
   onSave: (config: ProviderSettingsFormProvider) => void | Promise<void>;
   onAddPersonalModel?: (
     providerId: string,
@@ -60,40 +57,6 @@ export function ModelProviderSectionDetail({
   };
 
   if (!selectedNavItem) {
-    return <ModelProviderLoadingCard loadingLabel={loadingLabel} />;
-  }
-
-  if (selectedNavItem.type === "preset") {
-    if (!selectedNavItem.provider) {
-      // 首屏慢网时预置供应商配置尚未返回，先显示 loading，等请求结束后再决定是否展示占位。
-      if (presetLoading) {
-        return <ModelProviderLoadingCard loadingLabel={loadingLabel} />;
-      }
-
-      return <PresetProviderPlaceholderCard displayName={selectedNavItem.displayName} />;
-    }
-
-    const presetProvider = selectedNavItem.provider;
-    return (
-      <InlineEditableProviderCard
-        provider={presetProvider}
-        onSave={onSave}
-        {...modelEditingProps}
-        onReorderModelIds={
-          onReorderProviderModels
-            ? (modelIds) => onReorderProviderModels(presetProvider.providerId, modelIds)
-            : undefined
-        }
-        onTestModel={onTestModel}
-        readOnlyEndpoints
-        // 预置供应商名称承载固定 API Key 入口语义，
-        // 允许重命名会让侧边栏和模型选择器展示含义不一致，因此只允许自定义供应商改名。
-        nameEditable={false}
-      />
-    );
-  }
-
-  if (!selectedNavItem.provider) {
     return <ModelProviderLoadingCard loadingLabel={loadingLabel} />;
   }
 
