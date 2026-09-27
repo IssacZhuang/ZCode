@@ -26,7 +26,6 @@ import { materializeBrowserRecordingArtifact } from "./browserRecordingArtifactM
 import {
   ServiceCollection,
   IFileService,
-  IClientConfigService,
   IMediaPreviewService,
   IModelSelectionService,
   ISettingService,

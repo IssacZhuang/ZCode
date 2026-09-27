@@ -8,7 +8,6 @@ export type {
   WorkspaceFileEntry,
   SystemInfo,
   AppSettings,
-  ElectronReleaseChannel,
   IntegratedTerminalShellDialect,
   IntegratedTerminalShellOption,
   IntegratedTerminalShellSelection,
@@ -120,7 +119,6 @@ export * from "./storage.js";
 export * from "./oauth.js";
 export * from "./desktopMenu.js";
 export * from "./e2e-test-bridge.js";
-export * from "./remoteAppConfig.js";
 export * from "./remoteAssetInstallMode.js";
 export * from "./remoteResourcePackages.js";
 export * from "./plan-identity.js";
@@ -182,11 +180,8 @@ export type {
   EmbeddedBrowserOpenUrlRequest,
   IPlatformService,
   OpenInEditorOptions,
-  PostUpdateReleaseNotesPayload,
   RemoteServiceSession,
   TaskNotificationPayload,
-  UpdateCheckResultPayload,
-  UpdateStatePayload,
   ZCodeStdioTapDevState,
 } from "./platform.js";
 export type { ZCodeTaskCreateResult } from "./zcode-task-types.js";
@@ -233,7 +228,6 @@ export * from "./permission-request-preview.js";
 export * from "./settings-sync.js";
 export * from "./uuid.js";
 export * from "./usage-stats.js";
-export * from "./forceUpdate.js";
 export * from "./intranetProbe.js";
 export * from "./intranetDefaults.js";
 export * from "./hooks.js";
@@ -255,7 +249,4 @@ export * from "./execution-state.js";
 export { bashOutputDisplaySchema } from "./bash-output-display.js";
 
 export * from "./localTtft.js";
-export * from "./pluginStoreOrder.js";
-export * from "./clientConfig.js";
-export * from "./pluginStoreOrdering.js";
 export * from "./session-debug.js";

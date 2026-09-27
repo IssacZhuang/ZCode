@@ -9,7 +9,8 @@ import type {
   ZCodePluginInfo,
   ZCodePluginScope,
 } from "@zcode/shared";
-import { compareDocumentPluginPriority, isPluginCommand, isUserCommand } from "@zcode/shared";
+import { isPluginCommand, isUserCommand } from "@zcode/shared";
+import { compareDocumentPluginPriority } from "@/lib/pluginStoreOrdering.js";
 import { pluginSearchMatches } from "@/settings/pluginSearch.js";
 
 function canonicalPluginName(value: string): string {

@@ -1,6 +1,7 @@
-import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "./plugin-marketplaces.js";
-import type { PluginStoreModeOrder } from "./pluginStoreOrder.js";
+import { ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID } from "@zcode/shared";
 
+// 个人本地版排序：远端 pluginStoreOrder 配置已随 clientConfigService 移除，
+// 这里保留原 shared 排序的“无远端配置”默认分支，供商店条目与已安装列表复用。
 export const FALLBACK_PLUGIN_STORE_CATEGORY = "other";
 export const PLUGIN_STORE_CATEGORY_ORDER: readonly string[] = [
   "productivity",
@@ -35,17 +36,12 @@ interface PluginStoreSortEntry {
   displayName: string;
 }
 
-/** 纯展示排序：配置优先，剩余分类按产品默认顺序，类内文档插件优先，再按本地化名称稳定兜底。 */
+/** 纯展示排序：剩余分类按产品默认顺序，类内文档插件优先，再按本地化名称稳定兜底。 */
 export function sortPluginStoreEntries<T>(
   items: readonly T[],
   project: (item: T) => PluginStoreSortEntry,
   locale: string,
-  order?: PluginStoreModeOrder,
 ): T[] {
-  const categoryRanks = ranks(order?.categoryOrder);
-  const pluginRanks = new Map(
-    Object.entries(order?.pluginOrder ?? {}).map(([category, ids]) => [category, ranks(ids)]),
-  );
   return items
     .map((item, index) => {
       const entry = project(item);
@@ -58,9 +54,7 @@ export function sortPluginStoreEntries<T>(
     })
     .sort(
       (left, right) =>
-        compareRanks(categoryRanks, left.category, right.category) ||
         compareCategories(left.category, right.category) ||
-        compareRanks(pluginRanks.get(left.category), left.id, right.id) ||
         compareDocumentPluginPriority(left.id, right.id) ||
         left.displayName.localeCompare(right.displayName, locale) ||
         left.index - right.index,
@@ -68,15 +62,11 @@ export function sortPluginStoreEntries<T>(
     .map(({ item }) => item);
 }
 
-function ranks(order: readonly string[] = []): Map<string, number> {
-  const result = new Map<string, number>();
-  for (const key of order) if (!result.has(key)) result.set(key, result.size);
-  return result;
-}
 function compareRanks(order: Map<string, number> | undefined, left: string, right: string): number {
   if (!order) return 0;
   return (order.get(left) ?? order.size) - (order.get(right) ?? order.size);
 }
+
 function compareCategories(left: string, right: string): number {
   if (left === right) return 0;
   if (left === FALLBACK_PLUGIN_STORE_CATEGORY) return 1;

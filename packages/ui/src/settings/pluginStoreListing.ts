@@ -1,5 +1,4 @@
 import type {
-  PluginStoreModeOrder,
   ZCodeAvailablePluginSummary,
   ZCodeInstalledPluginSummary,
   ZCodePluginInfo,
@@ -7,15 +6,12 @@ import type {
   ZCodePluginStoreListing,
 } from "@zcode/shared";
 import {
-  sortPluginStoreEntries,
-  compareDocumentPluginPriority,
-  resolvePluginStoreCategory as resolveStoreCategory,
-  FALLBACK_PLUGIN_STORE_CATEGORY as FALLBACK_CATEGORY,
   isPublicStoreMarketplaceId,
   resolveLocalizedText,
   resolvePluginDisplayName,
   ZCODE_OFFICIAL_PLUGIN_MARKETPLACE_ID,
 } from "@zcode/shared";
+import { compareDocumentPluginPriority } from "@/lib/pluginStoreOrdering.js";
 import { pluginSearchMatches } from "@/settings/pluginSearch.js";
 
 export {
@@ -140,12 +136,7 @@ export {
   FALLBACK_PLUGIN_STORE_CATEGORY as FALLBACK_CATEGORY,
   PLUGIN_STORE_CATEGORY_ORDER as KNOWN_CATEGORY_ORDER,
   resolvePluginStoreCategory as resolveStoreCategory,
-} from "@zcode/shared";
-
-interface StoreCategoryGroup {
-  category: string;
-  items: StorePluginItem[];
-}
+} from "@/lib/pluginStoreOrdering.js";
 
 /** 个人分段的市场分组：marketplace 是排序键，title 是展示名。 */
 export interface PersonalMarketplaceGroup {
@@ -317,31 +308,6 @@ export function selectFeaturedItems(
     }
   }
   return featured;
-}
-
-export function groupItemsByCategory(
-  items: StorePluginItem[],
-  locale: string,
-  order?: PluginStoreModeOrder,
-): StoreCategoryGroup[] {
-  const groups = new Map<string, StorePluginItem[]>();
-  const sorted = sortPluginStoreEntries(
-    items,
-    (item) => ({
-      id: item.id,
-      category: item.listing?.category,
-      displayName: resolveItemDisplayName(item, locale),
-    }),
-    locale,
-    order,
-  );
-  for (const item of sorted) {
-    const category = resolveStoreCategory(item.listing?.category) ?? FALLBACK_CATEGORY;
-    const group = groups.get(category) ?? [];
-    group.push(item);
-    groups.set(category, group);
-  }
-  return [...groups.entries()].map(([category, items]) => ({ category, items }));
 }
 
 export function storeItemMatches(item: StorePluginItem, keyword: string, locale: string): boolean {

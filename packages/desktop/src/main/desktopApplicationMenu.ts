@@ -5,12 +5,10 @@ import {
   getDesktopMenuMessage,
   isValidShortcutBinding,
   ZCODE_ENV,
-  ZCODE_PRODUCT_FLAVOR,
   type DesktopCommandId,
   type Locale,
 } from "@zcode/shared";
 import { readZCodeStdioTapDevState } from "@zcode/services/node";
-import { CHECK_FOR_UPDATE_MENU_ID, setAutoUpdaterMenuLocale } from "./autoUpdater.js";
 import {
   DESKTOP_ZOOM_MAX_LEVEL,
   DESKTOP_ZOOM_MIN_LEVEL,
@@ -113,18 +111,6 @@ function buildApplicationMenuTemplate(options: {
           {
             label: app.name,
             submenu: [
-              // 更新入口跟随产品身份：Preview 禁用更新器，生产后端的 Preview 也不例外。
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
-                ? [
-                    {
-                      id: CHECK_FOR_UPDATE_MENU_ID,
-                      label: getLabel(desktopMenuMessageIds.helpCheckForUpdates),
-                      click: () =>
-                        void options.executeDesktopCommand(DesktopCommandIds.CheckForUpdates),
-                    },
-                  ]
-                : []),
-              { type: "separator" as const },
               {
                 label: getLabel(desktopMenuMessageIds.appServices),
                 role: "services" as const,
@@ -249,21 +235,6 @@ function buildApplicationMenuTemplate(options: {
     {
       label: getLabel(desktopMenuMessageIds.help),
       submenu: [
-        ...(process.platform !== "darwin"
-          ? [
-              ...(ZCODE_PRODUCT_FLAVOR === "production"
-                ? [
-                    {
-                      id: CHECK_FOR_UPDATE_MENU_ID,
-                      label: getLabel(desktopMenuMessageIds.helpCheckForUpdates),
-                      click: () =>
-                        void options.executeDesktopCommand(DesktopCommandIds.CheckForUpdates),
-                    },
-                  ]
-                : []),
-              { type: "separator" as const },
-            ]
-          : []),
         ...(isLocalDevelopmentRuntime && stdioTapState.visible
           ? [
               {
@@ -358,7 +329,6 @@ export function rebuildApplicationMenu(options: {
       }),
     ),
   );
-  setAutoUpdaterMenuLocale(options.currentApplicationLocale);
   if (!app.isPackaged) {
     updateZCodeStdioTapDevMenuState();
   }

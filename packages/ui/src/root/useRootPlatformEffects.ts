@@ -3,7 +3,6 @@ import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import type { IPlatformService } from "@zcode/shared";
 import { isWorkspaceTab, type WindowTabState } from "@/store/tabStore.js";
 import { logger } from "@/logger.js";
-import { toast } from "@/components/ui/toast.js";
 import { matchesPrimaryShortcut } from "@/lib/keyboardShortcuts.js";
 import { isShortcutRecordingActive } from "@/shortcuts/bindings.js";
 import { isRendererReloadNavigation } from "@/lib/rendererNavigation.js";
@@ -30,7 +29,6 @@ export function useRootPlatformEffects({
   tabs,
   totalUnreadTaskCount,
   hasCompletedFullTabRestore = true,
-  intl,
 }: {
   initialWorkspaceAbsPath?: string;
   initialWorkspaceIdentity?: string;
@@ -58,7 +56,6 @@ export function useRootPlatformEffects({
   tabs: WindowTabState[];
   totalUnreadTaskCount: number;
   hasCompletedFullTabRestore?: boolean;
-  intl: ReturnType<typeof import("@/i18n/IntlProvider.js").useZCodeIntl>["intl"];
 }) {
   const didBootstrapInitialWorkspaceRef = useRef(false);
 
@@ -168,51 +165,6 @@ export function useRootPlatformEffects({
       }
       logger.warn("[Root] onTaskNotificationClick: task not found in any workspace:", taskId);
     });
-    const disposeUpdateCheckResult = platform.onUpdateCheckResult
-      ? platform.onUpdateCheckResult((payload) => {
-          logger.info("[Root] onUpdateCheckResult:", payload.kind);
-          switch (payload.kind) {
-            case "up-to-date":
-              toast(
-                intl.formatMessage(
-                  { id: "update.toast.upToDate" },
-                  { version: payload.currentVersion },
-                ),
-              );
-              return;
-            case "downloading":
-              toast(
-                intl.formatMessage(
-                  { id: "update.toast.downloading" },
-                  { version: payload.version },
-                ),
-              );
-              return;
-            case "available":
-              toast(
-                intl.formatMessage({ id: "update.toast.available" }, { version: payload.version }),
-              );
-              return;
-            case "already-downloading":
-              toast(
-                intl.formatMessage(
-                  { id: "update.toast.alreadyDownloading" },
-                  { progress: payload.progress },
-                ),
-              );
-              return;
-            case "ready":
-              toast(intl.formatMessage({ id: "update.toast.ready" }, { version: payload.version }));
-              return;
-            case "dev-skipped":
-              toast(intl.formatMessage({ id: "update.toast.devSkipped" }));
-              return;
-            case "error":
-              toast(intl.formatMessage({ id: "update.toast.error" }, { error: payload.message }));
-              return;
-          }
-        })
-      : () => {};
     return () => {
       disposeFocusTab();
       disposeNewTab();
@@ -220,9 +172,8 @@ export function useRootPlatformEffects({
       disposeOpenWorkspace();
       disposeOpenWorkspacePath();
       disposeNotificationClick();
-      disposeUpdateCheckResult();
     };
-  }, [intl, platform]);
+  }, [platform]);
 
   useEffect(() => {
     if (!isDesktop || !shouldPublishCompleteWorkspaceSnapshot(hasCompletedFullTabRestore)) {

@@ -204,8 +204,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
   desktopWindowChromeState,
   macWindowControlsLeftPaddingPx,
   windowsWindowControlsRightPaddingPx = 136,
-  updateReadyVersion,
-  updateState,
   sidebarContainerRef,
   toggleSidebarShortcutLabel,
   newTaskShortcutLabel,
@@ -255,7 +253,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
   fileChangeFindQuery,
   onFileChangeFindMatchCountChange,
   appLogoUrl,
-  platform,
   reloadSessionDisabled,
   reloadSessionPending,
   handleReloadSession,
@@ -1424,11 +1421,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
     />
   );
   const sidePanePanel = renderSidePanePanel();
-  const hasUpdateStatusButton =
-    updateReadyVersion !== null ||
-    updateState?.kind === "update-available" ||
-    updateState?.kind === "download-progress" ||
-    updateState?.kind === "update-downloaded";
   // Draft 之前维护一套独立轻量 header，导致 side pane、caption 安全区和拖拽入口
   // 与 Task Header 分叉。桌面端统一复用 WorkspaceHeader，只由 variant 裁剪 task 专属内容；
   // 手机远控无 active task 时仍不渲染桌面 chrome，继续遵守 replayable overlay 边界。
@@ -1628,7 +1620,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
                           projectName={projectName}
                           activeTaskTitle={activeTaskTitle}
                           activeTaskChangeSummary={activeTaskChangeSummary}
-                          hasUpdateReady={hasUpdateStatusButton}
                           activeTaskId={activeTaskId}
                           activeTraceId={activeTraceId}
                           activeSessionId={activeSessionId}
@@ -1846,8 +1837,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
             isWindowsDesktop={isWindowsDesktop}
             isDesktop={isDesktop}
             isSidebarVisible={isSidebarVisible}
-            updateReadyVersion={updateReadyVersion}
-            updateState={updateState}
             toggleSidebarShortcutLabel={toggleSidebarShortcutLabel}
             newTaskShortcutLabel={newTaskShortcutLabel}
             goBackShortcutLabel={goBackShortcutLabel}
@@ -1858,7 +1847,6 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayoutComponent(
             canGoForward={canGoForward}
             showNewTaskButton={showTopOverlayNewTaskButton}
             appLogoUrl={appLogoUrl}
-            platform={platform}
             onToggleSidebar={handleToggleSidebar}
             onCreateTask={handleCreateTaskInChat}
             onGoBack={primaryNavigationBack}

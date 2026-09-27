@@ -16,7 +16,6 @@ import {
   IModelSelectionService,
   IProviderSettingsService,
   IUsageStatsService,
-  IClientConfigService,
   IClientScenesService,
   ISkillsService,
   IMcpSyncService,
@@ -51,7 +50,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly providerSettingsService: IProviderSettingsService;
   readonly modelSelectionService: IModelSelectionService;
   readonly usageStatsService: IUsageStatsService;
-  readonly clientConfigService: IClientConfigService;
   readonly clientScenesService: IClientScenesService;
   readonly skillsService: ISkillsService;
   readonly mcpSyncService: IMcpSyncService;
@@ -112,9 +110,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.usageStatsService = ProxyChannel.toService<IUsageStatsService>(
       channelClient.getChannel(IUsageStatsService.channelName),
-    );
-    this.clientConfigService = ProxyChannel.toService<IClientConfigService>(
-      channelClient.getChannel(IClientConfigService.channelName),
     );
     this.clientScenesService = ProxyChannel.toService<IClientScenesService>(
       channelClient.getChannel(IClientScenesService.channelName),

@@ -189,5 +189,3 @@ export { ISubagentsService } from "./subagents/subagents.js";
 export { ICommandsService } from "./commands/commands.js";
 
 export { ISettingsSyncService } from "./settings-sync/settingsSync.js";
-
-export { IClientConfigService } from "./client-config/clientConfig.js";

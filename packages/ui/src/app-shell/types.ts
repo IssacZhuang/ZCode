@@ -7,7 +7,6 @@ import type {
   GitChangeSourceId,
   DesktopWindowChromeState,
   IPlatformService,
-  UpdateStatePayload,
 } from "@zcode/shared";
 import type { IServiceAccessor } from "@zcode/services";
 import type { BrowserNavigationRequest, RecentClosedSidePaneTab } from "@/hooks/useAppPanels.js";
@@ -109,8 +108,6 @@ export interface WorkspaceShellLayoutProps extends AppProps {
   desktopWindowChromeState: DesktopWindowChromeState | null;
   macWindowControlsLeftPaddingPx: number;
   windowsWindowControlsRightPaddingPx: number;
-  updateReadyVersion: string | null;
-  updateState: UpdateStatePayload | null;
   sidebarContainerRef: RefObject<HTMLElement | null>;
   toggleSidebarShortcutLabel: string;
   newTaskShortcutLabel: string;
