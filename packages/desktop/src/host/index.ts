@@ -36,11 +36,9 @@ import {
   IMediaPreviewService,
   IModelSelectionService,
   ISettingService,
-  IConversationShareService,
   IZCodeAgentService,
   IZCodeTaskService,
   IZCodeSessionService,
-  ICuaPipSessionService,
   createZCodeAgentConnectionScope,
   type ZCodeAgentV4ClientMode,
   collectServiceMemoryDiagnostics,
@@ -97,7 +95,6 @@ import {
   settleManualDispatchFailureBestEffort,
 } from "./cronRunLifecycle.js";
 import { createWindowHostAttachmentRegistry } from "./windowHostAttachmentRegistry.js";
-import { scopeConversationShareServiceForAttachment } from "./conversationShareAttachmentService.js";
 import { resolveAutomationSubmissionModelSelection } from "./automationModelSelection.js";
 import { startHostSelfResourceTelemetry } from "./hostSelfResourceTelemetry.js";
 
@@ -594,18 +591,6 @@ const runtimeTaskReporter = {
   },
 } satisfies NonNullable<Parameters<typeof createLocalServices>[0]>["taskRuntimeReporter"];
 
-const cuaOperationStateReporter = {
-  onStateChanged(event) {
-    if (!parentPort) {
-      return;
-    }
-    parentPort.postMessage({
-      type: HostResponseTypes.CuaOperationState,
-      ...event,
-    });
-  },
-} satisfies NonNullable<Parameters<typeof createLocalServices>[0]>["cuaOperationStateReporter"];
-
 let untrackedPromptRpcCount = 0;
 function reportHostRunningTaskCount(): void {
   runtimeTaskReporter.onRunningTaskCountChanged({
@@ -1005,19 +990,6 @@ function exposeServicesOnMessagePort(
   if (connectionScope) {
     overrides.set(IZCodeAgentService.channelName, connectionScope.service);
   }
-  const conversationShareService = services.getOptional(IConversationShareService);
-  if (conversationShareService) {
-    // Share service 若继续持有 raw Agent，会绕过当前 MessagePort 已握手的 trusted carrier，
-    // rowsRange 会以 connection untrusted 拒绝。必须复用同一 attachment connection scope。
-    overrides.set(
-      IConversationShareService.channelName,
-      scopeConversationShareServiceForAttachment(
-        conversationShareService,
-        clientMode,
-        connectionScope?.service,
-      ),
-    );
-  }
   services.exposeOnChannelServer(server, overrides);
   let disposed = false;
   let flowUpdateChain = Promise.resolve();
@@ -1248,19 +1220,6 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
     if (msg.control.action === "snapshot") databaseStartup?.coordinator.publish();
     else if (msg.control.action === "retry")
       void databaseStartup?.coordinator.retry(msg.control.attemptId);
-    return;
-  }
-
-  if (msg.type === HostMessageTypes.CuaPipFocusChanged) {
-    const service = activeServices?.getOptional(ICuaPipSessionService);
-    if (service) {
-      void service.publishFocus(msg.event);
-    } else {
-      // 取不到服务时过去静默丢弃，focus-changed 于是从链路上凭空消失
-      // （dev 实测 0 条，正式包同期 92 条）。补这条才能把「main 没发」与
-      // 「host 收到了但服务没注册」分开。
-      logger.warn("[cua-pip-session] focus event dropped: service unavailable");
-    }
     return;
   }
 
@@ -1521,9 +1480,6 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
               // browser-use：agent 的 interaction/browserExecute 经 zcodeAgentService 转到这个 executor，
               // 再经 parentPort 到 main 的 WebContentsView+CDP 执行。
               browserControlExecutor: browserControlMainBridge,
-              // CUA 顶部提示属于物理 Windows 桌面投影；非 Windows 和远端 authority 都不得上报。
-              cuaOperationStateReporter:
-                process.platform === "win32" ? cuaOperationStateReporter : undefined,
             });
             activeServices = initializedServices;
             activeHostApiNetworkTransport = hostApiNetworkTransport;

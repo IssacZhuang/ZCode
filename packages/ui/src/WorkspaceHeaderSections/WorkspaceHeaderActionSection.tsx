@@ -3,18 +3,15 @@ import { WorkspaceSidePaneToggleButton } from "@/WorkspaceSidePaneToggleButton.j
 import { WorkspaceTerminalToggleButton } from "@/WorkspaceTerminalToggleButton.js";
 import { cn } from "@/components/lib/utils.js";
 import type { WorkspaceHeaderActionSectionProps } from "@/WorkspaceHeaderSections/shared.js";
-import { ConversationShareMenu } from "@/ConversationShareMenu.js";
 import { DesktopWindowControls } from "@/DesktopWindowControls.js";
 
 export type { WorkspaceHeaderActionSectionProps } from "@/WorkspaceHeaderSections/shared.js";
 
 export function WorkspaceHeaderActionSection({
   variant = "task",
-  activeTaskId,
   readOnlyReason,
   workspaceAbsPath,
   workspaceIdentity,
-  isDesktop,
   isTerminalOpen,
   isSidePaneOpen,
   onToggleTerminal,
@@ -40,13 +37,6 @@ export function WorkspaceHeaderActionSection({
           workspaceAbsPath={workspaceAbsPath}
           workspaceIdentity={workspaceIdentity}
           onSelectedEditorChange={onSelectedEditorChange}
-        />
-      ) : null}
-      {/* 账号体系移除后不再按登录态隐藏分享；鉴权与否由分享服务自身结果决定。 */}
-      {activeTaskId && isDesktop !== false ? (
-        <ConversationShareMenu
-          taskId={activeTaskId}
-          useWindowsCaptionSpacing={useWindowsCaptionSpacing}
         />
       ) : null}
       {!simplifyForNarrowRemote ? (

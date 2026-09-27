@@ -1,11 +1,11 @@
 import type { ApplicationIconRequest } from "@zcode/shared";
 
 /**
- * producer 的 `appKey` → 平台图标 locator。
+ * 会话协议里 CUA 工具的 `appKey` → 平台图标 locator。
  *
- * `appKey` 由 zcode-cua 的 `deriveApplicationKey` 生成，形态是 `<scheme>:<value>`：
- * `darwin:<bundleId>`（小写）、`windows-aumid:<aumid>`、`windows-exe:<canonical path>`、
- * `linux-exe:<path>`。会话协议只承载这个字符串，图标字节由平台服务按 locator 现取。
+ * `appKey` 形态是 `<scheme>:<value>`：`darwin:<bundleId>`（小写）、`windows-aumid:<aumid>`、
+ * `windows-exe:<canonical path>`、`linux-exe:<path>`。协议只承载这个字符串，图标字节由平台
+ * 服务按 locator 现取。
  *
  * Linux 没有对应的 `ApplicationIconLocator` kind，desktop 侧也没有 resolver，返回 null 让
  * 调用方回退自己的通用图标。

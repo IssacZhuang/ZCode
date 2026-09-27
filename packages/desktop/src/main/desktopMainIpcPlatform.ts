@@ -39,7 +39,6 @@ import { handleWindowUnreadCountSync } from "./desktopWindowLifecycle.js";
 import { openPathInDefaultApp, openPathInFileManager } from "./desktopMainIpcHelpers.js";
 import { dispatchTaskNotification } from "./desktopNotifications.js";
 import { deliverPendingDeepLink } from "./desktopDeepLinkRouter.js";
-import { registerCuaPermissionIpcHandlers } from "./desktopCuaPermissionIpc.js";
 import {
   registerDesktopBrowserIpcHandlers,
   type AttachBrowserGuest,
@@ -55,7 +54,6 @@ import {
 import { createTempTextAttachment } from "./tempTextAttachment.js";
 import { registerDesktopSaveFileIpcHandler } from "./desktopSaveFile.js";
 import { registerDesktopPrintToPdfIpcHandler } from "./desktopPrintToPdf.js";
-import { registerCuaPipActiveSessionIpc } from "./desktopCuaPipIpc.js";
 
 function isAllowedExternalOpenUrl(value: string): boolean {
   try {
@@ -101,13 +99,11 @@ export function registerPlatformIpcHandlers(options: {
   ) => { activated: boolean; winId?: number };
   windowWorkspaceMap: Map<number, Set<string>>;
   windowUnreadCountMap: Map<number, number>;
-  currentApplicationLocale: () => Locale;
   executeDesktopCommand: (
     command: DesktopCommandId,
     senderWindow?: BrowserWindow | null,
   ) => Promise<unknown>;
   acknowledgePostUpdateReleaseNotes: (version: string) => Promise<void>;
-  syncActiveTaskSession: (windowId: number, sessionId: string | null) => void;
   syncTaskRealtimeWorkspaceKeys: (windowId: number, workspaceKeys: Iterable<string>) => void;
   getUpdateState: () => UpdateStatePayload;
   openUpdateStatusWindow: () => void;
@@ -293,10 +289,6 @@ export function registerPlatformIpcHandlers(options: {
       options.logger,
     );
   });
-  registerCuaPipActiveSessionIpc({
-    syncActiveTaskSession: options.syncActiveTaskSession,
-    warn: (message) => options.logger.warn(message),
-  });
   ipcMain.on(
     PlatformChannels.WindowControlsOverlayReady,
     (event, payload: WindowControlsOverlayReadyPayload) => {
@@ -349,11 +341,6 @@ export function registerPlatformIpcHandlers(options: {
   ipcMain.handle(PlatformChannels.OpenInFileManager, async (_event, rawPath: string) =>
     openPathInFileManager(rawPath, options.logger),
   );
-
-  registerCuaPermissionIpcHandlers({
-    logger: options.logger,
-    currentApplicationLocale: options.currentApplicationLocale,
-  });
 
   ipcMain.handle(
     PlatformChannels.AcknowledgePostUpdateReleaseNotes,
@@ -417,7 +404,7 @@ export function registerPlatformIpcHandlers(options: {
       return;
     }
 
-    // 返回值直通 renderer 的 executeDesktopCommand promise（GetCuaOsSupport 依赖此行为）。
+    // 返回值直通 renderer 的 executeDesktopCommand promise。
     return await options.executeDesktopCommand(command as DesktopCommandId, senderWindow);
   });
 

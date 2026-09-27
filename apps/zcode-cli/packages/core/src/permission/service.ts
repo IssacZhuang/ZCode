@@ -5,8 +5,6 @@
 import {
   AMEND_WORKFLOW_TOOL_NAME,
   isAmendWorkflowOwnedPredecessor,
-  PermissionCapabilityGroup,
-  type PermissionCapabilityGroup as PermissionCapabilityGroupType,
   type PermissionRuleValue,
   type PermissionRuleset,
   type PermissionUpdate,
@@ -15,7 +13,6 @@ import {
   type RiskLevel,
   type ToolPermissionSpec,
 } from "@zcode/contracts";
-import { OFFICIAL_CUA_PERMISSION_RULE_TOOL_NAME } from "@zcode/shared";
 import { resolvePlanModeTransitionPermission } from "./plan-mode-policy.js";
 import { webFetchRuleSubjects, wildcardToRegExp } from "./rule-matching.js";
 import { isPreapprovedWorkflowDraftWrite } from "./workflow-draft-path.js";
@@ -53,7 +50,6 @@ export interface PermissionToolCapability {
   sideEffectScope?: ModelToolSideEffectScope;
   riskLevel?: RiskLevel;
   needsApproval?: boolean;
-  permissionCapabilityGroup?: PermissionCapabilityGroupType;
   permission?: ToolPermissionSpec;
 }
 
@@ -271,12 +267,6 @@ export class PermissionService {
     contextToolName: string,
     capability: ResolvedPermissionCapability,
   ): boolean {
-    if (rule.toolName === OFFICIAL_CUA_PERMISSION_RULE_TOOL_NAME) {
-      // 保留 key 只有在当前 tool entry 另行携带宿主验证后的 official_cua
-      // capability 时才匹配。同名第三方 MCP、authority 漂移以及旧普通 tool
-      // 都不能把可解析的 wire/storage 字符串升级成可信能力。
-      return capability.permissionCapabilityGroup === PermissionCapabilityGroup.OfficialCua;
-    }
     return this.matchesRuleToolName(rule.toolName, contextToolName);
   }
 
@@ -602,7 +592,6 @@ export class PermissionService {
         toolCapability?.permission?.needsApproval ??
         toolCapability?.needsApproval ??
         !this.isReadOnlyTool(context.toolName),
-      permissionCapabilityGroup: toolCapability?.permissionCapabilityGroup,
       permissionName: toolCapability?.permission?.permission,
     };
   }
@@ -664,7 +653,6 @@ interface ResolvedPermissionCapability {
   sideEffectScope: ModelToolSideEffectScope;
   riskLevel: RiskLevel;
   needsApproval: boolean;
-  permissionCapabilityGroup?: PermissionCapabilityGroupType;
   permissionName?: string;
 }
 

@@ -38,19 +38,6 @@ function getZCodeCliLogDir() {
   return join(getZCodeCliDir(), "log");
 }
 
-/**
- * Computer Use Helper 的运行目录。macOS 上 Helper 由 LaunchServices 启动，stderr 被系统丢弃，
- * 所以它把生命周期与后台输入诊断 tee 到 `<socket>.exit.log`（见 zcode-cua
- * helperExitLogPathFor）。同目录下还有 `.tokens` broker 凭据，收集时必须按文件名白名单。
- */
-function getCuaHelperRunDir() {
-  return join(homedir(), ".zcode", "computer-use", "run");
-}
-
-function isCuaHelperDiagnosticFileName(fileName: string): boolean {
-  return fileName.endsWith(".exit.log");
-}
-
 interface LogArchiveFileEntry {
   absolutePath: string;
   archivePath: string;
@@ -888,34 +875,6 @@ async function collectLogArchiveFilesFromDirectory(
   await walkLogArchiveDirectory(absoluteDir, relativeDir, visitedDirs, files);
 }
 
-/**
- * 按文件名白名单收集单层目录，不递归。用于运行目录这类"诊断文件与凭据同放"的场景：
- * 递归收集会把 .tokens 之类的机密带进用户会转发出去的日志包，而 EXCLUDED 名单是
- * 事后补救、天然滞后。白名单则默认拒绝——目录里以后多出什么都不会跟着漏出去。
- */
-async function collectLogArchiveFilesByName(
-  absoluteDir: string,
-  relativeDir: string,
-  isCollectableFileName: (fileName: string) => boolean,
-  files: LogArchiveFileEntry[],
-): Promise<void> {
-  const dirents = await readdir(absoluteDir, { withFileTypes: true }).catch(() => null);
-  if (!dirents) {
-    return;
-  }
-  dirents.sort((left, right) => left.name.localeCompare(right.name));
-  for (const dirent of dirents) {
-    if (!dirent.isFile() || !isCollectableFileName(dirent.name)) {
-      continue;
-    }
-    await collectLogArchiveFile(
-      join(absoluteDir, dirent.name),
-      posix.join(relativeDir, dirent.name),
-      files,
-    );
-  }
-}
-
 async function collectLogArchiveFile(
   absolutePath: string,
   archivePath: string,
@@ -971,18 +930,6 @@ async function createLogArchiveArtifacts(
     join(zcodeCliDir, "rollout"),
     posix.join(".zcode", "cli", "rollout"),
     visitedDirs,
-    files,
-  );
-
-  // Computer Use Helper 的结构化诊断必须进日志包：否则反馈包里
-  // grep "background keyboard begin rejected" 命中 0，
-  // 因为 Helper 由 LaunchServices 启动、stderr 被系统丢弃，它把诊断 tee 到
-  // ~/.zcode/computer-use/run/<socket>.exit.log，既不在 app data 也不在 ~/.zcode/cli 下。
-  // 同目录下有 .tokens broker 凭据，因此按文件名白名单只收 *.exit.log，不递归该目录。
-  await collectLogArchiveFilesByName(
-    getCuaHelperRunDir(),
-    posix.join(".zcode", "computer-use", "run"),
-    isCuaHelperDiagnosticFileName,
     files,
   );
 

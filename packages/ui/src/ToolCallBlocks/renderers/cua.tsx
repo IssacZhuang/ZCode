@@ -2,7 +2,6 @@
 import { type ReactNode, useCallback, useMemo } from "react";
 import type { ApplicationIconRequest } from "@zcode/shared";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import { isZCodeCuaToolName } from "@/lib/cuaPermissionAction.js";
 import { ToolLayout } from "@/ToolCallBlocks/ToolLayout.js";
 import { readCuaActionDetail } from "@/ToolCallBlocks/renderers/cuaActionDetail.js";
 import { buildCuaAccessDetails } from "@/ToolCallBlocks/renderers/cuaAccessDetails.js";
@@ -327,6 +326,15 @@ function buildCuaDetailsModel(
       errorCode === "element_stale" ? "chat.toolCall.cua.details.elementStaleAction" : undefined,
     suggestedAction: errorCode !== "element_stale" ? cuaDisplay?.suggestedAction : undefined,
   };
+}
+
+// CUA 工具名识别：server key 段为 computer-use（mcp__computer-use__*），plugin server
+// 命名（mcp__plugin_*_computer-use__*）也包含 "computer-use" 串。两种形态都用 includes
+// 兼容，否则 plugin namespace 前缀会让识别失败、ToolCallBlock 退化成 fallback 渲染。
+// "computer-use" 足够特异（仅 cua server 用此 key，不会误判 android-emulator/browser-use 等）。
+function isZCodeCuaToolName(value: string | null | undefined): boolean {
+  const normalized = value?.trim().toLowerCase().replace(/_/g, "-") ?? "";
+  return normalized === "computer-use" || normalized.includes("computer-use");
 }
 
 export function isCuaToolCall(

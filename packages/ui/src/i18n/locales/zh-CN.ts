@@ -99,7 +99,6 @@ const zhCN: Record<string, string> = {
   "offPeak.nav.listUnavailable": "闲时任务列表加载失败，请刷新后重试",
   "offPeak.boundSession.hint": "任务将在该会话中执行；执行期间停止会话会取消任务。",
   "offPeak.chatCreated.boundHint": "将在本会话中运行",
-  "settings.computerUse.disabledToast": "电脑控制已关闭，已有对话需重启 ZCode 后生效。",
   "settings.modelProvider.connectionUnavailableNotice": "当前套餐已不可用。",
   "settings.modelProvider.switchConnection": "切换至「{connection}」",
   "settings.modelProvider.connectionSuggestionStale": "套餐状态已变化，请在模型设置中重新选择。",
@@ -123,216 +122,6 @@ const zhCN: Record<string, string> = {
   "common.save": "保存",
   "common.saving": "保存中...",
   "common.delete": "删除",
-  "conversationShare.trigger": "分享",
-  "conversationShare.shareTitle": "分享标题",
-  "conversationShare.permissionLabel": "访问权限",
-  "conversationShare.permission.private": "仅自己可见",
-  "conversationShare.permission.privateHint": "适合个人留档",
-  "conversationShare.permission.linkViewer": "拥有链接的人都可查看",
-  "conversationShare.permission.linkViewerHint": "不能导入继续",
-  "conversationShare.permission.linkViewerSummary": "链接持有者可查看",
-  "conversationShare.permission.linkEditor": "拥有链接的人可导入并继续",
-  "conversationShare.permission.linkEditorHint": "可导入到 ZCode",
-  "conversationShare.permission.linkEditorSummary": "链接持有者可导入并继续",
-  "conversationShare.permission.privateSummary": "仅自己可见",
-  "conversationShare.openLink": "打开分享页",
-  "conversationShare.result.title": "分享已创建",
-  "conversationShare.result.description": "链接已准备好，可以复制或在浏览器中查看。",
-  "conversationShare.result.openInBrowser": "去浏览器查看",
-  "conversationShare.result.dismiss": "关闭分享结果",
-  "conversationShare.generatingLink": "正在生成分享链接",
-  "conversationShare.copyLink": "复制链接",
-  "conversationShare.copySucceeded": "分享链接已复制",
-  "conversationShare.publishSucceeded": "分享链接已生成",
-  "conversationShare.publishSucceededWithSkips": "分享链接已生成，有 {count} 个文件被跳过",
-  "conversationShare.copyFailed": "复制分享链接失败",
-  "conversationShare.publishFailed": "生成分享链接失败，请重试",
-  "conversationShare.error.authenticationRequired":
-    "分享功能仅对已登录用户开放。登录状态已失效，请重新登录后再试。",
-  "conversationShare.error.featureDisabled": "当前工作区或连接类型暂不支持分享。",
-  "conversationShare.error.artifactNotAllowed":
-    "某个预览文件的类型暂不支持分享，请取消选择对应对话后重试。",
-  "conversationShare.error.limitExceeded": "所选对话或文件超过分享限制，请减少选择的对话数量。",
-  "conversationShare.error.rateLimited": "分享操作过于频繁，请稍后再试。",
-  "conversationShare.error.network": "无法连接分享服务，请检查网络后重试。",
-  "conversationShare.error.safetyCheckTimeout": "分享安全检查超时，请稍后重试。",
-  "conversationShare.error.invalidSelection": "所选对话已发生变化，请重新打开分享面板并选择。",
-  "conversationShare.error.invalidConversation":
-    "所选内容包含当前版本暂不支持的结构。请取消仍在运行或包含内嵌图片的轮次，确认预览文件已完成后重试。",
-  "conversationShare.error.runningTurn":
-    "所选对话仍在运行，请取消选择运行中的轮次，等待完成后再分享。",
-  "conversationShare.error.streamingRow": "所选对话仍在生成中，请等待本轮输出完成后再分享。",
-  "conversationShare.error.activeToolCall": "所选对话仍有工具调用未完成，请等待工具结束后再分享。",
-  "conversationShare.error.activeSubagent":
-    "所选对话包含仍在运行的子任务，请等待子任务结束后再分享。",
-  "conversationShare.error.inputAttachment":
-    "用户输入附件当前无法完成分享，请确认附件仍存在后重试。",
-  "conversationShare.error.inlineToolImage":
-    "所选对话包含暂不支持的内嵌工具图片，请取消对应轮次后重试。",
-  "conversationShare.error.unsupportedTimeline":
-    "所选对话包含暂不支持的分支或恢复记录，请取消对应轮次后重试。",
-  "conversationShare.error.unsafeUrl": "所选内容包含本地或内联文件地址，请移除后再分享。",
-  "conversationShare.error.missingProductTurn":
-    "所选对话结构不完整，请重新打开分享面板并重新选择轮次。",
-  "conversationShare.error.artifactTypeNotAllowed":
-    "某个预览文件类型暂不支持分享，请取消对应轮次后重试。",
-  "conversationShare.error.artifactExtensionMissing":
-    "某个预览文件缺少有效扩展名，请检查文件后重试。",
-  "conversationShare.error.artifactOutsideWorkspace":
-    "某个预览文件不在当前工作区内，请重新生成或移动文件后重试。",
-  "conversationShare.error.artifactChanged":
-    "某个预览文件在分享前发生变化，请重新生成预览文件后重试。",
-  "conversationShare.error.artifactReadFailed":
-    "某个预览文件读取失败，请确认文件仍存在且可访问后重试。",
-  "conversationShare.error.artifactSizeLimit":
-    "某个文件超过单文件大小上限，请取消该轮或改用更小的文件后重试。",
-  "conversationShare.error.artifactManifest":
-    "预览文件清单不完整，请重新生成文件并刷新分享面板后重试。",
-  "conversationShare.error.payloadLimit": "所选对话或文件超过分享限制，请减少选择后重试。",
-  "conversationShare.error.disclosureRequired": "请先检查并确认分享内容，再生成链接。",
-  "conversationShare.error.uploadFailed": "文件未能完整上传，请确认文件仍然存在后重试。",
-  "conversationShare.error.connectionUnavailable": "桌面连接尚未就绪，请重新打开分享面板后重试。",
-  "conversationShare.error.noShareableContent":
-    "当前选择没有可分享内容，请重新选择需要分享的轮次。",
-  "conversationShare.error.summary": "分享失败：发现 {count} 个问题，详情见分享面板。",
-  "conversationShare.issue.artifactTypeNotAllowed":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName}（{artifactType}）暂不支持分享，将被跳过。当前支持：{allowedFormats}。",
-  "conversationShare.issue.artifactExtensionMissing":
-    "第 {turnOrdinal} 轮的预览文件缺少有效扩展名，请检查文件名后重试。",
-  "conversationShare.issue.artifactOutsideWorkspace":
-    "第 {turnOrdinal} 轮的预览文件不在当前工作区内，请重新生成或移动文件后重试。",
-  "conversationShare.issue.artifactChanged":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName} 在读取期间发生变化，请重新生成文件后重试。",
-  "conversationShare.issue.artifactReadFailed":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName} 无法读取，请确认文件仍存在且可访问。",
-  "conversationShare.issue.inputAttachment":
-    "第 {turnOrdinal} 轮包含用户输入附件，当前版本不支持，请取消该轮。",
-  "conversationShare.issue.inputAttachmentUnavailable":
-    "第 {turnOrdinal} 轮的用户输入附件已不存在或无法读取。",
-  "conversationShare.issue.inlineToolImage": "第 {turnOrdinal} 轮包含无法公开承载的内嵌工具图片。",
-  "conversationShare.issue.runningTurn": "第 {turnOrdinal} 轮仍在运行，请等待完成或取消该轮。",
-  "conversationShare.issue.streamingRow": "第 {turnOrdinal} 轮仍在生成，请等待完成或取消该轮。",
-  "conversationShare.issue.activeToolCall": "第 {turnOrdinal} 轮仍有工具调用未完成，请取消该轮。",
-  "conversationShare.issue.activeSubagent":
-    "第 {turnOrdinal} 轮仍有子任务运行，请等待完成或取消该轮。",
-  "conversationShare.issue.unsupportedTimeline":
-    "第 {turnOrdinal} 轮包含当前无法公开承载的时间线记录。",
-  "conversationShare.issue.noShareableContent":
-    "当前选择没有可分享内容，请重新选择需要分享的轮次。",
-  "conversationShare.issue.unsafeUrl":
-    "第 {turnOrdinal} 轮包含本地或内联文件地址，当前版本不支持，请移除后重试。",
-  "conversationShare.issue.missingProductTurn": "所选内容缺少完整轮次身份，请重新选择对话。",
-  "conversationShare.issue.invalidSelection": "所选轮次已发生变化，请返回选择并重新勾选。",
-  "conversationShare.issue.invalidConversation": "所选对话结构不完整，请取消问题轮次后重试。",
-  "conversationShare.issue.staleConversation": "会话在准备分享期间发生变化，请返回选择后重试。",
-  "conversationShare.issue.rowsLimit": "对话行数为 {actual}，超过上限 {limit}，请减少选择的轮次。",
-  "conversationShare.issue.artifactCountLimit":
-    "产物数量为 {actual}，超过上限 {limit}，请减少选择的轮次。",
-  "conversationShare.issue.artifactSizeLimit":
-    "{artifactDisplayName} 大小为 {actual}，超过单文件上限 {limit}，请取消该轮或重新生成较小文件。",
-  "conversationShare.issue.artifactTotalSizeLimit":
-    "产物总大小为 {actual}，超过上限 {limit}，请减少产物或取消对应轮次。",
-  "conversationShare.issue.payloadSizeLimit":
-    "分享请求大小为 {actual}，超过上限 {limit}，请减少选择的轮次或产物。",
-  "conversationShare.issue.artifactManifest":
-    "预览文件清单存在重复或缺失，请重新生成文件并刷新分享面板。",
-  "conversationShare.issue.uploadIncomplete":
-    "{artifactDisplayName} 上传回执与文件不一致，请确认文件未变化后重试。",
-  "conversationShare.issue.unknown":
-    "分享在 {phase} 阶段失败，服务端未返回可定位详情，请稍后重试。",
-  "conversationShare.issue.details": "错误详情",
-  "conversationShare.issue.requestIdLabel": "服务端请求 ID",
-  "conversationShare.issue.requestId": "服务端请求 ID：{requestId}",
-  "conversationShare.issue.requestIdMissing": "未收到服务端 request-id。",
-  "conversationShare.issue.copyRequestId": "复制 request-id",
-  "conversationShare.issue.deselectTurn": "取消选择此轮",
-  "conversationShare.issue.retryPreflight": "重新检查",
-  "conversationShare.issue.more": "还有 {count} 个问题未展开。",
-  "conversationShare.warning.summary": "分享已完成，有 {count} 个文件被跳过，未包含在链接中。",
-  "conversationShare.warning.artifactSkipped":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName} 无法读取，已跳过。如果确实需要分享该文件，请重新生成后再分享。",
-  "conversationShare.warning.inputAttachmentSkipped":
-    "第 {turnOrdinal} 轮的用户输入附件未包含在分享中，该轮文字内容照常分享。",
-  "conversationShare.warning.inputAttachmentUnavailable":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName} 已不存在或无法读取，已跳过。",
-  "conversationShare.warning.artifactTypeSkipped":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName}（{artifactType}）暂不支持分享，已跳过。当前支持：{allowedFormats}。",
-  "conversationShare.warning.artifactChangedSkipped":
-    "第 {turnOrdinal} 轮的 {artifactDisplayName} 在分享前发生变化，已跳过。",
-  "conversationShare.partial.panelLabel": "选择要分享的对话",
-  "conversationShare.selection.reopen": "重新打开选择面板",
-  "conversationShare.partial.empty": "当前没有已完成、可分享的对话",
-  "conversationShare.partial.selectionStageHint": "勾选要分享的已完成会话，点击下一步继续。",
-  "conversationShare.partial.preflightChecking": "正在检查分享内容…",
-  "conversationShare.partial.preflightBlocked": "发现无法分享的内容，请先处理下方问题。",
-  "conversationShare.partial.preflightSkipped":
-    "发现 {count} 个文件不会加入分享链接，继续后会跳过。",
-  "conversationShare.partial.preflightDeferred": "部分文件暂时无法检查，发布时会再次确认。",
-  "conversationShare.partial.continueWithSkips": "继续下一步（将跳过 {count} 个文件）",
-  "conversationShare.partial.selectionHint": "检查标题、访问权限和敏感信息确认后生成链接。",
-  "conversationShare.partial.confirmationTitle": "确认分享内容",
-  "conversationShare.publish.failedTitle": "分享发布失败",
-  "conversationShare.publish.failedDescription": "请根据下方提示修正后重试。",
-  "conversationShare.publish.retry": "重试生成链接",
-  "conversationShare.publish.footerMeta": "分享 {selected} 个对话轮次，{access}",
-  "conversationShare.publish.failedFooter": "内容需要调整后再发布",
-  "conversationShare.partial.selectAll": "全选",
-  "conversationShare.partial.deselectAll": "取消全选",
-  "conversationShare.partial.selectionCount": "{selected}/{total}",
-  "conversationShare.partial.selectedSummary": "已选择 {selected} / {total}",
-  "conversationShare.partial.cancel": "取消",
-  "conversationShare.partial.next": "下一步",
-  "conversationShare.partial.back": "上一步",
-  "conversationShare.partial.confirm": "生成分享链接",
-  "conversationShare.partial.publishing": "生成中…",
-  "conversationShare.progress.collecting": "正在整理会话和产物…",
-  "conversationShare.progress.uploading": "正在上传产物…",
-  "conversationShare.progress.checking": "正在等待安全检查完成…",
-  "conversationShare.progress.collectingFailed": "整理会话和产物失败",
-  "conversationShare.progress.uploadingFailed": "上传产物失败",
-  "conversationShare.progress.checkingFailed": "安全检查失败",
-  "conversationShare.phase.collecting": "整理内容",
-  "conversationShare.phase.uploading": "上传产物",
-  "conversationShare.phase.checking": "安全检查",
-  "conversationShare.phase.collectingComplete": "会话和产物已准备",
-  "conversationShare.phase.uploadingComplete": "产物上传完成",
-  "conversationShare.phase.uploadingActive": "正在上传 {completed} / {total}",
-  "conversationShare.phase.collectingPending": "等待开始",
-  "conversationShare.phase.uploadingPending": "等待整理完成",
-  "conversationShare.phase.checkingPending": "等待上传完成",
-  "conversationShare.phase.failed": "失败",
-  "conversationShare.publicWarning": "公开前请检查对话、工具输入输出和产物中的敏感信息。",
-  "conversationShare.disclosure.description": "系统不会自动检测敏感信息。",
-  "conversationShare.disclosure.checkbox": "我已检查分享内容，确认不包含敏感信息。",
-  "conversationShare.disclosure.scope.trigger": "查看检查范围",
-  "conversationShare.disclosure.scope.title": "检查范围",
-  "conversationShare.disclosure.scope.reviewLabel": "需要查看",
-  "conversationShare.disclosure.scope.conversation": "会话内容：用户消息、助手回复、任务标题",
-  "conversationShare.disclosure.scope.tools": "工具输入与输出：命令、参数、返回结果",
-  "conversationShare.disclosure.scope.generated": "生成内容：代码、文件、预览内容",
-  "conversationShare.disclosure.scope.sensitiveLabel": "重点排查",
-  "conversationShare.disclosure.scope.sensitive": "凭证、Token、密码、私钥、内部地址、个人信息",
-  "conversationShare.disclosure.scope.note": "系统不会自动扫描或脱敏，请逐项确认。",
-  "conversationShare.import.source": "已从分享导入：{title}",
-  "conversationShare.import.dividerLabel": "已从分享导入",
-  "conversationShare.import.fallbackRemoteWorkspace":
-    "已从分享导入：{title}。当前工作区是远程的，暂不支持导入，会话已创建在本地工作区 {workspacePath}。",
-  "conversationShare.import.fallbackDefaultWorkspace":
-    "已从分享导入：{title}。没有可用的目标工作区，会话已创建在默认工作区 {workspacePath}。",
-  "conversationShare.import.downloading": "正在下载分享文件：{completed}/{total}",
-  "conversationShare.import.installing": "正在安装分享文件",
-  "conversationShare.import.committing": "正在创建分享会话",
-  "conversationShare.import.complete": "分享导入完成",
-  "conversationShare.import.loginRequired": "该分享暂不支持匿名导入，请登录 ZCode 后重试",
-  "conversationShare.import.notFound": "分享不存在或当前账号无权访问",
-  "conversationShare.import.expired": "分享已过期，请让分享者重新生成",
-  "conversationShare.import.integrityFailed": "分享文件校验失败，已停止导入",
-  "conversationShare.import.failed": "分享导入失败，请检查网络后重试",
-  "conversationShare.import.integrityFailedWithArtifact":
-    "分享文件 {artifactDisplayName} 校验失败，已停止导入，请让分享者重新生成链接。",
-  "conversationShare.import.failedWithArtifact":
-    "分享文件 {artifactDisplayName} 在下载阶段失败，请检查网络后重试。",
-  "conversationShare.import.retry": "重试",
   "settings.resourceGroup.item.one": "{count} 项",
   "settings.resourceGroup.item.other": "{count} 项",
   "settings.create.action": "新建",
@@ -3866,15 +3655,6 @@ const zhCN: Record<string, string> = {
     "压缩完成后，当前会话已使用的上下文仍大于目标模型预留最大输出后的可用上下文，模型切换已取消。",
   "chat.toolbar.mode.label": "切换模式",
   // CUA 输入框常驻入口按钮
-  "chat.toolbar.computerUse.label": "电脑操作",
-  "chat.toolbar.computerUse.tooltip.idle": "电脑操作空闲——首次使用时自动启动",
-  "chat.toolbar.computerUse.tooltip.starting": "正在启用电脑操作插件…",
-  "chat.toolbar.computerUse.tooltip.ready": "电脑操作已就绪 · 直接描述你想让 ZCode 做的事",
-  "chat.toolbar.computerUse.tooltip.permissionRequired": "缺少 macOS 权限，点击完成授权",
-  "chat.toolbar.computerUse.tooltip.error":
-    "电脑操作启用失败 · 重启 ZCode 应用后重试，或让 ZCode 排查日志",
-  "chat.toolbar.computerUse.tooltip.sessionBusy":
-    "会话进行中，暂不能切换电脑操作；任务结束后可再试",
   "chat.toolbar.mode.description": "切换当前任务的权限/执行模式，例如默认、计划或接受编辑。",
   "chat.toolbar.thoughtLevel.label": "推理强度",
   "chat.toolbar.thoughtLevel.tooltip": "思考级别",
@@ -4926,10 +4706,6 @@ const zhCN: Record<string, string> = {
   "chat.permission.workflow.save.args.default": "默认值",
   "chat.interactionOrigin.subagent": "子智能体",
   "chat.interactionOrigin.subagent.title": "来自子智能体：{agentType}",
-  "chat.cuaPermission.openAccessibility": "打开辅助功能设置",
-  "chat.cuaPermission.openScreenRecording": "打开屏幕录制设置",
-  "chat.cuaPermission.opening": "正在打开...",
-  "chat.cuaPermission.openFailed": "无法打开 CUA 权限引导：{error}",
 
   // 用户问答
   "chat.elicitation.title": "需要确认",
@@ -5353,10 +5129,6 @@ const zhCN: Record<string, string> = {
   "automations.runs.prevPage": "上一页",
   "automations.runs.nextPage": "下一页",
   // CUA (Computer Use)
-  "chat.cuaReadiness.toolsNotLoaded":
-    "ZCode 电脑控制仍在准备中——工具尚未加载（已加载 {count} 个）。请先授予下方权限，Helper 就绪后工具会自动出现。",
-  "chat.cuaReadiness.toolsPreparing":
-    "ZCode 电脑控制仍在准备中——工具尚未加载。请先授予下方权限，Helper 就绪后工具会自动出现。",
   "chat.toolCall.cua.requestAccess": "检查 Computer Use 权限",
   "chat.toolCall.cua.appName": "电脑控制",
   "chat.toolCall.cua.group.completedLabel": "电脑控制",
@@ -5472,57 +5244,6 @@ const zhCN: Record<string, string> = {
   "chat.toolCall.cua.writeClipboard": "写入剪贴板",
   "chat.toolCall.cua.stop": "停止控制电脑",
   "chat.toolCall.cua.default": "使用 Computer Use",
-  "cuaPermission.modal.unavailable":
-    "暂时无法确认 Helper 权限状态（Helper 可能还在启动）。请重新检查后再打开系统设置。",
-  "cuaPermission.live.title": "电脑操作需要 macOS 权限",
-  "cuaPermission.live.description": "正在运行的电脑操作任务需要 macOS 权限，是否前往授权？",
-  "cuaPermission.live.confirm": "前往授权",
-  "cuaPermission.live.cancel": "暂不授权",
-  "cuaPermission.modal.restartButton": "重启 Helper",
-  "cuaPermission.modal.restarting": "正在重启 Helper…",
-  "cuaPermission.modal.restartFailed": "无法重启 Helper：{error}",
-  "cuaPermission.modal.relaunchAppButton": "重启 ZCode",
-  "cuaPermission.modal.relaunchAppHint":
-    "重启 Helper 后仍未生效？重启 ZCode 可彻底重载 Helper 进程。",
-  "cuaPermission.status.granted": "已授权",
-  "cuaPermission.status.missing": "未授权",
-  "cuaPermission.status.unknown": "未知",
-  "cuaPermission.status.stale": "授权状态需要重新确认",
-  "cuaPermission.status.verifying": "已授权，正在验证",
-  "cuaPermission.probeVerifyingHint": "系统授权已存在，正在验证实际控制与截图能力。",
-  "cuaPermission.tools.preparing":
-    "系统权限与本机控制能力已就绪，正在等待当前会话加载电脑控制工具。",
-  "cuaPermission.grantAlreadySatisfied": "此权限已授予",
-  "cuaPermission.tools.agentUpdateRequired":
-    "当前 Agent 版本过旧，无法安全检查工具就绪状态。请更新或重启 Agent 后重新检查。",
-  "cuaPermission.tools.untrustedRuntime":
-    "检测到电脑控制工具，但它们并非来自已校验的 ZCode 官方插件。请检查插件安装后重新验证。",
-  "cuaPermission.perm.accessibility": "辅助功能 (Accessibility)",
-  "cuaPermission.perm.accessibility.purpose": "读取/驱动 UI 元素 + 合成键鼠输入",
-  "cuaPermission.perm.screenRecording": "屏幕录制 (Screen Recording)",
-  "cuaPermission.perm.screenRecording.purpose": "截屏",
-  "cuaPermission.osFloorTitle":
-    "电脑控制功能需要 macOS {minimum} 或更高版本（当前约为 macOS {current}）",
-  "cuaPermission.osFloorDescription": "请先升级系统后再使用。授权设置在低版本系统上无法完成。",
-  "cuaPermission.ready": "权限已就绪",
-  "cuaPermission.ready.sessionValidationHint":
-    "首个会话启动时，ZCode 会针对该会话精确验证电脑控制工具。",
-  "settings.computerUse.title": "电脑控制",
-  "settings.computerUse.toggleLabel": "启用电脑控制",
-  "settings.computerUse.toggleDescription": "开启后将启用电脑控制及其 MCP 与技能。",
-  "settings.computerUse.composerEntry.label": "在输入框显示电脑操作按钮",
-  "settings.computerUse.composerEntry.description": "关闭后输入框不再显示电脑操作按钮。",
-  "settings.computerUse.composerEntry.requiresEnabled":
-    "需先开启电脑控制，才能在输入框显示该按钮。",
-  "settings.computerUse.composerEntry.saveFailed": "保存失败：{error}",
-  "settings.computerUse.pluginDisabledHint": "电脑控制插件未启用。前往插件开启后即可使用电脑控制。",
-  "settings.computerUse.unsupported.title": "当前环境暂不支持电脑控制",
-  "settings.computerUse.unsupported.remoteDescription":
-    "Computer Use 暂不支持 SSH、WSL、Docker 或其他远端环境。请切换到本机 macOS 或 Windows 工作区。",
-  "settings.computerUse.unsupported.linuxDescription":
-    "Computer Use 暂不支持 Linux 桌面环境。请切换到本机 macOS 或 Windows 工作区。",
-  "settings.computerUse.unsupported.badge": "当前环境不可用",
-  "settings.computerUse.unsupported.group": "不可用的内置能力",
   "scheduledPreview.keepAwakeEnabled": "已开启保持唤醒",
   "scheduledPreview.keepAwakeDisabled": "已关闭保持唤醒",
   "scheduledPreview.toast.running": "正在运行“{title}”…",

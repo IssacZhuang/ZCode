@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- 共享能力外壳聚合 Scope，并承载 Plugin tabs 与独立 Commands 入口。 */
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Monitor, MoreHorizontal, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
+import { Loader2, MoreHorizontal, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { toast } from "@/components/ui/toast.js";
 import {
@@ -66,11 +66,6 @@ import {
   selectPluginsForScope,
 } from "@/settings/pluginCapabilityProjection.js";
 import {
-  isComputerUseRemoteOrLinux,
-  matchesComputerUseSearch,
-  resolveComputerUseAvailability,
-} from "@/settings/computerUseAvailability.js";
-import {
   PluginScopeMenu,
   getPluginWorkspaceKey,
   isPluginScopeWorkspaceConnected,
@@ -94,9 +89,6 @@ type PluginScope =
   | { kind: "workspace"; key: string; tab: WorkspaceTabState };
 
 interface PluginsSectionProps {
-  isDesktop?: boolean;
-  isMacDesktop?: boolean;
-  isWindowsDesktop?: boolean;
   initialTab?: PluginTabTarget;
   mode?: "plugin" | "mcp" | "skill" | "command";
   workspacePath?: string | null;
@@ -112,9 +104,6 @@ function PluginList({
   target,
   configScope,
   searchQuery,
-  isDesktop,
-  isMacDesktop,
-  isWindowsDesktop,
   onCreateTask,
   onDetailOpenChange,
   onVisibleCountChange,
@@ -122,9 +111,6 @@ function PluginList({
   target: WorkspaceTabState | null;
   configScope: ZCodePluginScope;
   searchQuery: string;
-  isDesktop: boolean;
-  isMacDesktop: boolean;
-  isWindowsDesktop: boolean;
   onCreateTask?: (request?: CreateTaskRequest) => void;
   onDetailOpenChange?: (open: boolean) => void;
   onVisibleCountChange?: (count: number) => void;
@@ -222,27 +208,12 @@ function PluginList({
   const visibleBuiltInPlugins = visiblePluginGroups.builtIn;
   const visibleInstalledPlugins = visiblePluginGroups.installed;
   const installedPluginCount = scopedPluginGroups.installed.length;
-  const computerUseAvailability = resolveComputerUseAvailability({
-    isDesktop,
-    isMacDesktop,
-    isWindowsDesktop,
-    remoteSessionId: target?.remoteSessionId,
-    workspaceIdentity: target?.workspaceIdentity,
-  });
-  const showUnavailableComputerUse = Boolean(
-    configScope === "user" &&
-    target &&
-    !loading &&
-    isComputerUseRemoteOrLinux(computerUseAvailability) &&
-    matchesComputerUseSearch(searchQuery),
-  );
   const hasEmptySearchResult = Boolean(
     target &&
     !loading &&
     searchQuery.trim() &&
     visibleInstalledPlugins.length === 0 &&
-    visibleBuiltInPlugins.length === 0 &&
-    !showUnavailableComputerUse,
+    visibleBuiltInPlugins.length === 0,
   );
   const hideInstalledGroup = Boolean(searchQuery.trim() && visibleInstalledPlugins.length === 0);
   useEffect(() => {
@@ -578,32 +549,6 @@ function PluginList({
     </div>
   );
 
-  const renderUnavailableComputerUse = () => (
-    <div className="overflow-hidden rounded-xl bg-surface">
-      <div className="flex min-w-0 items-center gap-3 px-4 py-3 text-foreground-subtle">
-        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-background text-foreground-subtle">
-          <Monitor className="size-4" aria-hidden="true" />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-ui-base font-medium text-foreground">
-            {intl.formatMessage({ id: "settings.computerUse.title" })}
-          </div>
-          <div className="mt-0.5 text-ui-sm text-foreground-subtle">
-            {intl.formatMessage({
-              id:
-                computerUseAvailability.kind === "local-linux"
-                  ? "settings.computerUse.unsupported.linuxDescription"
-                  : "settings.computerUse.unsupported.remoteDescription",
-            })}
-          </div>
-        </div>
-        <span className="shrink-0 rounded-md bg-background px-2 py-1 text-ui-xs font-medium text-foreground-subtle">
-          {intl.formatMessage({ id: "settings.computerUse.unsupported.badge" })}
-        </span>
-      </div>
-    </div>
-  );
-
   if (selectedPlugin && selectedStoreItem && targetServiceResolution.rpcReady) {
     const pluginBreadcrumbLabel = resolvePluginDisplayName(selectedStoreItem, locale);
     // Plugin 不打开仅含管理字段的简化弹窗：那会与插件详情形成两套内容模型，
@@ -742,7 +687,7 @@ function PluginList({
           <PluginLoadingState label={intl.formatMessage({ id: "common.loading" })} />
         ) : visibleInstalledPlugins.length > 0 ? (
           renderPluginRows(visibleInstalledPlugins)
-        ) : installedPluginCount === 0 && !showUnavailableComputerUse ? (
+        ) : installedPluginCount === 0 ? (
           // 市场浏览入口已移除：无已装插件时仅展示空态说明，不再提供“浏览插件”跳转。
           <PluginInstallEmptyState
             title={intl.formatMessage({
@@ -763,14 +708,6 @@ function PluginList({
             </span>
           </h3>
           {renderPluginRows(visibleBuiltInPlugins)}
-        </div>
-      ) : null}
-      {showUnavailableComputerUse ? (
-        <div className="space-y-4">
-          <h3 className="flex h-7 items-center text-ui-base font-medium text-foreground">
-            {intl.formatMessage({ id: "settings.computerUse.unsupported.group" })}
-          </h3>
-          {renderUnavailableComputerUse()}
         </div>
       ) : null}
       <PluginUninstallConfirmDialog
@@ -802,9 +739,6 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export function PluginsSection({
-  isDesktop = false,
-  isMacDesktop = false,
-  isWindowsDesktop = false,
   initialTab = "plugins",
   mode = "plugin",
   workspacePath,
@@ -1111,9 +1045,6 @@ export function PluginsSection({
             <PluginList
               target={target}
               configScope={selectedScope.kind === "user" ? "user" : "workspace"}
-              isDesktop={isDesktop}
-              isMacDesktop={isMacDesktop}
-              isWindowsDesktop={isWindowsDesktop}
               searchQuery={searchQueries.plugins}
               onCreateTask={onCreateTask}
               onDetailOpenChange={setPluginDetailOpen}

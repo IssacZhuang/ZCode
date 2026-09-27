@@ -18,29 +18,6 @@ export {
 // Accessor
 export type { IServiceAccessor } from "./accessor.js";
 export {
-  ConversationShareServiceError,
-  createUnsupportedConversationShareService,
-  IConversationShareService,
-} from "./conversation-share/conversationShare.js";
-export type {
-  ConversationShareSelection,
-  ConversationSharePublishProgress,
-  ConversationShareImportProgress,
-  ImportConversationShareInput,
-  ImportConversationShareResult,
-  ImportedConversationShare,
-  ConversationShareServiceErrorKind,
-  ConversationShareFailureIssue,
-  ConversationShareFailureIssueCode,
-  ConversationSharePreflightInput,
-  ConversationSharePreflightResult,
-  ConversationShareAllowedArtifact,
-  ConversationShareTurnPreflightResult,
-  PublishTextConversationInput,
-} from "./conversation-share/conversationShare.js";
-// Conversation share 的具体实现依赖 Node 文件系统，只能从 @zcode/services/node 引入；
-// 根入口必须保持 browser-safe，避免 renderer 解析到 node:* 模块。
-export {
   createConversationTelemetryService,
   type ConversationTelemetryWorkspaceTarget,
   type IConversationTelemetryService,
@@ -132,7 +109,6 @@ export type {
   ZCodeAgentAttachmentChunkParams,
   ZCodeAgentAttachmentTerminalParams,
   ZCodeAgentCreateSessionParams,
-  ZCodeAgentCuaPermissionObservation,
   ZCodeAgentInitializeResult,
   ZCodeAgentStorageStartupSnapshot,
   ZCodeAgentRuntimeLifecycleEvent,
@@ -208,20 +184,6 @@ export { isValidCronExpr } from "./session/automationCronValidation.js";
 // Skills service — ISkillsService is both a type (interface) and value (descriptor)
 export { ISkillsService } from "./skills/skills.js";
 export { IMcpSyncService } from "./mcp-sync/mcpSync.js";
-export {
-  ICuaPermissionService,
-  type CuaPermissionState,
-  type CuaPermissionRestartOptions,
-  type CuaPermissionStatus,
-  type CuaPermissionStatusQueryOptions,
-  type CuaPermissionStatusResult,
-  type CuaPermissionStatusUnavailable,
-  isCuaPermissionStatusAvailable,
-} from "./cua-permission-broker/cuaPermissionService.js";
-export {
-  ICuaPipSessionService,
-  type CuaPipSessionService,
-} from "./cua-permission-broker/cuaPipSession.js";
 
 // 设置页插件管理薄服务（UI 平台能力面不再直触 zcodeAgentService）
 export { IPluginManagementService } from "./plugins/pluginManagement.js";

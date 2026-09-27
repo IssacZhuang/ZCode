@@ -160,9 +160,6 @@ importers:
       '@zcode/shared':
         specifier: workspace:*
         version: link:../../../../packages/shared
-      '@zcode/zcode-cua':
-        specifier: workspace:*
-        version: link:../../../../packages/zcode-cua
       ai:
         specifier: 6.0.193
         version: 6.0.193(zod@4.6.5)
@@ -371,9 +368,6 @@ importers:
       '@zcode/shared-types':
         specifier: workspace:*
         version: link:../shared-types
-      '@zcode/zcode-cua':
-        specifier: workspace:*
-        version: link:../../../../packages/zcode-cua
       cheerio:
         specifier: ^1.0.0
         version: 1.2.0
@@ -486,9 +480,6 @@ importers:
       '@zcode/shared':
         specifier: workspace:*
         version: link:../../../../packages/shared
-      '@zcode/zcode-cua':
-        specifier: workspace:*
-        version: link:../../../../packages/zcode-cua
       zod:
         specifier: ^4.4.3
         version: 4.6.5
@@ -678,9 +669,6 @@ importers:
       '@zcode/ui':
         specifier: workspace:*
         version: link:../ui
-      '@zcode/zcode-cua':
-        specifier: workspace:*
-        version: link:../zcode-cua
       electron-updater:
         specifier: ^6.8.3
         version: 6.8.3
@@ -859,9 +847,6 @@ importers:
       '@zcode/shared':
         specifier: workspace:*
         version: link:../shared
-      '@zcode/zcode-cua':
-        specifier: workspace:*
-        version: link:../zcode-cua
       croner:
         specifier: ^10.0.1
         version: 10.0.1
@@ -1135,8 +1120,6 @@ importers:
       unified:
         specifier: ^11.0.5
         version: 11.0.5
-
-  packages/zcode-cua: {}
 
 packages:
 

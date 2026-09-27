@@ -23,7 +23,8 @@ export interface ConversationCuaGroupRenderItem {
 
 const OFFICIAL_CUA_TOOL_PREFIXES = [
   "mcp__computer-use__",
-  "mcp__plugin_zcode-cua_computer-use__",
+  // 个人分支已移除 CUA 产品装配；plugin server（mcp__plugin_*_computer-use__*）的
+  // 工具调用保留在通用 ToolCallBlock 渲染，不再进入 CUA 分组。
 ] as const;
 
 export const ENABLE_CUA_TOOL_CALL_GROUPING = true;

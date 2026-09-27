@@ -151,7 +151,6 @@ import { useOpenPptxElementReference } from "@/v4/composer/useOpenPptxElementRef
 import type { CodeViewerSource } from "@/lib/codeViewer.js";
 import { useConversationSelectionReferences } from "@/v4/composer/useConversationSelectionReferences.js";
 import { ConversationBackgroundWorkTrigger } from "@/v4/composer/ConversationBackgroundWorkTrigger.js";
-import { V4ComposerCuaEntry } from "@/v4/composer/V4ComposerCuaEntry.js";
 import {
   V4ComposerModeSwitch,
   V4ComposerModelControls,
@@ -168,7 +167,6 @@ import { useScopedConversationTelemetrySupervisor } from "@/v4/telemetry/Convers
 import type { ConversationPromptTelemetrySeed } from "@/v4/telemetry/conversationTelemetrySupervisor.js";
 import type { ComposerSubmissionConfig } from "@/v4/composer/composerSubmissionConfig.js";
 import { buildV4ConversationPromptTelemetryExtraDetail } from "@/v4/telemetry/conversationPromptTelemetry.js";
-import { resolveAttachableShareContext } from "@/lib/conversationShareContext.js";
 
 const MODEL_SELECTION_LOADING_STATE: ModelSelectionState = { status: "loading" };
 
@@ -594,11 +592,6 @@ function ConversationComposerImpl({
   const pendingRef = useRef(false);
   const snapshotRef = useRef(snapshot);
   snapshotRef.current = snapshot;
-  // 这条线断过一次：composer 原本读一个平行的 sharedContextImport prop，而 SessionPane 从没
-  // 传过它（全仓 `sharedContextImport=` 零命中），于是首条消息永远不带 sharedContextRefs。
-  // 现在从必然拿到的 snapshot 推导，理由与边界见 resolveAttachableShareContext。
-  const activeShareContext = resolveAttachableShareContext(snapshot?.sharedContextImport);
-  const pendingShareContext = activeShareContext?.status === "pending" ? activeShareContext : null;
   const inputApiRef = useRef<LexicalChatInputHandle | null>(null);
   const reportedErrorKeysRef = useRef(new Set<string>());
   const primaryModifierPressed = usePrimaryFollowupModifier();
@@ -1102,16 +1095,14 @@ function ConversationComposerImpl({
     hasCodeCommentContexts ||
     hasWebElementContexts ||
     hasPptxElementReferences ||
-    hasConversationSelectionReferences ||
-    Boolean(pendingShareContext);
+    hasConversationSelectionReferences;
   const hasComposerDraftContent =
     text.length > 0 ||
     hasAttachments ||
     hasCodeCommentContexts ||
     hasWebElementContexts ||
     hasPptxElementReferences ||
-    hasConversationSelectionReferences ||
-    Boolean(pendingShareContext);
+    hasConversationSelectionReferences;
   useEffect(() => {
     onDraftStateChange?.({
       hasContent: hasComposerDraftContent,
@@ -1156,7 +1147,6 @@ function ConversationComposerImpl({
       const hasPendingPptxElementReferences = currentPptxElementReferences.length > 0;
       const currentConversationSelections = conversationSelectionReferences;
       const hasPendingConversationSelections = currentConversationSelections.length > 0;
-      const submittedShareContext = pendingShareContext;
       // 草稿首发 accepted 后同一 composer 会原地从 __draft__ promotion 到
       // session scope；若成功清理时再读可变 ref，会误清新 scope，并把首条输入残留在
       // __draft__，下次新建任务又恢复。发送开始时冻结真正提交的 scope。
@@ -1170,8 +1160,7 @@ function ConversationComposerImpl({
           !hasPendingCodeCommentContexts &&
           !hasPendingWebElementContexts &&
           !hasPendingPptxElementReferences &&
-          !hasPendingConversationSelections &&
-          !submittedShareContext) ||
+          !hasPendingConversationSelections) ||
         pendingRef.current ||
         !submissionReady ||
         (createSubmissionFromComposer !== undefined && submission === null) ||
@@ -1310,13 +1299,12 @@ function ConversationComposerImpl({
           webElements: currentWebElementContexts,
           pptxElements: currentPptxElementReferences,
         });
-        const contextAttachmentCount =
-          countComposerPromptContexts({
-            codeComments: currentCodeCommentContexts,
-            conversationSelections: currentConversationSelections,
-            webElements: currentWebElementContexts,
-            pptxElements: currentPptxElementReferences,
-          }) + (submittedShareContext ? 1 : 0);
+        const contextAttachmentCount = countComposerPromptContexts({
+          codeComments: currentCodeCommentContexts,
+          conversationSelections: currentConversationSelections,
+          webElements: currentWebElementContexts,
+          pptxElements: currentPptxElementReferences,
+        });
         if (trimmed) {
           promptHistoryBeforeSend = readPromptHistoryEntries(workspacePath);
           promptHistoryAfterAppend = appendPromptHistoryEntry(promptHistoryBeforeSend, trimmed);
@@ -1348,16 +1336,6 @@ function ConversationComposerImpl({
           ...(expectedHeldQueueItemIds ? { expectedHeldQueueItemIds } : {}),
           ...(readyAttachmentRefs.length > 0 ? { attachments: readyAttachmentRefs } : {}),
           ...(contextAttachmentCount > 0 ? { contextAttachmentCount } : {}),
-          ...(submittedShareContext
-            ? {
-                sharedContextRefs: [
-                  {
-                    kind: "shared_context_import" as const,
-                    context_id: submittedShareContext.contextId,
-                  },
-                ],
-              }
-            : {}),
         });
         if (sendResult === "blocked") {
           if (telemetrySeed.localTtft)
@@ -1446,7 +1424,6 @@ function ConversationComposerImpl({
       telemetryDraftConfig,
       modelSelectionView,
       onSendText,
-      pendingShareContext,
       provider,
       readPlanIdentitySnapshot,
       removeCodeCommentContext,
@@ -2006,7 +1983,6 @@ function ConversationComposerImpl({
     removeWebElementContext,
     removePptxElementReference,
     conversationSelectionReferences,
-    pendingShareContext,
     webElementContexts,
     pptxElementReferences,
     onOpenCodeViewer,
@@ -2146,14 +2122,6 @@ function ConversationComposerImpl({
           activeConfigPicker={activeConfigPicker}
           onConfigPickerOpenChange={handleConfigPickerOpenChange}
           onSwitchMode={onSwitchMode}
-        />
-        {/* 附件画廊重构曾整段覆盖 leadingActions，误删 CUA 常驻入口。
-            入口自身继续负责平台、远程与设置可见性，不在 composer 重复判定。 */}
-        <V4ComposerCuaEntry
-          workspacePath={workspacePath}
-          workspaceIdentity={workspaceIdentity}
-          remoteSessionId={remoteSessionId}
-          currentSessionBusy={canStop}
         />
         <ConversationBackgroundWorkTrigger
           backgroundWorks={snapshot?.backgroundWorks ?? []}
