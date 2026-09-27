@@ -26,7 +26,6 @@ import { toast } from "@/components/ui/toast.js";
 import { DesktopWindowFrame } from "@/DesktopWindowFrame.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
-import { getPathLeaf } from "@/lib/path.js";
 import {
   addPendingSettingsSectionListener,
   consumeInitialSettingsSection,
@@ -43,7 +42,6 @@ import { AutomationsSection } from "@/settings/AutomationsSection.js";
 import { PluginsSection } from "@/settings/PluginsSection.js";
 import { HooksSection } from "@/settings/HooksSection.js";
 import { WorkspaceFileSearchSection } from "@/settings/WorkspaceFileSearchSection.js";
-import { MemorySettingsSection } from "@/settings/MemorySettingsSection.js";
 import { BrowserSettingsSection } from "@/settings/BrowserSettingsSection.js";
 import { ShortcutSettingsSection } from "@/settings/ShortcutSettingsSection.js";
 import { MigrationSection } from "@/settings/MigrationSection.js";
@@ -236,21 +234,6 @@ export function SettingsPage({
   const services = useServices();
   const localHostServices = useBaseWorkspaceServices();
   const { settings: sharedSettings, update: updateSharedSettings } = useSettings();
-  const memoryWorkspaceDisplayNames = useMemo(() => {
-    const names = new Set<string>();
-    // Memory Scope 的项目顺序以 settings.json recentProjects 为准；打开中的
-    // Workspace 只补充尚未持久化的项目，不能抢占最近项目排序。
-    for (const path of sharedSettings?.recentProjects ?? []) {
-      const name = getPathLeaf(path).trim();
-      if (name) names.add(name);
-    }
-    for (const tab of workspaceTabs) {
-      const name = tab.label.trim() || getPathLeaf(tab.workspacePath).trim();
-      if (name) names.add(name);
-    }
-    return [...names];
-  }, [sharedSettings?.recentProjects, workspaceTabs]);
-  const memoryEnabled = sharedSettings?.memoryEnabled === true;
   const nativeSearchEnhancementsEnabled = sharedSettings?.nativeSearchEnhancementsEnabled !== false;
   const askUserQuestionAutoResolutionEnabled =
     sharedSettings?.askUserQuestionAutoResolutionEnabled !== false;
@@ -404,12 +387,6 @@ export function SettingsPage({
   const handleModelIoFullRetentionEnabledChange = useCallback(
     async (enabled: boolean) => {
       await updateSharedSettings({ modelIoFullRetentionEnabled: enabled });
-    },
-    [updateSharedSettings],
-  );
-  const handleMemoryEnabledChange = useCallback(
-    async (enabled: boolean) => {
-      await updateSharedSettings({ memoryEnabled: enabled });
     },
     [updateSharedSettings],
   );
@@ -933,17 +910,6 @@ export function SettingsPage({
                               onConsumePendingModelProviderTarget={() =>
                                 setPendingModelProviderTarget(undefined)
                               }
-                            />
-                          </ServiceProvider>
-                        ) : activeSection === "memory" ? (
-                          <ServiceProvider services={localHostServices}>
-                            {/* Memory catalog 始终使用本地 Host，避免远程 workspace 误读本机数据。 */}
-                            <MemorySettingsSection
-                              memoryEnabled={memoryEnabled}
-                              memoryService={localHostServices.memoryService}
-                              onMemoryEnabledChange={handleMemoryEnabledChange}
-                              projectMemoryViewerAvailable={Boolean(isDesktop)}
-                              workspaceDisplayNames={memoryWorkspaceDisplayNames}
                             />
                           </ServiceProvider>
                         ) : activeSection === "plugin" ? (

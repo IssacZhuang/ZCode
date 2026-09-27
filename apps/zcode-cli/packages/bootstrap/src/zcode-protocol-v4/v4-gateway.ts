@@ -241,8 +241,6 @@ export interface V4GatewayHost {
    * 会话不在册返回 null（gateway 跳过，保持空初值）；未实现（旧宿主/测试桩）同。
    */
   getSessionConfigSeed?(sessionId: string): SessionConfigSeed | null;
-  /** 只读会话创建期 App 开关，不读取实时设置或推断 Memory 工具使用。 */
-  getSessionMemoryEnabled?(sessionId: string): boolean | undefined;
   /**
    * 冷恢复 usage 种子：transcript 合成路径可能只能生成 0/默认窗口的占位
    * ModelComplete；宿主可从持久化 assistant tokens / runtime snapshot 提供真实水位。
@@ -2432,18 +2430,9 @@ export class ConversationV4Gateway {
         this.inbox.pinLiveInput(outcome.envelope.sessionId, durableInputIntent);
       }
       const result = await this.host.executeCommand(outcome.envelope, admission);
-      // 新建/侧聊命令采用结果会话的开关，避免把父会话或当前 App 设置误记到新会话。
-      const telemetrySessionId =
-        result?.type === "createSession" || result?.type === "createSelectionSideSession"
-          ? result.sessionId
-          : outcome.envelope.sessionId;
-      const memoryEnabled = telemetrySessionId
-        ? this.host.getSessionMemoryEnabled?.(telemetrySessionId)
-        : undefined;
       const final = {
         status: "accepted" as const,
         ...(result ? { result } : {}),
-        ...(memoryEnabled !== undefined ? { memoryEnabled } : {}),
       };
       return settleOnce(final);
     } catch (error) {

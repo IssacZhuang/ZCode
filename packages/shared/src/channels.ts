@@ -95,8 +95,6 @@ export const ServiceChannels = {
   Commands: "commands",
   /** Hooks 管理服务 */
   Hooks: "hooks",
-  /** Memory 管理服务 */
-  Memory: "memory",
   /** 首次启动设置同步服务 */
   SettingsSync: "settings-sync",
   /** 闲时任务管理服务（与 automation 服务面独立） */

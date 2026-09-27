@@ -1,6 +1,6 @@
 /* eslint-disable max-lines -- workspace 模型协议与兼容请求处理仍集中在本文件。 */
 import { createInMemorySessionEventStore } from "@zcode/adapters/storage";
-import type { ModelSelection } from "@zcode/contracts";
+import type { ModelSelection, WorkspaceId } from "@zcode/contracts";
 import {
   zcodeProviderTestModelConnectivityParamsSchema,
   zcodeWorkspaceReadPresentationParamsSchema,
@@ -87,12 +87,8 @@ export async function createWorkspaceZCodeApp(
       // 放在这个 helper 里而不是各调用点，是为了两条 session 创建路径都拿到同一份隔离键。
       ...(workspace.remoteSessionId ? { remoteSessionId: workspace.remoteSessionId } : {}),
       ...(workspace.workspaceIdentity
-        ? {
-            memory: {
-              ...options.runtimeConfig?.memory,
-              workspaceIdentity: workspace.workspaceIdentity,
-            },
-          }
+        ? // 上游提供的透明隔离键，只做类型品牌化，不改写字符串本身。
+          { workspaceIdentity: workspace.workspaceIdentity as WorkspaceId }
         : {}),
       // Electron/Protocol 主会话之前没有像 CLI/TUI 那样显式开启模型流式，
       // 导致主 turn 退回 generateText 非流式请求，遇到返回 SSE 的兼容端点会按 JSON 解析失败。

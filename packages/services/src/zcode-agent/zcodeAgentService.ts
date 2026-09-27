@@ -1673,7 +1673,6 @@ export function createZCodeAgentService(
                   (await resolveSessionRuntimePreferences?.(parsed.data.scope)) ?? {
                     askUserQuestionAutoResolutionEnabled: true,
                     nativeSearchEnhancementsEnabled: true,
-                    memoryEnabled: false,
                   },
                 );
               } catch (error) {

@@ -122,18 +122,12 @@ export async function resumeFromStore(
 
   this.workingDirectory = session.directory;
   this.config.taskType = session.taskType;
-  if (this.config.memory) {
-    // Memory root 必须使用会话落盘时的 workspace identity，不能沿用进程启动 workspace。
-    this.config.memory.workspaceIdentity = session.workspaceID
-      ? String(session.workspaceID)
-      : undefined;
-  }
   this.messageHistory = new MessageHistoryImpl();
   this.contextBuilder = null;
   this.contextInitialized = false;
   this.lastEmittedLocalDate = undefined;
   // cold resume 的历史 hydration 会先清空 runtime-local read-state；必须在
-  // Context 初始化前完成，确保随后单次加载的 MEMORY.md 状态与 provider 所见内容一致。
+  // Context 初始化前完成，确保随后单次加载的文件状态与 provider 所见内容一致。
   const readFileStateHydration = await hydrateReadFileStateFromSession({
     branchCutAfterMessageId,
     messages,

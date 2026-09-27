@@ -23,7 +23,6 @@ import {
   ISubagentsService,
   ICommandsService,
   IHooksService,
-  IMemoryService,
   ISettingsSyncService,
   type IServiceAccessor,
 } from "@zcode/services";
@@ -57,7 +56,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly subagentsService: ISubagentsService;
   readonly commandsService: ICommandsService;
   readonly hooksService: IHooksService;
-  readonly memoryService: IMemoryService;
   readonly settingsSyncService: ISettingsSyncService;
 
   constructor(channelClient: IChannelClient) {
@@ -131,9 +129,6 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.hooksService = ProxyChannel.toService<IHooksService>(
       channelClient.getChannel(IHooksService.channelName),
-    );
-    this.memoryService = ProxyChannel.toService<IMemoryService>(
-      channelClient.getChannel(IMemoryService.channelName),
     );
     this.settingsSyncService = ProxyChannel.toService<ISettingsSyncService>(
       channelClient.getChannel(ISettingsSyncService.channelName),

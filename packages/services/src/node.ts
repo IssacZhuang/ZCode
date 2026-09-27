@@ -141,7 +141,6 @@ export { createPluginManagementService } from "./plugins/pluginManagementService
 export { createSubagentsService } from "./subagents/subagentsService.js";
 export { createCommandsService } from "./commands/commandsService.js";
 export { createHooksService } from "./hooks/hooksService.js";
-export { createMemoryService } from "./memory/memoryService.js";
 export { createSettingsSyncService } from "./settings-sync/settingsSyncService.js";
 export { createNodeApiClient, NodeApiClient } from "./providers/api/nodeApiClient.js";
 export {
@@ -200,7 +199,6 @@ import { IPluginManagementService } from "./plugins/pluginManagement.js";
 import { ISubagentsService } from "./subagents/subagents.js";
 import { ICommandsService } from "./commands/commands.js";
 import { IHooksService } from "./hooks/hooks.js";
-import { IMemoryService } from "./memory/memory.js";
 import { ISettingsSyncService } from "./settings-sync/settingsSync.js";
 import { createFileService } from "./file/fileService.js";
 import { createMediaPreviewService } from "./media-preview/mediaPreview.js";
@@ -243,7 +241,6 @@ import { createPluginManagementService } from "./plugins/pluginManagementService
 import { createSubagentsService } from "./subagents/subagentsService.js";
 import { createCommandsService } from "./commands/commandsService.js";
 import { createHooksService } from "./hooks/hooksService.js";
-import { createMemoryService } from "./memory/memoryService.js";
 import { createSettingsSyncService } from "./settings-sync/settingsSyncService.js";
 import { createNodeApiClient } from "./providers/api/nodeApiClient.js";
 import {
@@ -574,7 +571,6 @@ export function createLocalServices(options: {
               askUserQuestionAutoResolutionEnabled:
                 settings.askUserQuestionAutoResolutionEnabled !== false,
               nativeSearchEnhancementsEnabled: settings.nativeSearchEnhancementsEnabled !== false,
-              memoryEnabled: settings.memoryEnabled === true,
               modelContextBudgetStrategy,
               // user-execution 只消费 Shell；共享默认策略是统一 result schema 的兼容占位，
               // 不会覆盖 runtime-materialization 阶段已经固定的 strategy。
@@ -676,7 +672,6 @@ export function createLocalServices(options: {
         grantWorkspaceHookTrust: (params) => zcodeAgentService.grantWorkspaceHookTrust(params),
       }),
     )
-    .register(IMemoryService, createMemoryService())
     .register(ISettingsSyncService, createSettingsSyncService({ settingService }));
 
   registerHostApiNetworkTransportForDispose(services, hostApiNetworkTransport);

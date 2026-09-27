@@ -425,8 +425,6 @@ export const commandResultSchema = z.discriminatedUnion("type", [
 export type CommandResult = z.infer<typeof commandResultSchema>;
 
 export const commandAckSchema = z.object({
-  /** 会话创建期采用的 App Memory 开关；旧发送端缺省表示未知。 */
-  memoryEnabled: z.boolean().optional(),
   ttftExcluded: z.literal("capacity").optional(),
   commandId: z.string(),
   // accepted 不承诺跨 CLI 进程存活；最终收口以权威数据（sourceCommandId）为准。

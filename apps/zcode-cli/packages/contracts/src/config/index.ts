@@ -33,12 +33,8 @@ export const ConfigKey = {
   FeatureCompact: "features.compact",
   FeatureRewind: "features.rewind",
   FeatureSubagent: "features.subagent",
-  FeatureMemory: "features.memory",
   FeatureSkill: "features.skill",
   FeatureMcp: "features.mcp",
-
-  // Memory
-  MemoryUse: "memory.use",
 
   // MCP
   McpServers: "mcp.servers",
@@ -106,15 +102,12 @@ export type ConfigValue<K extends ConfigKey> = K extends "modelStream.idleTimeou
                   | "features.compact"
                   | "features.rewind"
                   | "features.subagent"
-                  | "features.memory"
                   | "features.skill"
                   | "features.mcp"
                   | "skills.enabled"
                   | "skills.includeInstructions"
               ? boolean
-              : K extends "memory.use"
-                ? boolean
-                : K extends "skills.metadataBudget"
+              : K extends "skills.metadataBudget"
                   ? number
                   : K extends "skills.roots"
                     ? string[]
@@ -222,12 +215,8 @@ export interface RuntimeConfig {
     compact: boolean;
     rewind: boolean;
     subagent: boolean;
-    memory: boolean;
     skill: boolean;
     mcp: boolean;
-  };
-  memory: {
-    use: boolean;
   };
   mcp: {
     servers: Record<string, McpServerConfig>;
@@ -263,7 +252,6 @@ export interface RuntimeConfigPatch {
   storage?: Partial<RuntimeConfig["storage"]>;
   network?: Partial<RuntimeConfig["network"]>;
   features?: Partial<RuntimeConfig["features"]>;
-  memory?: Partial<RuntimeConfig["memory"]>;
   mcp?: Partial<RuntimeConfig["mcp"]>;
   plugins?: Partial<RuntimeConfig["plugins"]>;
   skills?: Partial<RuntimeConfig["skills"]>;
@@ -309,12 +297,8 @@ export const DefaultRuntimeConfig: RuntimeConfig = {
     compact: true,
     rewind: true,
     subagent: true,
-    memory: true,
     skill: true,
     mcp: true,
-  },
-  memory: {
-    use: true,
   },
   mcp: {
     servers: {},

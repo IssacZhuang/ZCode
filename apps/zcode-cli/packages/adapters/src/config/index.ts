@@ -120,15 +120,10 @@ class ConfigStore {
         this.set(ConfigKey.FeatureRewind, config.features.rewind, scope);
       if (config.features.subagent !== undefined)
         this.set(ConfigKey.FeatureSubagent, config.features.subagent, scope);
-      if (config.features.memory !== undefined)
-        this.set(ConfigKey.FeatureMemory, config.features.memory, scope);
       if (config.features.skill !== undefined)
         this.set(ConfigKey.FeatureSkill, config.features.skill, scope);
       if (config.features.mcp !== undefined)
         this.set(ConfigKey.FeatureMcp, config.features.mcp, scope);
-    }
-    if (config.memory) {
-      if (config.memory.use !== undefined) this.set(ConfigKey.MemoryUse, config.memory.use, scope);
     }
     if (config.mcp) {
       if (config.mcp.servers !== undefined)
@@ -284,12 +279,8 @@ export class ConfigPortImpl implements ConfigPort {
         compact: this.store.get(ConfigKey.FeatureCompact) ?? true,
         rewind: this.store.get(ConfigKey.FeatureRewind) ?? true,
         subagent: this.store.get(ConfigKey.FeatureSubagent) ?? true,
-        memory: this.store.get(ConfigKey.FeatureMemory) ?? true,
         skill: this.store.get(ConfigKey.FeatureSkill) ?? true,
         mcp: this.store.get(ConfigKey.FeatureMcp) ?? true,
-      },
-      memory: {
-        use: this.store.get(ConfigKey.MemoryUse) ?? DefaultConfig.memory.use,
       },
       mcp: {
         servers: this.store.get(ConfigKey.McpServers) ?? DefaultConfig.mcp.servers,
@@ -399,14 +390,10 @@ function getDefaultValue(key: ConfigKey): unknown {
       return defaults.features.rewind;
     case ConfigKey.FeatureSubagent:
       return defaults.features.subagent;
-    case ConfigKey.FeatureMemory:
-      return defaults.features.memory;
     case ConfigKey.FeatureSkill:
       return defaults.features.skill;
     case ConfigKey.FeatureMcp:
       return defaults.features.mcp;
-    case ConfigKey.MemoryUse:
-      return defaults.memory.use;
     case ConfigKey.McpServers:
       return defaults.mcp.servers;
     case ConfigKey.PluginsEnabled:

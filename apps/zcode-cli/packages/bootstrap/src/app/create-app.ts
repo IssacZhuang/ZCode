@@ -154,7 +154,7 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
       env: options.env,
       projectConfigPath: options.projectConfigPath,
       workingDirectory,
-      workspaceIdentity: options.runtimeConfig?.memory?.workspaceIdentity,
+      workspaceIdentity: options.runtimeConfig?.workspaceIdentity,
       skipUserConfig: options.skipUserConfig,
       userConfigPath: options.userConfigPath,
       cliOverrides: createConfigCliOverrides(options),
@@ -252,7 +252,7 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
         subagentProfiles,
         storageRoot,
         workingDirectory,
-        workspaceIdentity: options.runtimeConfig?.memory?.workspaceIdentity,
+        workspaceIdentity: options.runtimeConfig?.workspaceIdentity,
       });
     const browserControlPort = options.browserControlPort;
     if (
@@ -753,7 +753,7 @@ export async function createZCodeApp(options: ZCodeAppOptions): Promise<ZCodeApp
       providerRuntimeHeadersPort: options.providerRuntimeHeadersPort,
       resolveEffectiveModelSelection: options.resolveEffectiveModelSelection,
       isRemoteWorkspace: () =>
-        isRemoteWorkspaceIdentity(runtimeConfig.memory?.workspaceIdentity ?? ""),
+        isRemoteWorkspaceIdentity(runtimeConfig.workspaceIdentity ?? ""),
       permissionBroker: options.permissionBroker,
       permissionService,
       workflowPort: scriptWorkflowFacade.workflowPort,

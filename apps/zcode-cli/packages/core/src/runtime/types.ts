@@ -187,7 +187,6 @@ export interface AgentRuntimeConfig {
   embeddedSearchBackend?: EmbeddedSearchBackend;
   /** 根 Session runtime 创建时固定；false 只关闭 Bash 的 bfs/ugrep prelude。 */
   nativeSearchEnhancementsEnabled?: boolean;
-  memory?: MemoryRuntimeConfig;
   /** 历史恢复允许未绑定；只有完整选择才能创建本轮执行 Model。 */
   modelSelection?: ModelSelection;
   titleGeneration?: {
@@ -289,16 +288,6 @@ export interface EnqueueSubagentMessageInput {
   traceContext: TraceContext;
 }
 
-export interface MemoryRuntimeConfig {
-  cliStorageRoot?: string;
-  enabled?: boolean;
-  /** 是否调度成功 Main turn 后的自动 Extraction；缺省按 true 处理。 */
-  extractionEnabled?: boolean;
-  storageRoot?: string;
-  use?: boolean;
-  workspaceIdentity?: string;
-}
-
 export interface AgentRuntimeDeps {
   agentTelemetry?: AgentExecutionTelemetryPort;
   agentTelemetryCausation?: AgentTelemetryCausation;
@@ -367,7 +356,6 @@ export interface AgentRuntimeDeps {
   contextBuilder?: ContextBuilder; // Optional, will be created from config
   now?: () => Date;
   isRemoteWorkspace?: () => boolean;
-  memoryRoot?: string;
 }
 
 export interface RuntimeModelFactoryInput {
@@ -416,8 +404,6 @@ export interface TurnResult {
  * 也不会成为 Session Selection 的第二份来源。
  */
 export interface ModelExecutionContext {
-  /** 仅当前 Turn 跳过自动 Project Memory Extraction；不修改 Session Memory 配置。 */
-  memoryExtraction?: "skip";
   selectionScope: "execution";
   requestDependencies?: ModelRequestDependencies;
   subagents?: {

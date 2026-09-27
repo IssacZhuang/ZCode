@@ -52,8 +52,6 @@ const wantsEventStream = (options: GlobalOptions): boolean =>
 const IMAGE_EXTENSIONS = new Set([".gif", ".jpeg", ".jpg", ".png", ".webp"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".m4v", ".mov", ".webm", ".mkv", ".avi"]);
 const EMPTY_PROMPT_ERROR = "--prompt requires non-empty text.";
-const MEMORY_BENCH_DISABLED_ERROR =
-  "--memory-bench requires Project Memory to be enabled (features.memory=true and memory.use=true).";
 const TARGET_SELECTION_UNAVAILABLE_ERROR =
   "Headless goal commands cannot open an interactive replacement picker. Re-run with --target-replace or use /goal replace <objective>.";
 
@@ -196,7 +194,6 @@ export const runPrompt = async (
         ...(forceMcs ? { midConversationSystem: { mode: "force" as const } } : {}),
         // headless 按本次调用显式开关；不改 core 缺省值，保持 TUI 与 stdio 的既有策略。
         dynamicWorkflowEnabled: options.enableWorkflow === true,
-        memory: { extractionEnabled: options.memoryBench === true },
         modelStreaming: "on",
         presentationSurface,
         workingDirectory,
@@ -215,9 +212,6 @@ export const runPrompt = async (
       throw abortController.signal.reason;
     }
     traceId = app.traceId;
-    if (options.memoryBench && !app.runtime.isProjectMemoryEnabled()) {
-      throw new Error(MEMORY_BENCH_DISABLED_ERROR);
-    }
 
     // 按**可解析性**分流，不按拼写。
     //
@@ -284,11 +278,6 @@ export const runPrompt = async (
         runtime: runtimeFacts,
         signal: abortController.signal,
       });
-    }
-    // bench 的正常等待必须先于 close；close 会取消 Extraction，且有独立的清理时限。
-    if (options.memoryBench) {
-      await app.runtime.drainMemoryExtractions(null);
-      abortController.signal.throwIfAborted();
     }
     // 结果行之后绝不能再冒出事件行——stream-json 的 result 是流的终止符。
     stopObservingEvents();
@@ -495,11 +484,6 @@ async function runPromptCommandCenterCommand(
       `Error: ${result.response}\n${TARGET_SELECTION_UNAVAILABLE_ERROR}${nextTraceId ? ` (traceId: ${nextTraceId})` : ""}\n`,
     );
     return 1;
-  }
-
-  if (options.memoryBench) {
-    await app.runtime.drainMemoryExtractions(null);
-    abortSignal.throwIfAborted();
   }
 
   if (wantsJsonSummary(options)) {

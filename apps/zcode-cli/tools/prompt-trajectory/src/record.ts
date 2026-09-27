@@ -361,7 +361,6 @@ function buildRecorderRuntimeConfig(input: {
     ...fixtureRuntimeConfig,
     compact: fixtureRuntimeConfig?.compact,
     mcp: { enabled: false },
-    memory: { enabled: false },
     mode: fixtureRuntimeConfig?.mode ?? "yolo",
     modelSelection: input.modelSelection,
     modelStreaming: fixtureRuntimeConfig?.modelStreaming ?? "on",

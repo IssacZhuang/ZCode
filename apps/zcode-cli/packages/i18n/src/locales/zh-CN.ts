@@ -30,7 +30,6 @@ export const zhCN: ZCodeCopy = {
   -v, --version    显示版本
   -p, --prompt <text>  单次运行 prompt，不打开 TUI
   --enable-workflow  为 --prompt 或 --target 开启动态工作流（默认关闭）
-  --memory-bench   配合 --prompt 开启自动 Memory 提取并等待后退出（需已开启 Memory）
   --browser-use <mode> 启用 Browser Use backend（当前支持：headless）
   --surface <surface>  设置无头 prompt/app-server 的呈现面：terminal 或 desktop
   --browser-executable <path> headless Browser Use 使用的 Chrome/Chromium 路径
