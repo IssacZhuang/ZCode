@@ -15,6 +15,7 @@ import type {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+import type { IProviderUsageService } from "./model-provider/providerUsageService.js";
 import type { IUsageStatsService } from "./usage-stats/usageStats.js";
 import type { IClientScenesService } from "./client-scenes/clientScenes.js";
 import type { ISkillsService } from "./skills/skills.js";
@@ -42,6 +43,8 @@ export interface IServiceAccessor {
   readonly fileWatcherService: IFileWatcherService;
   /** 当前 Environment 的 Provider 配置与设置视图。 */
   readonly providerSettingsService: IProviderSettingsService;
+  /** 供应商用量/余额查询（按 base_url 域名识别内置适配器）。 */
+  readonly providerUsageService: IProviderUsageService;
   /** 当前 Environment Registry 发布的唯一模型选择 View。 */
   readonly modelSelectionService: IModelSelectionService;
   readonly usageStatsService: IUsageStatsService;

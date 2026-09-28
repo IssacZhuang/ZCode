@@ -15,6 +15,7 @@ import {
   IFileWatcherService,
   IModelSelectionService,
   IProviderSettingsService,
+  IProviderUsageService,
   IUsageStatsService,
   IClientScenesService,
   ISkillsService,
@@ -47,6 +48,7 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly zcodeSessionService: IZCodeSessionService;
   readonly fileWatcherService: IFileWatcherService;
   readonly providerSettingsService: IProviderSettingsService;
+  readonly providerUsageService: IProviderUsageService;
   readonly modelSelectionService: IModelSelectionService;
   readonly usageStatsService: IUsageStatsService;
   readonly clientScenesService: IClientScenesService;
@@ -102,6 +104,9 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.providerSettingsService = ProxyChannel.toService<IProviderSettingsService>(
       channelClient.getChannel(IProviderSettingsService.channelName),
+    );
+    this.providerUsageService = ProxyChannel.toService<IProviderUsageService>(
+      channelClient.getChannel(IProviderUsageService.channelName),
     );
     this.modelSelectionService = ProxyChannel.toService<IModelSelectionService>(
       channelClient.getChannel(IModelSelectionService.channelName),

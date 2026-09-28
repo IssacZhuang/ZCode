@@ -462,6 +462,7 @@ function V4ComposerModelControlsImpl({
         selectedProvider={displayProvider}
         intl={intl}
         locale={locale}
+        modelProviderId={effectiveConfig?.provider ?? null}
         onSendCompressionCommand={onSendCompressionCommand}
         compressionDisabled={disabled || recoveryPending}
       />

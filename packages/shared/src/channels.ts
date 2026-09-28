@@ -73,6 +73,8 @@ export const ServiceChannels = {
   /** 远端 Environment 内部 Provider Provisioning target */
   /** 本地 usage 统计服务 */
   UsageStats: "usage-stats",
+  /** 供应商用量/余额查询服务（按 base_url 域名识别内置适配器） */
+  ProviderUsage: "provider-usage",
   /** Coding Plan 订阅购买服务 */
   CodingPlanSubscription: "coding-plan-subscription",
   /** ZCode 客户端场景配置服务 */

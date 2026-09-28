@@ -232,6 +232,10 @@ import {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+import {
+  IProviderUsageService,
+  createProviderUsageService,
+} from "./model-provider/providerUsageService.js";
 import { createProviderSettingsConnectivityTester } from "./model-provider/providerSettingsConnectivity.js";
 import { createUsageStatsService } from "./usage-stats/usageStatsService.js";
 import { createClientScenesService } from "./client-scenes/clientScenesService.js";
@@ -679,7 +683,16 @@ export function createLocalServices(options: {
   providerRuntimes.set(services, providerRuntime);
   services
     .register(IProviderSettingsService, providerRuntime.providerSettings)
-    .register(IModelSelectionService, providerRuntime.modelSelection);
+    .register(IModelSelectionService, providerRuntime.modelSelection)
+    // 供应商用量/余额查询：读取 ProviderSettingsView 的 effective baseUrl/apiKey，
+    // 走 host 的代理感知 fetch；快照按次返回，不落盘。
+    .register(
+      IProviderUsageService,
+      createProviderUsageService({
+        getView: () => providerRuntime.providerSettings.getView(),
+        fetchImpl: hostApiNetworkTransport.fetch,
+      }),
+    );
   const log = createServiceLogger("provider-runtime");
   void providerRuntime.start().then(
     () => {

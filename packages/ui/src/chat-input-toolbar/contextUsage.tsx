@@ -1,5 +1,5 @@
-/* 账号体系移除：context 面板原先聚合 Context windows、Coding Plan 和 Start Plan 三段展示；
-   订阅相关段落与配额重置动效整体删除，只保留任务上下文容量（used/size、breakdown、缓存命中率）。 */
+/* context 面板聚合任务上下文容量（used/size、breakdown、缓存命中率）与当前供应商的
+   用量/余额（provider-agnostic，按 base_url 域名识别内置适配器）。 */
 import { useCallback, useMemo, useState, type CSSProperties } from "react";
 import {
   TID_CHAT_CONTEXT_USAGE_TRIGGER,
@@ -16,6 +16,7 @@ import { cn } from "@/components/lib/utils.js";
 import { Progress } from "@/components/ui/progress.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { formatCompactTokenNumber } from "@/lib/tokenNumberFormat.js";
+import { ContextProviderUsageSection } from "./contextProviderUsage.js";
 
 type ContextUsageBreakdownSource = ZCodeContextUsageBreakdownItem["source"];
 
@@ -183,6 +184,7 @@ export function ChatContextUsage({
   selectedProvider: _selectedProvider,
   intl,
   locale,
+  modelProviderId,
 }: {
   taskUsage: {
     used: number;
@@ -193,12 +195,14 @@ export function ChatContextUsage({
   selectedProvider: ZCodeProvider;
   intl: ReturnType<typeof useZCodeIntl>["intl"];
   locale: string;
+  /** 当前会话的模型 providerId；命中内置用量适配器时在面板内追加用量/余额区块。 */
+  modelProviderId?: string | null;
   onSendCompressionCommand?: (command: string) => void;
   compressionDisabled?: boolean;
 }) {
   const [contextOpen, setContextOpen] = useState(false);
   const handleContextOpenChange = useCallback((open: boolean) => {
-    // 账号体系移除后 hover 不再触发订阅额度 access 刷新，仅维护面板展开状态。
+    // 面板展开时由 ContextProviderUsageSection 自行查询一次；此处仅维护展开状态。
     setContextOpen(open);
   }, []);
   const renderableTaskUsage = getRenderableTaskUsage(taskUsage);
@@ -358,6 +362,11 @@ export function ChatContextUsage({
               ) : null}
             </>
           ) : null}
+          <ContextProviderUsageSection
+            modelProviderId={modelProviderId}
+            locale={locale}
+            intl={intl}
+          />
         </ContextContentBody>
       </ContextContent>
     </Context>
