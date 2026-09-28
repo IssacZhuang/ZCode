@@ -489,7 +489,6 @@ async function compactActiveConversationImpl(
             fileSystemPort: this.fileSystemPort,
             sessionId: this.sessionId,
             traceContext: modelTraceContext,
-            workspaceRoot: this.workspaceRoot,
           })
         : undefined;
       const postCompactReminderEntries = [

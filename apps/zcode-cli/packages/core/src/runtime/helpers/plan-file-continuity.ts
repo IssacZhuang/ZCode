@@ -1,3 +1,4 @@
+import { homedir } from "node:os";
 import { join } from "node:path";
 import {
   CoreErrorType,
@@ -15,13 +16,21 @@ import {
 
 const PLAN_FILE_REFERENCE_MAX_BYTES = PLAN_MODE_MAX_PLAN_CHARS * 4 + 1024;
 
+/**
+ * 计划文件是会话级机器状态，存用户主目录 `~/.zcode/cli/plans/`，不写入项目工作区，
+ * 避免污染项目 git（见 `.specs/plan-mode/plan-file-storage.md`）。
+ * `homeDir` 只为测试注入：生产恒取 `os.homedir()`，**不**跟随 `ZCODE_STORAGE_DIR` /
+ * `storage.dir` 配置——与 `~/.zcode/cli/db` 会话库、saved-workflows 全局目录的既有决策
+ * 一致（会话与计划本就跨渠道共享）。
+ */
 function resolveApprovedPlanFilePath(input: {
+  homeDir?: string;
   sessionId: SessionId | string;
-  workspaceRoot: string;
 }): string {
   return join(
-    input.workspaceRoot,
+    input.homeDir ?? homedir(),
     ".zcode",
+    "cli",
     "plans",
     `plan-${sanitizePlanFileSessionId(input.sessionId)}.md`,
   );
@@ -30,10 +39,10 @@ function resolveApprovedPlanFilePath(input: {
 export async function writeApprovedPlanFile(input: {
   abortSignal?: AbortSignal;
   fileSystemPort: FileSystemPort;
+  homeDir?: string;
   plan: string;
   sessionId: SessionId | string;
   traceContext?: TraceContext;
-  workspaceRoot: string;
 }): Promise<{ path: string }> {
   if (!input.plan.trim()) {
     throw createCoreError(CoreErrorType.InvalidInput, "ExitPlanMode plan cannot be empty", {
@@ -59,9 +68,9 @@ export async function writeApprovedPlanFile(input: {
 export async function readApprovedPlanFileReferenceEntry(input: {
   abortSignal?: AbortSignal;
   fileSystemPort: FileSystemPort;
+  homeDir?: string;
   sessionId: SessionId | string;
   traceContext?: TraceContext;
-  workspaceRoot: string;
 }): Promise<RuntimeMessageEntry | undefined> {
   const path = resolveApprovedPlanFilePath(input);
   let content: string;

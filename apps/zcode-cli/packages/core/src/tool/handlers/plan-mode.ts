@@ -142,7 +142,6 @@ async function persistApprovedPlanFileBeforeExitPlanMode(input: {
       plan: input.plan,
       sessionId: context.sessionId,
       traceContext: createPlanModeToolTraceContext(context),
-      workspaceRoot: context.workspaceRoot,
     });
   } catch (error) {
     if (isPlanFilePersistenceCancellation(error, context.abortSignal)) {
