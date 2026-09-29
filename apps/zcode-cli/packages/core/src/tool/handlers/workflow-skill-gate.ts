@@ -14,10 +14,10 @@ import type { ToolHandlerFailure, ToolInputResolutionContext } from "../types.js
  * 「技能未加载」的稳定错误码。与四个工具的入参级 400 分开：调用方要能不靠文本区分「参数给错了」
  * 与「先去读技能」——前者改参数，后者多一次 Skill 调用。
  */
-export const WORKFLOW_SKILL_NOT_LOADED_CODE = 428;
+const WORKFLOW_SKILL_NOT_LOADED_CODE = 428;
 
 /** 门在场时的判据；单独导出供探针实现复用。 */
-export function isDynamicWorkflowSkillLoaded(context: ToolInputResolutionContext): boolean {
+function isDynamicWorkflowSkillLoaded(context: ToolInputResolutionContext): boolean {
   return context.hasLoadedSkill?.(DYNAMIC_WORKFLOW_SKILL_NAME) ?? true;
 }
 

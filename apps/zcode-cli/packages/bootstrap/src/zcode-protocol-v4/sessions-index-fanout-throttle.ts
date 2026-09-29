@@ -5,12 +5,12 @@
 // 引擎事件频率重算任务列表。因此合并窗口内的进度更新，控制任务索引的发布频率。
 
 /** 工作流进度事件的 fan-out 窗口：窗内的进度合并为窗末一次发布（侧栏运行行 ≤4Hz）。 */
-export const WORKFLOW_PROGRESS_INDEX_FANOUT_MS = 250;
+const WORKFLOW_PROGRESS_INDEX_FANOUT_MS = 250;
 
 /** 定时器句柄对调度逻辑不透明：默认使用 setTimeout，也允许调用方提供实现。 */
-export type FanoutTimerHandle = unknown;
+type FanoutTimerHandle = unknown;
 
-export interface SessionsIndexFanoutThrottleOptions {
+interface SessionsIndexFanoutThrottleOptions {
   /** 发布某会话当前摘要到 sessions-index（网关的 publishCurrentSummaryToIndex）。 */
   publish: (sessionId: string) => void;
   windowMs?: number;

@@ -505,7 +505,7 @@ export async function removeZCodePluginMarketplace(
 export async function updateZCodePluginMarketplace(
   options: UpdateZCodeMarketplaceOptions,
 ): Promise<ZCodeMarketplaceUpdateData> {
-  const { configResult, pluginStorageRoot, workingDirectory } = resolvePluginContext(options);
+  const { configResult, pluginStorageRoot } = resolvePluginContext(options);
   ensureDefaultPluginMarketplaces(pluginStorageRoot);
   const declared = resolveDeclaredMarketplaceSources({
     configResult,

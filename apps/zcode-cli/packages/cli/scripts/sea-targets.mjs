@@ -14,7 +14,7 @@ const supportedTargetSet = new Set(supportedTargets);
 export const hostTarget = ({ arch = process.arch, platform = process.platform } = {}) =>
   `${platform === "win32" ? "win" : platform}-${arch}`;
 
-export const normalizeTarget = (target) => {
+const normalizeTarget = (target) => {
   const normalized = target.trim().toLowerCase();
   const aliases = {
     "win32-arm64": "win-arm64",
@@ -26,7 +26,7 @@ export const normalizeTarget = (target) => {
   return aliases[normalized] ?? normalized;
 };
 
-export const assertSupportedTarget = (target) => {
+const assertSupportedTarget = (target) => {
   if (!supportedTargetSet.has(target)) {
     throw new Error(
       `Unsupported SEA target "${target}". Supported targets: ${supportedTargets.join(", ")}`,

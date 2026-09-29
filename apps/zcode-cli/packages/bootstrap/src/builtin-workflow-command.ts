@@ -20,8 +20,8 @@ if (!helpEntry) {
 }
 
 const USAGE_PREFIX = `/${BUILTIN_WORKFLOW_COMMAND_NAME} `;
-export const BUILTIN_WORKFLOW_COMMAND_DESCRIPTION = helpEntry.summary;
-export const BUILTIN_WORKFLOW_COMMAND_ARGUMENT_HINT = helpEntry.usage.startsWith(USAGE_PREFIX)
+const BUILTIN_WORKFLOW_COMMAND_DESCRIPTION = helpEntry.summary;
+const BUILTIN_WORKFLOW_COMMAND_ARGUMENT_HINT = helpEntry.usage.startsWith(USAGE_PREFIX)
   ? helpEntry.usage.slice(USAGE_PREFIX.length)
   : "";
 
@@ -38,7 +38,7 @@ const BUILTIN_WORKFLOW_COMMAND_BODY = [
   "",
 ].join("\n");
 
-export const BUILTIN_WORKFLOW_COMMAND: CustomCommandContent = {
+const BUILTIN_WORKFLOW_COMMAND: CustomCommandContent = {
   bytesRead: Buffer.byteLength(BUILTIN_WORKFLOW_COMMAND_BODY),
   content: BUILTIN_WORKFLOW_COMMAND_BODY,
   metadata: {

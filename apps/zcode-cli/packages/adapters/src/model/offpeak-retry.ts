@@ -15,7 +15,7 @@ import { isProviderBusinessError } from "./model-execution.js";
  * ⚠ 与 desktop 侧 @zcode/shared/src/off-peak-types.ts 的同名常量跨包同值（wire 契约）：
  * providerId 随 per-turn runtimeModel 注入，错误标记随 task 终态错误文本回传，改动须两侧同步。
  */
-export const OFF_PEAK_TICKET_EXPIRED_MARKER = "off-peak-ticket-expired";
+const OFF_PEAK_TICKET_EXPIRED_MARKER = "off-peak-ticket-expired";
 
 /** 单次排队等待钳制：min(Retry-After, 5min)；无 Retry-After 时保守 60s 探测。 */
 const OFF_PEAK_QUEUE_WAIT_CAP_MS = 5 * 60_000;

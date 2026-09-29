@@ -1,6 +1,6 @@
 import { formatLogPrefix } from "@zcode/shared";
 
-export type LogLevel = "debug" | "info" | "warn" | "error";
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 type DesktopLogLevel = Exclude<LogLevel, "debug">;
 

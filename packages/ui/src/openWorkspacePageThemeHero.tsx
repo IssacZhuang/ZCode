@@ -65,7 +65,7 @@ function getThemeHeroPalette(theme: Theme): ThemeHeroPalette {
   }
 }
 
-export function useResolvedThemeHeroPalette(): ThemeHeroPalette {
+function useResolvedThemeHeroPalette(): ThemeHeroPalette {
   const theme = useZCodeStore((state) => state.theme);
   const resolvedTheme =
     theme === "system" ? (resolveTheme(theme) === "dark" ? "dark" : "light") : theme;

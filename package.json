@@ -41,7 +41,6 @@
     "architecture:context": "node scripts/architecture/architecture-check.mjs context"
   },
   "dependencies": {
-    "border-beam": "^1.0.1",
     "d3-path": "^3.1.0",
     "tailwind-scrollbar-hide": "^4.0.0"
   },
@@ -51,20 +50,18 @@
     "@types/node": "^25.5.0",
     "concurrently": "^9.1.2",
     "conventional-changelog-conventionalcommits": "^9.3.1",
-    "conventional-changelog-writer": "^8.4.0",
-    "dotenv": "^17.4.2",
     "husky": "^9.1.7",
     "istanbul-lib-instrument": "6.0.3",
     "knip": "^6.0.6",
-    "lint-staged": "^17.0.8",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.57.0",
-    "postject": "1.0.0-alpha.6",
     "release-it": "^19.2.4",
     "ts-morph": "^28.0.0",
     "tsx": "^4.19.4",
     "turbo": "^2.4.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "yaml": "^2.9.0",
+    "yazl": "^3.3.1"
   },
   "peerDependencies": {
     "@tanstack/react-virtual": "^3.13.23"

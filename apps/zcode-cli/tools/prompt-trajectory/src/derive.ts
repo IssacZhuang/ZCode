@@ -8,9 +8,6 @@ import type {
   OpenAiMessage,
   TrajectoryJsonlEntry,
 } from "./types.js";
-
-export type { TrajectoryJsonlEntry } from "./types.js";
-
 const COMPACT_SUMMARY_PREFIXES = [
   "This session is being continued from a previous conversation that ran out of context",
   "This session is being continued from a previous conversation that was compacted",

@@ -6,9 +6,9 @@ import type {
   ExecutionRunOptions,
 } from "@zcode/contracts";
 
-export type BashBackgroundLifecycleMode = "explicit" | "auto_on_timeout";
+type BashBackgroundLifecycleMode = "explicit" | "auto_on_timeout";
 
-export type BashBackgroundLifecycleResult =
+type BashBackgroundLifecycleResult =
   | {
       kind: "foreground";
       result: ExecutionResult;

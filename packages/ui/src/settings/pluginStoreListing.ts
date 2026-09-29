@@ -7,11 +7,7 @@ import type {
 } from "@zcode/shared";
 import { resolveLocalizedText, resolvePluginDisplayName } from "@zcode/shared";
 
-export {
-  formatCanonicalPluginName,
-  resolveLocalizedText,
-  resolvePluginDisplayName,
-} from "@zcode/shared";
+export { resolvePluginDisplayName } from "@zcode/shared";
 
 export { isTrustedImageUrl } from "@/lib/trustedImageUrl.js";
 
@@ -55,7 +51,7 @@ export interface StorePluginItem {
   installedMeta?: ZCodeInstalledPluginSummary;
 }
 
-export type PluginUpdateStatus = NonNullable<ZCodeInstalledPluginSummary["updateStatus"]>;
+type PluginUpdateStatus = NonNullable<ZCodeInstalledPluginSummary["updateStatus"]>;
 
 function isPluginUpdatePending(
   updateStatus: PluginUpdateStatus | undefined,
@@ -124,10 +120,7 @@ export const KNOWN_CATEGORY_LABEL_IDS: Record<string, string> = {
   other: "settings.plugins.store.category.other",
 };
 
-export {
-  PLUGIN_STORE_CATEGORY_ORDER as KNOWN_CATEGORY_ORDER,
-  resolvePluginStoreCategory as resolveStoreCategory,
-} from "@/lib/pluginStoreOrdering.js";
+export { resolvePluginStoreCategory as resolveStoreCategory } from "@/lib/pluginStoreOrdering.js";
 
 /**
  * 把 overview 数据 join 成商店条目集合。

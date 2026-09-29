@@ -3,11 +3,11 @@ import { isDeepStrictEqual } from "node:util";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@modelcontextprotocol/client";
 import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
 
-export const MCP_OAUTH_CANONICAL_CREDENTIALS_KEY = "authorization_credentials";
+const MCP_OAUTH_CANONICAL_CREDENTIALS_KEY = "authorization_credentials";
 const MCP_OAUTH_LEGACY_CLIENT_KEY = "client_information";
 const MCP_OAUTH_LEGACY_TOKENS_KEY = "tokens";
-export const MCP_OAUTH_CREDENTIALS_VERSION = 2;
-export const MCP_OAUTH_SUPPORTED_CREDENTIAL_VERSIONS = new Set([1, MCP_OAUTH_CREDENTIALS_VERSION]);
+const MCP_OAUTH_CREDENTIALS_VERSION = 2;
+const MCP_OAUTH_SUPPORTED_CREDENTIAL_VERSIONS = new Set([1, MCP_OAUTH_CREDENTIALS_VERSION]);
 
 /**
  * canonical credential pair。
@@ -16,7 +16,7 @@ export const MCP_OAUTH_SUPPORTED_CREDENTIAL_VERSIONS = new Set([1, MCP_OAUTH_CRE
  * 追加可选字段对旧 reader 向后兼容（旧 reader 忽略未知字段即可），bump version 反而会让未升级的
  * CLI/desktop 把新记录当未知版本整体忽略、退回 legacy 镜像，丢掉 pair 保证。
  */
-export interface McpOAuthCanonicalCredentials {
+interface McpOAuthCanonicalCredentials {
   client_information: OAuthClientInformationMixed;
   /** 由 `expires_in` 与 `obtained_at` 推导的绝对过期点（epoch ms）。 */
   expires_at?: number;
@@ -66,7 +66,7 @@ function resolveCredentialGeneration(canonical: McpOAuthCanonicalCredentials, ra
   return `legacy-${createHash("sha256").update(raw).digest("hex").slice(0, 32)}`;
 }
 
-export function isCanonicalCredentials(value: unknown): value is McpOAuthCanonicalCredentials {
+function isCanonicalCredentials(value: unknown): value is McpOAuthCanonicalCredentials {
   if (
     !isRecord(value) ||
     typeof value.version !== "number" ||
@@ -258,7 +258,7 @@ export async function loadCredentialPair(
  * canonical + 镜像。这里判断的就是「在没有 generation 的旧格式下，legacy 的变化能否被证明属于
  * 同一次授权」。
  */
-export function deriveCredentialPair(input: {
+function deriveCredentialPair(input: {
   canonicalRaw?: string;
   legacyClientRaw?: string;
   legacyTokensRaw?: string;

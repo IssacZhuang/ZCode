@@ -26,7 +26,7 @@ interface DebugServerOptions extends Omit<DebugAppOptions, "networkCapture"> {
   networkCapture?: NetworkCaptureService | false;
 }
 
-export function createDebugApp(options: DebugAppOptions = {}): Hono {
+function createDebugApp(options: DebugAppOptions = {}): Hono {
   const app = new Hono();
   app.use("*", cors());
 

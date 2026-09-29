@@ -104,6 +104,8 @@ export class StartupDiskSampler {
     if (this.busy || this.stopped) return;
     this.busy = true;
     try {
+      // probe 是异步的且循环内会增删 this.scopes，快照迭代避免遍历中 Map 被修改。
+      // eslint-disable-next-line unicorn/no-useless-spread
       for (const scope of [...this.scopes.values()]) {
         if (this.stopped) break;
         try {

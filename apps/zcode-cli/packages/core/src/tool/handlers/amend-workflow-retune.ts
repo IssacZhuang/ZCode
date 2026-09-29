@@ -195,7 +195,7 @@ function describeBoundInForce(bound: number | undefined, ceiling: number | undef
 }
 
 /** 同值：什么都没写、什么都没停，拒绝里点名此刻生效的那个界。 */
-export function retuneUnchangedFailure(
+function retuneUnchangedFailure(
   runId: string,
   current: number | undefined,
   ceiling: number | undefined,
@@ -208,7 +208,7 @@ export function retuneUnchangedFailure(
 }
 
 /** 别人的 run，已经结算：再调一次，那一次从头走修订，连同它要的那个确认窗。 */
-export function runSettledFailure(runId: string): ToolHandlerFailure {
+function runSettledFailure(runId: string): ToolHandlerFailure {
   return {
     result: false,
     errorCode: AMEND_WORKFLOW_ERROR_CODE.RUN_SETTLED,
@@ -217,7 +217,7 @@ export function runSettledFailure(runId: string): ToolHandlerFailure {
 }
 
 /** 别人的 run，本 agent 从没握住过（`pending`，引擎还没建）：同样的下一步。 */
-export function notRetunableFailure(runId: string): ToolHandlerFailure {
+function notRetunableFailure(runId: string): ToolHandlerFailure {
   return {
     result: false,
     errorCode: AMEND_WORKFLOW_ERROR_CODE.NOT_RETUNABLE,

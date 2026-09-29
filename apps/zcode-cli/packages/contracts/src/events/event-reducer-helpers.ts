@@ -111,14 +111,6 @@ export function applyCompactBoundary(
   };
 }
 
-export function positiveInteger(value: unknown): number | undefined {
-  if (typeof value !== "number" || !Number.isFinite(value)) {
-    return undefined;
-  }
-  const integer = Math.trunc(value);
-  return integer > 0 ? integer : undefined;
-}
-
 export function applyBackgroundTaskStarted(
   projection: SessionProjection,
   payload: BackgroundTaskStartedPayload,

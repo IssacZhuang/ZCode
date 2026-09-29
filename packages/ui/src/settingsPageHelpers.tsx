@@ -33,11 +33,7 @@ import { normalizeInterfaceMode, type InterfaceMode } from "@/lib/interfaceMode.
 import {
   createSettingsPageConfig,
   resolveSettingsSectionForPlatform,
-  type SettingsSectionId,
 } from "@/settings/settingsPageConfig.js";
-
-export type { Locale, LocalePreference } from "@zcode/shared";
-export { type SettingsSectionId };
 export { createSettingsPageConfig, resolveSettingsSectionForPlatform };
 
 const TASK_AUTO_ARCHIVE_DAY_OPTIONS = [3, 7, 14, 30] as const;

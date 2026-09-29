@@ -8,7 +8,7 @@ const uploadProgressIntervalMs = 200;
 
 export const fileMode = (stats) => stats.mode & executableModeMask;
 
-export const formatBytes = (bytes) => {
+const formatBytes = (bytes) => {
   if (bytes < 1024) return `${bytes} B`;
   const units = ["KB", "MB", "GB"];
   let value = bytes / 1024;

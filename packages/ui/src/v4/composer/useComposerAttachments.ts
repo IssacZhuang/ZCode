@@ -38,7 +38,6 @@ import {
   updateComposerAttachmentScope,
   useComposerAttachmentUploadStore,
   type ComposerAttachmentUploadItem,
-  type ComposerAttachmentUploadStatus,
 } from "@/store/composerAttachmentUploadStore.js";
 import { uploadComposerAttachment, type AttachmentPutFn } from "@/v4/composer/attachmentUpload.js";
 
@@ -51,10 +50,6 @@ const COMPOSER_ATTACHMENT_COMPLETE_VISIBLE_MS = 300;
  */
 const COMPOSER_ATTACHMENT_REBUILD_RETRY_LIMIT = 5;
 const EMPTY_COMPOSER_ATTACHMENTS: ComposerAttachmentUploadItem[] = [];
-export type {
-  ComposerAttachmentUploadItem,
-  ComposerAttachmentUploadStatus,
-} from "@/store/composerAttachmentUploadStore.js";
 
 interface UploadTarget {
   sessionId: string | null;

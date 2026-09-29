@@ -14,7 +14,6 @@ import type {
   TimelineMarkerPayload,
   ToolOutput,
   TurnHeaderRow,
-  UserInputRow,
 } from "@zcode/shared/zcode-protocol-v4";
 import { PROTOCOL_V4_LIMITS } from "@zcode/shared/zcode-protocol-v4";
 
@@ -41,28 +40,6 @@ function mapTurnHeaderOrigin(
   }
 }
 
-// inputSource → userInput.origin。
-function mapUserInputOrigin(
-  source: SyntheticUserMessageSource | undefined,
-): UserInputRow["origin"] {
-  switch (source) {
-    case "background_task":
-      return "backgroundResult";
-    case "goal-continuation":
-      return "goalContinuation";
-    case "subagent":
-    case "subagent_message":
-      return "mailbox";
-    case "fork":
-    case "plugin_reference":
-    case "rewind":
-    case "todo_reminder":
-      return "synthetic";
-    default:
-      return "realUser";
-  }
-}
-
 export function buildTurnHeaderRow(base: RowBaseInput, payload: TurnStartedPayload): TurnHeaderRow {
   return {
     ...base,
@@ -72,33 +49,6 @@ export function buildTurnHeaderRow(base: RowBaseInput, payload: TurnStartedPaylo
     ...(payload.originMeta ? { originMeta: payload.originMeta } : {}),
     state: "running",
     startedAt: base.createdAt,
-  };
-}
-
-export function buildUserInputRow(base: RowBaseInput, payload: TurnStartedPayload): UserInputRow {
-  // 附件渲染：TurnStarted 携带的展示元信息 → row.attachments。
-  // ref 是内容引用占位（本地路径/artifact URI）；无稳定引用时以行内序号占位，
-  // 展示层只用 fileName/mime/bytes，不据 ref 取内容（attachment/get query 属后续）。
-  const attachments =
-    payload.intent?.attachmentRefs ??
-    payload.attachments?.map((meta, index) => ({
-      ref: meta.ref ?? `turn-attachment/${base.rowId}/${index}`,
-      fileName: meta.fileName,
-      mime: meta.mime,
-      bytes: meta.bytes,
-    }));
-  const sourceCommandId = payload.intent?.sourceCommandId ?? payload.inputId;
-  const rootSourceCommandId = payload.intent?.provenance?.sourceCommandId ?? sourceCommandId;
-  return {
-    ...base,
-    kind: "userInput",
-    text: payload.input,
-    origin: mapUserInputOrigin(payload.inputSource),
-    ...(sourceCommandId ? { sourceCommandId } : {}),
-    ...(rootSourceCommandId ? { rootSourceCommandId } : {}),
-    ...(payload.intent?.clientId ? { clientId: payload.intent.clientId } : {}),
-    ...(payload.epilogueStart === undefined ? {} : { epilogueStart: payload.epilogueStart }),
-    ...(attachments && attachments.length > 0 ? { attachments } : {}),
   };
 }
 

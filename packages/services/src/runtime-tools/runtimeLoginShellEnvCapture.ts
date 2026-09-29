@@ -21,7 +21,7 @@ interface LoginShellExecutionOptions {
   signal?: AbortSignal;
 }
 
-export type LoginShellExecutor = (
+type LoginShellExecutor = (
   shellPath: string,
   shellArgs: string[],
   options: LoginShellExecutionOptions,

@@ -265,7 +265,7 @@ export class PermissionService {
   private matchesRuleScope(
     rule: PermissionRuleValue,
     contextToolName: string,
-    capability: ResolvedPermissionCapability,
+    _capability: ResolvedPermissionCapability,
   ): boolean {
     return this.matchesRuleToolName(rule.toolName, contextToolName);
   }

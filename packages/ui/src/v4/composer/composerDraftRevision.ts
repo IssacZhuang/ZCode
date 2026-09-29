@@ -7,13 +7,6 @@ function getWorkspaceKey(workspacePath: string, workspaceIdentity?: string): str
   return workspaceIdentity?.trim() || workspacePath;
 }
 
-export function getComposerDraftRevision(
-  workspacePath: string,
-  workspaceIdentity?: string,
-): number {
-  return revisionByWorkspaceKey.get(getWorkspaceKey(workspacePath, workspaceIdentity)) ?? 0;
-}
-
 export function advanceComposerDraftRevision(
   workspacePath: string,
   workspaceIdentity?: string,

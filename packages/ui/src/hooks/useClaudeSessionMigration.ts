@@ -5,12 +5,12 @@ import { useZCodeTaskService } from "@/hooks/useZCodeTaskService.js";
 import { useTabStoreApi } from "@/store/TabStoreProvider.js";
 import { invalidateTaskQueryCacheByScopes } from "@/store/taskQueryCacheStore.js";
 
-export type ClaudeMigrationRange = "all" | "7d" | "30d" | "90d";
+type ClaudeMigrationRange = "all" | "7d" | "30d" | "90d";
 type ClaudeMigrationWorkspaceFilterMode = "all" | "current";
 
 const DEFAULT_LIMIT = 100;
 const MAX_SCAN_LIMIT = 500;
-export const UNLIMITED_SCAN_LIMIT_INPUT = "unlimited";
+const UNLIMITED_SCAN_LIMIT_INPUT = "unlimited";
 
 const RANGE_TO_DURATION_MS: Record<Exclude<ClaudeMigrationRange, "all">, number> = {
   "7d": 7 * 24 * 60 * 60 * 1000,

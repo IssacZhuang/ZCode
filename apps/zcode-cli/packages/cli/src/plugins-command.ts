@@ -33,7 +33,6 @@ import {
 import { runMarketplaceCommand } from "./plugins-marketplace-command.js";
 
 export type {
-  PluginsCommandDependencies,
   PluginsCommandFlags,
   PluginsCommandOverrides,
 } from "./plugins-command-shared.js";

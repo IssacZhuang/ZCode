@@ -15,7 +15,7 @@ import type { TuiWorkflowCard } from "./app-workflow-mirror.js";
 
 const CARD_DETAIL_INDENT = "  ";
 const CARD_LOG_INDENT = "    ";
-export const MAX_ACTOR_ROWS = 6;
+const MAX_ACTOR_ROWS = 6;
 const MAX_RESULT_PREVIEW_WIDTH = 200;
 
 /** 六行位置按状态分桶：跑着的排前面。 */
@@ -33,7 +33,7 @@ const ACTOR_ROW_RANK: Record<WorkflowRunActor["status"], number> = {
  * 挑选——running → waiting → completed，桶内仍按协议顺序（稳定，所以一个 actor 只在它自己换
  * 状态时才移动）。
  */
-export function actorRowsForCard(
+function actorRowsForCard(
   actors: readonly WorkflowRunActor[],
   limit: number = MAX_ACTOR_ROWS,
 ): readonly WorkflowRunActor[] {

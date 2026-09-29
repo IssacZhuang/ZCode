@@ -346,15 +346,6 @@ export function mapSessionEventForProtocol(
   return mapSessionEvent(event, deliveryKind, options);
 }
 
-export function mapSessionEvents(
-  events: readonly SessionEvent[],
-  deliveryKind?: ZCodeDeliveryKind,
-): ZCodeSessionEvent[] {
-  return events
-    .map((event) => mapSessionEventForProtocol(event, deliveryKind))
-    .filter((event): event is ZCodeSessionEvent => event !== null);
-}
-
 export function shouldExposeSessionEventToProtocol(event: SessionEvent): boolean {
   if (event.type === SessionEventType.StreamingToolLedgerUpdated) {
     // 性能修复：StreamingToolLedgerUpdated 是 runtime replay 账本，常在 closed/queued/started/committed

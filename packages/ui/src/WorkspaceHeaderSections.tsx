@@ -37,11 +37,8 @@ import { applyTaskQueryCacheMutation } from "@/store/taskQueryCacheStore.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
 import { TaskRenameDialog } from "@/TaskRenameDialog.js";
 
-export type { WorkspaceHeaderState, WorkspaceHeaderTitleSectionProps };
-export {
-  WorkspaceHeaderActionSection,
-  type WorkspaceHeaderActionSectionProps,
-} from "@/WorkspaceHeaderSections/WorkspaceHeaderActionSection.js";
+export type { WorkspaceHeaderState };
+export { WorkspaceHeaderActionSection } from "@/WorkspaceHeaderSections/WorkspaceHeaderActionSection.js";
 
 export function WorkspaceHeaderTitleSection({
   variant,

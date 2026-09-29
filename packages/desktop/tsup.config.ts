@@ -180,7 +180,10 @@ export default defineConfig([
     platform: "node",
     target: "node22",
     external: ["electron"],
-    noExternal: ["@zcode/shared"],
+    // sandboxed preload 的 require 只认 electron 和 Node 内置模块，不能解析 asar 里的 node_modules。
+    // zod 一旦进入 package.json dependencies，tsup 默认会把它外置成 require("zod")，
+    // 打包态 preload 直接加载失败（renderer 白屏），必须内联进 bundle。
+    noExternal: ["@zcode/shared", "zod"],
     outExtension: () => ({ js: ".cjs" }),
     define: createSharedDefines(),
     esbuildOptions(options) {

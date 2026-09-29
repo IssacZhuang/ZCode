@@ -12,11 +12,7 @@ import {
   type WebFetchOutput,
 } from "@zcode/contracts";
 import type { ToolEntry, ToolExecutionContext, ToolHandler } from "../types.js";
-import {
-  clearWebFetchCacheForTests as clearWebFetchContentCacheForTests,
-  getWebFetchCache,
-  putWebFetchCache,
-} from "./webfetch-cache.js";
+import { getWebFetchCache, putWebFetchCache } from "./webfetch-cache.js";
 import {
   DEFAULT_WEBFETCH_TIMEOUT_MS,
   MAX_WEBFETCH_MODEL_BYTES,
@@ -31,11 +27,6 @@ import type {
 } from "./webfetch-types.js";
 import { isWebFetchPreapprovedUrl } from "../webfetch-preapproved.js";
 import { normalizeWebFetchUrl } from "./webfetch-url.js";
-
-export function clearWebFetchCacheForTests(): void {
-  clearWebFetchContentCacheForTests();
-}
-
 const WEBFETCH_DESCRIPTION = [
   "Fetches a URL, converts the page to markdown, and answers `prompt` against it using a small fast model.",
   "",

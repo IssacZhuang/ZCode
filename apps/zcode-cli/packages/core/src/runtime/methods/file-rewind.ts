@@ -104,8 +104,7 @@ export async function applyWorkspaceFileRewind(
     commitAfterApply?: () => Promise<void>;
   } = {},
 ): Promise<WorkspaceFileRewindApplyResult> {
-  const traceContext =
-    options.traceContext ?? getCurrentTraceContext() ?? this.rootTraceContext;
+  const traceContext = options.traceContext ?? getCurrentTraceContext() ?? this.rootTraceContext;
   const plan = await buildWorkspaceFileRewindPlan.call(this, {
     ...options,
     traceContext,
@@ -212,7 +211,6 @@ export async function applyWorkspaceFileRewind(
     };
   }
 
-  const firstOperation = plan.operations[0];
   const lastOperation = plan.operations.at(-1);
   const targetMessageId = options.targetMessageId ?? options.targetMessageIds?.[0];
   const rewindId = `rewind_${crypto.randomUUID()}`;
@@ -285,8 +283,7 @@ async function buildWorkspaceFileRewindPlan(
     traceContext?: TraceContext;
   },
 ): Promise<WorkspaceFileRewindPlan> {
-  const traceContext =
-    options.traceContext ?? getCurrentTraceContext() ?? this.rootTraceContext;
+  const traceContext = options.traceContext ?? getCurrentTraceContext() ?? this.rootTraceContext;
   if (!this.artifactStore || !this.fileSystemPort) {
     return {
       canApply: false,
@@ -509,10 +506,7 @@ function resolveTargetCheckpoints(
       .map((event) => event.payload)
       .filter((payload): payload is CheckpointCreatedPayload => {
         const checkpoint = payload as Partial<CheckpointCreatedPayload>;
-        return (
-          checkpoint.scope === RewindScope.Workspace ||
-          checkpoint.scope === RewindScope.Both
-        );
+        return checkpoint.scope === RewindScope.Workspace || checkpoint.scope === RewindScope.Both;
       });
   }
 

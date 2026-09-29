@@ -99,7 +99,7 @@ export function workflowExpansionActionFor({
 
 export const PROMPT_DRAFT_CLEARED_STATUS = "Ready.";
 export const CTRL_C_EXIT_PROMPT = "Press Ctrl-C again to exit.";
-export const CTRL_C_EXIT_CONFIRMATION_WINDOW_MS = 2_000;
+const CTRL_C_EXIT_CONFIRMATION_WINDOW_MS = 2_000;
 
 export function shouldClearPromptDraftOnCtrlC(draftValue: string): boolean {
   return draftValue.length > 0;

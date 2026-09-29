@@ -17,7 +17,6 @@
   },
   "devDependencies": {
     "@types/node": "^25.5.0",
-    "@zcode/model-option-map": "workspace:*",
     "typescript": "^6.0.2"
   }
 }

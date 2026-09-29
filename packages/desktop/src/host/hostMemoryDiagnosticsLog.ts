@@ -14,7 +14,7 @@ interface HostMemoryDiagnosticsTimerHandle {
   unref?(): void;
 }
 
-export interface StartHostMemoryDiagnosticsLogOptions {
+interface StartHostMemoryDiagnosticsLogOptions {
   logger: HostMemoryDiagnosticsLogger;
   /** services 层的领域计数器（`collectServiceMemoryDiagnostics`）。 */
   collectCounters(): Record<string, number>;

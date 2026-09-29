@@ -20,9 +20,6 @@ import {
   type SidebarSectionId,
   type SidebarSectionExpansion,
 } from "./app-sidebar-layout.js";
-
-export { SIDEBAR_CONTENT_WIDTH } from "./app-sidebar-layout.js";
-
 const h = React.createElement as (
   type: React.ElementType | string,
   props?: Record<string, unknown> | null,

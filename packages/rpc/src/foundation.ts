@@ -155,6 +155,8 @@ export class Emitter<T> implements IDisposable {
     if (this.disposed) {
       return;
     }
+    // listener 回调可能同步订阅/退订（onDidRemoveLastListener 等），快照迭代避免遍历中 Set 被修改。
+    // eslint-disable-next-line unicorn/no-useless-spread
     for (const listener of [...this.listeners]) {
       listener(event);
     }

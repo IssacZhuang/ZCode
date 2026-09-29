@@ -1,4 +1,3 @@
-import type { WorkspaceId } from "@zcode/contracts";
 import { buildExecutionStateEntry, readRuntimeExecutionState } from "../execution-state.js";
 import {
   SESSION_ENTRY_TARGET_COMPLETION_VERIFICATION,

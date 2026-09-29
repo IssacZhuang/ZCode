@@ -57,7 +57,7 @@ const OFFICIAL_PLUGIN_ASSETS_BASE_URL = "https://cdn-zcode.z.ai/zcode/official-p
 
 const OFFICIAL_NODE_REPL_HOST_REQUIRED_SEED_PATHS = ["dist/mcp/server.js"] as const;
 
-export const OFFICIAL_BROWSER_USE_REQUIRED_SEED_PATHS = [
+const OFFICIAL_BROWSER_USE_REQUIRED_SEED_PATHS = [
   "docs/api.json",
   "docs/documents.json",
   "docs/overview.md",

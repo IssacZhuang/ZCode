@@ -1,7 +1,7 @@
 // 会话查找共用件（各命令组 handler 复用）。
 import type { V4CommandCoreHost, V4SessionRecordView } from "./types.js";
 
-export class V4SessionNotFoundError extends Error {
+class V4SessionNotFoundError extends Error {
   constructor(sessionId: string) {
     super(`v4 command session not found: ${sessionId}`);
     this.name = "V4SessionNotFoundError";

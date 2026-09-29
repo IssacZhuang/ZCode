@@ -107,7 +107,7 @@ export function seedWorkflowMirror(
  * 真实步数小：触界是**拒新**，被拒的实例根本不在 `nodes` 里，只在 usage 的两个计数器上。
  * 本函数只保留 TUI 的字段名（卡片与 i18n 说的是 nodesSettled / nodesTotal）。
  */
-export function workflowRunStepCounts(run: WorkflowRunState): {
+function workflowRunStepCounts(run: WorkflowRunState): {
   nodesSettled: number;
   nodesTotal: number;
 } {

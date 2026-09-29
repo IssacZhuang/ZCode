@@ -90,7 +90,7 @@ export async function enqueueDeferredInputForBusyWork(
 }
 
 /** 等 idle 超时（active turn 的 finally 5s 内未释放锁）→ 放弃重发并报错。 */
-export class V4SessionIdleTimeoutError extends Error {
+class V4SessionIdleTimeoutError extends Error {
   constructor(sessionId: string) {
     super(`v4 timed out waiting for session idle: ${sessionId}`);
     this.name = "V4SessionIdleTimeoutError";

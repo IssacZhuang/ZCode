@@ -5,8 +5,6 @@ import { cn } from "@/components/lib/utils.js";
 import type { WorkspaceHeaderActionSectionProps } from "@/WorkspaceHeaderSections/shared.js";
 import { DesktopWindowControls } from "@/DesktopWindowControls.js";
 
-export type { WorkspaceHeaderActionSectionProps } from "@/WorkspaceHeaderSections/shared.js";
-
 export function WorkspaceHeaderActionSection({
   variant = "task",
   readOnlyReason,

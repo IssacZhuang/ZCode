@@ -27,9 +27,7 @@ import {
 import { getElectronAppPath, isElectronAppPackaged } from "./desktopElectronApp.js";
 
 const isLocalDevelopmentRuntime = !isElectronAppPackaged();
-export const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime
-  ? "development"
-  : "production";
+const desktopRuntimeEnv: ZCodeRuntimeEnv = isLocalDevelopmentRuntime ? "development" : "production";
 // 身份看编译期 flavor 而不是 ZCODE_ENV：ZCODE_PREVIEW_IDENTITY=1 的生产后端构建同样是 Preview，
 // 需要独立的应用名、Electron 数据目录和 Helper 安装子目录才能与正式版并排运行。
 const isPreviewPackagedRuntime = !isLocalDevelopmentRuntime && ZCODE_PRODUCT_FLAVOR === "preview";
@@ -163,10 +161,6 @@ export function loadHostProcessEnvFromLocalFiles(): Record<string, string> {
   }
 
   return applySelectedZCodeEnvLinks(merged);
-}
-
-function resolveEnvValue(envName: string, localEnv: LocalRuntimeEnv = {}): string | undefined {
-  return process.env[envName]?.trim() || localEnv[envName]?.trim() || undefined;
 }
 
 export function resolveZCodeEndpointEnvBaseOrigin(

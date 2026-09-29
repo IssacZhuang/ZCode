@@ -108,7 +108,7 @@ export function createObservationEventStream(
   });
 }
 
-export async function fingerprintObservationSources(
+async function fingerprintObservationSources(
   options: ObservationOptions,
 ): Promise<ObservationSourceFingerprint[]> {
   const fingerprints: ObservationSourceFingerprint[] = [];

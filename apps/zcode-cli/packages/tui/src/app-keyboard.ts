@@ -39,20 +39,6 @@ import type {
 import type { SidebarSectionId } from "./app-sidebar-layout.js";
 import type { TuiEffortOption, TuiModeOption, TuiModelOption } from "./types.js";
 import { latestRetryableCompactCommand } from "./app-compact-timeline.js";
-
-export {
-  CTRL_C_EXIT_CONFIRMATION_WINDOW_MS,
-  completeEffortCommand,
-  completeModeCommand,
-  completeModelCommand,
-  completeSlashCommand,
-  createCtrlCExitGuard,
-  isModeSwitchKey,
-  resetCtrlCExitGuard,
-  resolveCtrlCExitIntent,
-  shouldHandleInputHistoryNavigation,
-} from "./app-keyboard-helpers.js";
-
 type UseTuiKeyboardControlsOptions = {
   readOnlyView?: { back(): void };
   abortControllerRef: MutableRefObject<AbortController | undefined>;

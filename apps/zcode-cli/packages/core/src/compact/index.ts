@@ -10,7 +10,6 @@ export {
   buildManualCompactBoundary,
   createCompactBoundaryId,
   estimateMessageTokens,
-  getMessagesToSummarize,
   getUsageTotalTokens,
   hasEnoughMessagesToCompact,
 } from "./manual.js";

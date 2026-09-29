@@ -31,7 +31,7 @@ function readVersionMajor(version) {
   return Number.parseInt(String(version).trim().split(".", 1)[0] ?? "", 10);
 }
 
-export function assertLinuxNativeSearchBuildEnvironment({
+function assertLinuxNativeSearchBuildEnvironment({
   nodeVersion,
   glibcVersion,
   gccVersion,
@@ -78,7 +78,7 @@ function verifyLinuxNativeSearchBuildEnvironment(config) {
   );
 }
 
-export function resolveNativeUnixBuildConfig({
+function resolveNativeUnixBuildConfig({
   platform = process.platform,
   arch = process.arch,
   hostPlatform = process.platform,
@@ -283,7 +283,7 @@ function buildBrotli(sourcePath, prefix, workDir, env, quiet, config) {
   }
 }
 
-export function createBfsBuildEnvironment({ sourcePath, prefix, env, config }) {
+function createBfsBuildEnvironment({ sourcePath, prefix, env, config }) {
   const relativePrefix = relative(sourcePath, prefix) || ".";
   return {
     ...env,

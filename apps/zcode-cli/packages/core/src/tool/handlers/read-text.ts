@@ -82,7 +82,7 @@ export function formatReadTextOutput(output: ReadTextOutput): string {
   })}`;
 }
 
-export function addReadLineNumbers({
+function addReadLineNumbers({
   content,
   startLine,
 }: {

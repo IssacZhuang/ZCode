@@ -17,9 +17,6 @@ import {
 import { readWindowsProcessMemory } from "./process-probe-windows.js";
 
 export {
-  PROCESS_PROBE_SAMPLE_TIMEOUT_MS,
-  type ProcessProbeCommandResult,
-  type ProcessProbeExecFile,
   type ProcessProbeSample,
 } from "./process-probe-shared.js";
 

@@ -14,11 +14,3 @@ export function mergeAutomationMutationToolDenylist(
 // 独立常量，绝不并入 AUTOMATION_MUTATION_TOOL_NAMES——cron automation 轮
 // 明确放行 OffPeakCreate（定时派生闲时任务），混入会让 automation 轮误 deny。
 export const OFF_PEAK_MUTATION_TOOL_NAMES = ["OffPeakCreate"] as const;
-
-export function mergeOffPeakMutationToolDenylist(current: readonly string[] | undefined): string[] {
-  const merged = new Set(current);
-  for (const toolName of OFF_PEAK_MUTATION_TOOL_NAMES) {
-    merged.add(toolName);
-  }
-  return [...merged];
-}

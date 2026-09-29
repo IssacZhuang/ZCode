@@ -145,7 +145,7 @@ interface AmendImportDeps {
  * 是同一份；本对象是**这一次构建**才成立的观察，两次构建可以不同。混进 deps 会让「同一份 deps
  * 必给同一张表」这句话变味。
  */
-export interface AmendImportOptions {
+interface AmendImportOptions {
   /**
    * 已**静默**（不再有在写的 turn）的前驱会话 id。只影响在飞 ask 的接续：完结前缀的边界是
    * journal 事实，与会话此刻长不长无关。

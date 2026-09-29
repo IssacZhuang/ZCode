@@ -2,7 +2,7 @@ import { extname, win32 } from "node:path";
 
 const DEFAULT_WINDOWS_PATHEXT = [".COM", ".EXE", ".BAT", ".CMD"];
 
-export function getWindowsEnvValue(
+function getWindowsEnvValue(
   env: NodeJS.ProcessEnv,
   key: string,
 ): string | undefined {

@@ -8,11 +8,6 @@ interface CacheEntry extends CachedFetchContent {
 const fetchCache = new Map<string, CacheEntry>();
 let cacheBytes = 0;
 
-export function clearWebFetchCacheForTests(): void {
-  fetchCache.clear();
-  cacheBytes = 0;
-}
-
 export function getWebFetchCache(key: string): CachedFetchContent | undefined {
   const entry = fetchCache.get(key);
   if (!entry) return undefined;

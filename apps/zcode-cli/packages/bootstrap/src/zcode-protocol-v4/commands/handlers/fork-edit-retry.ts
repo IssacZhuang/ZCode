@@ -43,18 +43,6 @@ export class V4RowTranslationError extends Error {
   }
 }
 
-/** fork 目标不是所属轮最后一段 assistantText → 明确拒绝。 */
-export class V4ForkTargetNotLatestSegmentError extends Error {
-  readonly reasonCode = "fault.command.executionFailed";
-
-  constructor(targetRowId: number) {
-    super(
-      `forkAssistant targetRowId ${targetRowId} 不是所属轮的最后一段 assistant（fork 只挂轮尾段）`,
-    );
-    this.name = "V4ForkTargetNotLatestSegmentError";
-  }
-}
-
 class V4ForkTargetGuardError extends Error {
   constructor(
     readonly reasonCode: string,

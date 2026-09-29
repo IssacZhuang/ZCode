@@ -30,9 +30,6 @@ import type {
   CliTargetRequest,
   RunDependencies,
 } from "./cli-types.js";
-
-export type { RunDependencies } from "./cli-types.js";
-
 declare const __CLI_VERSION__: string | undefined;
 
 const version = typeof __CLI_VERSION__ === "string" ? __CLI_VERSION__ : "0.0.0";

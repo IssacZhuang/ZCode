@@ -14,6 +14,7 @@ import {
   projectSessionSubagents,
 } from "../zcode-protocol/subagent-session-query.js";
 
+// types.ts 通过顶层 import type 引用本类型；export 必须保留，knip 才能识别该使用方。
 export interface SubagentTranscriptSnapshot {
   sessionId: string;
   sequenceNumber: number;

@@ -49,9 +49,6 @@ import {
   resolveReadTimeoutBudgetMs,
   supportsPdfForExecution,
 } from "./read-pdf.js";
-
-export { addReadLineNumbers } from "./read-text.js";
-
 const FILE_UNCHANGED_STUB =
   "Wasted call — file unchanged since your last Read. Refer to that earlier tool_result instead.";
 const READ_PROVIDER_DESCRIPTION = [

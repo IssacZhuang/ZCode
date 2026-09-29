@@ -5,7 +5,7 @@ import { canVisualizeCronInAutomationEditor } from "@/settings/automationFormat.
 /* 账号体系移除：闲时任务模板（off-peak-task 场景）依赖 Coding Plan 订阅，整体删除；
    目录只保留定时任务模板的映射。 */
 
-export interface AutomationTemplateLocalizedText {
+interface AutomationTemplateLocalizedText {
   cn?: string;
   en?: string;
 }

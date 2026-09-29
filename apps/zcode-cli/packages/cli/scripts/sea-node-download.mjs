@@ -35,7 +35,7 @@ const sha256File = async (file) => {
 
 const formatBytes = (bytes) => `${(bytes / 1024 / 1024).toFixed(1)} MiB`;
 
-export const downloadFile = async (url, destination) => {
+const downloadFile = async (url, destination) => {
   console.log(`[sea] downloading ${url}`);
   const response = await fetch(url, {
     redirect: "follow",

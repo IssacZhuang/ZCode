@@ -309,7 +309,7 @@ function posixShellKind(path: string): PosixShellKind | undefined {
   return undefined;
 }
 
-export function isExecutableCandidate(path: string, exists?: ExecutableCheck): boolean {
+function isExecutableCandidate(path: string, exists?: ExecutableCheck): boolean {
   if (exists) {
     return exists(path);
   }

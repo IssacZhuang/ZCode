@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import { rootCertificates } from "node:tls";
 import { Agent, ProxyAgent, fetch as undiciFetch, type Dispatcher } from "undici";
 
-export interface HostApiNetworkOptions {
+interface HostApiNetworkOptions {
   httpProxy?: string;
   noProxy?: string;
   caCertPath?: string;
@@ -58,7 +58,7 @@ function matchesNoProxy(url: URL, value: string | undefined): boolean {
   });
 }
 
-export function resolveHostProxyForUrl(
+function resolveHostProxyForUrl(
   requestUrl: string | URL,
   options: HostApiNetworkOptions,
 ): HostProxyRoute {

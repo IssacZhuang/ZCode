@@ -155,8 +155,6 @@ export const modelProviderKindSchema = z.enum(["anthropic", "openai", "openai-co
 
 export const modelProviderCatalogSourceIdSchema = z.enum(["china-llm-zcode-dev"]);
 
-const modelProviderModalitySchema = z.enum(["text", "image", "video", "audio", "pdf"]);
-
 const providerOptionsPatchOperationSchema = z.object({
   path: z.array(z.string().min(1)).min(1),
 });
@@ -175,48 +173,6 @@ export const modelProviderReasoningSpecSchema = z.object({
 });
 
 const modelProviderEndpointPathsSchema = z.partialRecord(modelProviderKindSchema, z.string());
-
-const modelProviderCatalogEndpointSchema = z.object({
-  baseURL: z.string(),
-  paths: modelProviderEndpointPathsSchema,
-});
-
-const modelProviderCatalogModelSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().optional(),
-  kinds: z.array(modelProviderKindSchema),
-  defaultKind: modelProviderKindSchema.optional(),
-  modelIdByKind: z.partialRecord(modelProviderKindSchema, z.string().min(1)).optional(),
-  modalities: z.object({
-    input: z.array(modelProviderModalitySchema),
-    output: z.array(modelProviderModalitySchema),
-  }),
-  contextWindow: z.number().int().positive(),
-  maxOutputTokens: z.number().int().positive().optional(),
-  reasoning: modelProviderReasoningSpecSchema.optional(),
-  priority: z.number().finite().optional(),
-});
-
-const modelProviderCatalogProviderSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  endpoints: modelProviderCatalogEndpointSchema,
-  defaultKind: modelProviderKindSchema.optional(),
-  models: z.array(modelProviderCatalogModelSchema),
-});
-
-export const modelProviderCatalogFileSchema = z.object({
-  schemaVersion: z.literal("zcode.model-providers.v1"),
-  providers: z.array(modelProviderCatalogProviderSchema),
-});
-
-const modelProviderModelConfigSchema = modelProviderCatalogModelSchema.extend({
-  disabledReason: z.string().optional(),
-  supportsTools: z.boolean().optional(),
-  supportsStructuredOutput: z.boolean().optional(),
-  modified: z.boolean().optional(),
-  deleted: z.boolean().optional(),
-});
 
 export const modelProviderSourceSchema = z.enum(["builtin", "models-dev", "custom", "workspace"]);
 
@@ -265,43 +221,6 @@ const legacyModelProviderConfigSchema = z.object({
 });
 
 export const legacyModelProviderListSchema = z.array(legacyModelProviderConfigSchema);
-
-const modelProviderConfigSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  enabled: z.boolean().optional(),
-  systemDisabledReason: modelProviderSystemDisabledReasonSchema.optional(),
-  endpoints: modelProviderEndpointsSchema,
-  apiFormat: modelProviderApiFormatSchema.optional(),
-  source: modelProviderSourceSchema.optional(),
-  catalogSourceId: modelProviderCatalogSourceIdSchema.optional(),
-  catalogProviderId: z.string().optional(),
-  modelsDevProviderId: z.string().optional(),
-  apiKeyRequired: z.boolean().optional(),
-  headers: z.record(z.string(), z.string()).optional(),
-  logoUrl: z.string().optional(),
-  apiKey: z.string(),
-  apiKeyUrl: z.string().optional(),
-  defaultKind: modelProviderKindSchema.optional(),
-  models: z.array(modelProviderModelConfigSchema).default([]),
-  modelDisplayNames: z.record(z.string(), z.string()).optional(),
-  modelSupportedFormats: z.record(z.string(), z.array(modelSupportedFormatSchema)).optional(),
-  providerMappings: providerModelMappingsSchema.optional(),
-  createdAt: z.number(),
-  updatedAt: z.number(),
-});
-
-const modelProviderListSchema = z.array(modelProviderConfigSchema);
-
-export const modelProviderStoreFileSchema = z.object({
-  schemaVersion: z.literal("zcode.model-providers.v2"),
-  providers: modelProviderListSchema,
-});
-
-export const modelProviderDisplayOrderStateSchema = z.object({
-  providerIds: z.array(z.string().min(1)),
-  updatedAt: z.number().int().nonnegative(),
-});
 
 export function stripLegacyClaudeProviderMappings(
   providerMappings: ProviderModelMappings | undefined,

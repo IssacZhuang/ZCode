@@ -6,11 +6,7 @@ import {
   isGitRuntimeContextUnsafe,
   type BashReadonlyRuntimeContext,
 } from "./bash-git-runtime-safety.js";
-import {
-  evaluateBashReadonlyPolicy,
-  hasKnownBashWriteOption,
-  isSedInPlaceOption,
-} from "./bash-readonly-policy.js";
+import { evaluateBashReadonlyPolicy, hasKnownBashWriteOption } from "./bash-readonly-policy.js";
 const BASH_SEMANTIC_NEUTRAL_COMMANDS = new Set(["", ":", "echo", "false", "printf", "true"]);
 const BASH_SILENT_COMMANDS = new Set([
   "cd",
@@ -63,14 +59,6 @@ export function isRuntimeReadOnlyBashCommand(
   }
 
   return hasReadOnlyCommand;
-}
-
-export function isSedInPlaceBashCommand(command: string): boolean {
-  const analysis = analyzeBashCommand(command);
-  if (analysis.hasParseErrors) return false;
-  return analysis.commands.some(
-    (commandPart) => commandPart.name === "sed" && commandPart.argv.some(isSedInPlaceOption),
-  );
 }
 
 export function isSilentBashCommand(command: string): boolean {

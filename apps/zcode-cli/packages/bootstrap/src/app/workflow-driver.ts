@@ -596,4 +596,3 @@ export function createAgentRuntimeWorkflowDriver(
 }
 
 export { mintActorSessionId } from "./workflow-driver-helpers.js";
-export type { ActorRuntimeFactory } from "./workflow-driver-types.js";

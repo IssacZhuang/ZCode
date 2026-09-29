@@ -134,14 +134,13 @@ export async function prepareProtocolStartupStorage(options: {
     } catch {
       /* 原始存储异常优先于失败通知的 IO 异常。 */
     }
-    throw error;
-  } finally {
-    clearTimeout(timer!);
-    lines.close();
-    try {
-      store?.close();
-    } catch (error) {
-      if (!failure) throw error;
-    }
   }
+  clearTimeout(timer!);
+  lines.close();
+  try {
+    store?.close();
+  } catch (error) {
+    if (failure === undefined) throw error;
+  }
+  if (failure !== undefined) throw failure;
 }

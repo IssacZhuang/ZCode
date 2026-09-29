@@ -48,7 +48,7 @@ interface WorkflowActorModelPolicy {
  * 钉住的模型无法构造时抛出。带上 pin 本身：排查的人需要知道 journal 里钉的是哪个模型，
  * 而不是从一条「模型引用非法」的通用消息里猜。
  */
-export class WorkflowActorPinnedModelError extends Error {
+class WorkflowActorPinnedModelError extends Error {
   readonly pinnedModel: string;
 
   constructor(pinnedModel: string, cause?: unknown) {

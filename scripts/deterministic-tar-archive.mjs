@@ -1,5 +1,4 @@
 import { lstatSync, readFileSync, readdirSync, readlinkSync, writeFileSync } from "node:fs";
-import { createHash } from "node:crypto";
 import { basename, join } from "node:path";
 import { constants as zlibConstants, gzipSync } from "node:zlib";
 
@@ -136,25 +135,4 @@ export function packSourceAsDeterministicTarGzip(sourcePath, artifactPath) {
   });
   archive[9] = 255;
   writeFileSync(artifactPath, archive);
-}
-
-export function computeDeterministicSourceSha256(sourcePath) {
-  const hash = createHash("sha256");
-  for (const entry of collectDeterministicTarEntries(sourcePath)) {
-    hash.update(
-      `${JSON.stringify({
-        type: entry.type,
-        relativePath: entry.relativePath,
-        mode: entry.mode,
-        linkName: entry.linkName,
-        size: entry.type === "file" ? entry.data.length : 0,
-      })}\n`,
-      "utf8",
-    );
-    if (entry.type === "file") {
-      hash.update(entry.data);
-      hash.update("\n", "utf8");
-    }
-  }
-  return hash.digest("hex");
 }

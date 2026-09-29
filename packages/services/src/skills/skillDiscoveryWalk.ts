@@ -8,12 +8,7 @@ import {
 
 // 扫描策略来自 @zcode/shared，供桌面端（本包）与 agent 端（@zcode/adapters）共享，
 // 避免两端对“该进入哪些目录”产生分歧。这里转出，保持既有导入路径不变。
-export {
-  MAX_SKILL_SCAN_DEPTH,
-  SKILL_FILE_NAME,
-  SKILL_SCAN_EXCLUDED_DIRECTORY_NAMES,
-  shouldWalkSkillDirectoryEntry,
-} from "@zcode/shared";
+export { SKILL_FILE_NAME } from "@zcode/shared";
 
 interface WalkSkillMarkdownOptions {
   /** readdir / stat 失败时回调；不传则静默跳过该目录，调用方按需收集诊断。 */

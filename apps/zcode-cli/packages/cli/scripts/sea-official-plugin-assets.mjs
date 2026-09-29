@@ -3,8 +3,8 @@ import { mkdir, readdir, readFile, rm, stat, writeFile } from "node:fs/promises"
 import { existsSync } from "node:fs";
 import { join, relative, resolve, sep } from "node:path";
 
-export const seaOfficialPluginAssetPrefix = "zcode-official-plugins/";
-export const seaOfficialPluginManifestAssetKey = `${seaOfficialPluginAssetPrefix}manifest.json`;
+const seaOfficialPluginAssetPrefix = "zcode-official-plugins/";
+const seaOfficialPluginManifestAssetKey = `${seaOfficialPluginAssetPrefix}manifest.json`;
 const browserUseRequiredRuntimePaths = [
   "scripts/browser-client.mjs",
   "docs/api.json",
@@ -17,7 +17,7 @@ const browserUseRequiredRuntimePaths = [
   "skills/web-gui-tester/SKILL.md",
 ];
 
-export const officialSeaPlugins = [
+const officialSeaPlugins = [
   {
     // node_repl 宿主：Browser Use 与 Computer Use 共用的运行时产物，自己不是面向用户的插件
     // （无 skill、无市场 listing）。它必须始终随发布物嵌入，否则任一能力启用时都没有宿主可跑。

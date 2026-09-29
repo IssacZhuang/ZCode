@@ -21,12 +21,6 @@ import {
   type SettingsModelProviderTarget,
 } from "@/lib/settingsNavigation.js";
 
-export {
-  fuzzyMatch,
-  handleEndpointSuggestionPopoverOpenAutoFocus,
-  resolveEndpointSuggestionOpenRequest,
-} from "./model-provider-section/utils.js";
-
 function resolveProviderTargetNodeKey(
   target: SettingsModelProviderTarget | undefined,
 ): string | null {

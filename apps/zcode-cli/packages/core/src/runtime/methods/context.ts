@@ -17,8 +17,6 @@ import { buildContextHistoryEntries } from "./context-history-entries.js";
 import { resolveRuntimeEmbeddedSearchEnabled } from "./embedded-search-branch.js";
 import { getContextSourceShellDisplayName } from "./session-shell-environment.js";
 
-export { buildContextHistoryEntries };
-
 export async function ensureContextInitialized(
   this: AgentRuntimeInternal,
   traceContext: TraceContext,

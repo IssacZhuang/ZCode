@@ -144,9 +144,6 @@ const BASE_SETTINGS_SECTIONS: SettingsSectionDefinition[] = [
 ];
 
 // 兼容既有只读消费者：默认配置代表 Web 视图。
-export const SETTINGS_SECTIONS = BASE_SETTINGS_SECTIONS.filter((section) =>
-  isSettingsSectionEnabled(section.id),
-);
 
 interface SettingsPageConfigOptions {
   isDesktop?: boolean;
@@ -177,5 +174,3 @@ export function resolveSettingsSectionForPlatform(
   }
   return visibleSections[0]?.id ?? "general";
 }
-
-export type { SettingsSectionId };

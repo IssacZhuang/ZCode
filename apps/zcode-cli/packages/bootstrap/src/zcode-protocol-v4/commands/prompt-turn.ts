@@ -38,7 +38,7 @@ interface PromptTurnStartResult {
   messageId?: string;
 }
 
-export class V4PromptRejectedError extends Error {
+class V4PromptRejectedError extends Error {
   readonly turnStartUncertain = false;
 
   constructor(
@@ -204,7 +204,7 @@ function buildTurnToolDisallowlist(
   return tools.size > 0 ? [...tools] : undefined;
 }
 
-export function resolveTurnAutomationId(
+function resolveTurnAutomationId(
   params: Pick<StartPromptTurnParams, "automationId" | "inputId">,
 ): string | undefined {
   const explicit = params.automationId?.trim();

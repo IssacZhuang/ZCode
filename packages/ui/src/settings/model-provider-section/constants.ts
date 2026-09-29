@@ -1,10 +1,4 @@
-import { createUuid } from "@zcode/shared";
 import type { ProviderSettingsFormProvider } from "@/lib/providerSettingsFormTypes.js";
-
-export function generateId(): string {
-  return createUuid();
-}
-
 export type ModelProviderNavItem = {
   key: string;
   type: "custom";

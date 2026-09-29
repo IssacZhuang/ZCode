@@ -49,12 +49,6 @@ import { useProviderModelDraft } from "@/settings/model-provider-section/useProv
 import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import type { ProviderConfigObject } from "@zcode/provider";
 
-export { formatModelContextWindowLabel } from "@/lib/tokenNumberFormat.js";
-export {
-  resolveProviderConnectionApiFormatDisplayLabel,
-  resolveProviderConnectionApiFormatOptions,
-} from "@/settings/model-provider-section/ProviderApiFormatSelect.js";
-
 function shouldShowProviderApiFormat(
   _provider: Pick<ProviderSettingsFormProvider, "providerId">,
 ): boolean {

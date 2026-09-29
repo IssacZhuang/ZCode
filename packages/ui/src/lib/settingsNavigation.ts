@@ -169,11 +169,6 @@ export function setPendingSettingsSection(section: SettingsSectionId): void {
   setPendingSettingsSectionIntent(section);
 }
 
-export function setPendingSettingsUsageIntent(): void {
-  // 使用统计入口只负责打开 Usage 分区（本地 app 用量）。
-  setPendingSettingsSectionIntent("usage");
-}
-
 export function setPendingSettingsPluginIntent(tab: SettingsPluginTabTarget): void {
   const section =
     tab === "mcps"

@@ -4,9 +4,6 @@ import { CSS } from "@dnd-kit/utilities";
 import { WorkspaceSidebarItem, type SortableBindings } from "./WorkspaceSidebarItem.js";
 import type { WorkspaceTabState } from "@/store/tabStore.js";
 import type { ZCodeTaskMeta } from "@zcode/shared";
-
-export type { SortableBindings };
-
 // 垂直拖拽容器约束已上提到 lib（Idle-time 侧栏组内拖拽需要复用且不能背上本模块的依赖链）。
 export { restrictVerticalDragWithinContainer } from "@/lib/restrictVerticalDragWithinContainer.js";
 

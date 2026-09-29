@@ -340,7 +340,7 @@ export function formatReadPdfPagesOutput(output: ReadPartsOutput): ModelMessageC
   ];
 }
 
-export function formatFileSize(bytes: number): string {
+function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} bytes`;
   if (bytes < 1024 * 1024) return `${oneDecimal(bytes / 1024)}KB`;
   if (bytes < 1024 * 1024 * 1024) return `${oneDecimal(bytes / (1024 * 1024))}MB`;

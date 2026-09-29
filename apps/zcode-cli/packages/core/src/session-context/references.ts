@@ -2,7 +2,7 @@ import { type SessionId } from "@zcode/contracts";
 
 const SESSION_REFERENCE_PATTERN = /#(sess_[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*)/g;
 
-export function extractSessionReferences(input: string): SessionId[] {
+function extractSessionReferences(input: string): SessionId[] {
   const unique = new Set<string>();
   for (const match of input.matchAll(SESSION_REFERENCE_PATTERN)) {
     unique.add(match[1]!);

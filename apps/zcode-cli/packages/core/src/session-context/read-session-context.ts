@@ -9,8 +9,7 @@ import { activeSessionMessages } from "../agent/session-history-hydrator.js";
 import { dedupeParts, formatPartForContext } from "./parts.js";
 import { truncateText } from "./utils.js";
 export {
-  buildReferencedSessionContextReminderBody,
-  extractSessionReferences,
+  buildReferencedSessionContextReminderBody
 } from "./references.js";
 
 const DEFAULT_OUTPUT_CHAR_BUDGET = 24_000;

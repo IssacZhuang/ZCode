@@ -12,8 +12,6 @@ import { splitArgs } from "./utils.js";
 
 export const AVAILABLE_COMMANDS = SLASH_COMMAND_HELP_ENTRIES.map((entry) => `/${entry.name}`);
 
-const SKILL_COMMAND_USAGE = "Usage: /skill [<skill-name> [task]]";
-
 export function parseSlashCommand(input: string): SlashCommand | null {
   if (!input.startsWith("/")) return null;
 
@@ -222,10 +220,6 @@ export function buildManualSkillPrompt(skillName: string, task: string): string 
     "",
     taskBlock,
   ].join("\n");
-}
-
-export function manualSkillCommandUsage(): string {
-  return SKILL_COMMAND_USAGE;
 }
 
 export function listSlashCommandSuggestions(

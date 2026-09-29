@@ -14,7 +14,6 @@ import type {
   TurnAttachment,
   ModelExecutionContext,
   TurnResult,
-  WorkflowAgentRunner,
   WorkspaceCheckpointSummary,
   WorkspaceForkResult,
   WorkspaceGenerateTextInput,
@@ -96,6 +95,7 @@ import type { SessionTranscriptMessage } from "../session-transcript.js";
 import type { WorkspaceHookReviewCommandResult } from "./workspace-hook-review-controller.js";
 import type { WorkspaceHookPolicy } from "@zcode/contracts";
 import type { ProviderRegistryModelSource } from "./provider-registry-model-runtime.js";
+import type { SubagentTranscriptSnapshot } from "./subagent-observation.js";
 
 export interface WorkspaceHookReviewHostContext {
   taskId: string;
@@ -327,9 +327,7 @@ export interface ZCodeApp {
     endedCursor?: string;
     endedLimit?: number;
   }): Promise<import("@zcode/shared").ZCodeSessionSubagentsResult>;
-  readSubagentTranscript(
-    childSessionId: string,
-  ): Promise<import("./subagent-observation.js").SubagentTranscriptSnapshot>;
+  readSubagentTranscript(childSessionId: string): Promise<SubagentTranscriptSnapshot>;
   readTodos(): Promise<TodoItem[]>;
   readTarget(): Promise<SessionGoal | null>;
   setCustomSessionTitle(input: { title: string; traceContext?: TraceContext }): Promise<void>;
@@ -748,5 +746,3 @@ export interface ListZCodeSessionsOptions {
   limit?: number;
   sessionStore?: SessionStorePort;
 }
-
-export type { WorkflowAgentRunner };

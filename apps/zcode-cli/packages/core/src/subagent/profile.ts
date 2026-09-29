@@ -7,7 +7,7 @@ import { filterSubagentChildToolNames } from "./tool-policy.js";
 import type { ModelSelection } from "@zcode/shared";
 import { resolveProfileModelSelection } from "./profile-model-selection.js";
 
-export const DEFAULT_SUBAGENT_TYPE = GENERAL_PURPOSE_AGENT_TYPE;
+const DEFAULT_SUBAGENT_TYPE = GENERAL_PURPOSE_AGENT_TYPE;
 
 export type BuiltInSubagentModelSelectionOverrides = Partial<
   Record<typeof DEFAULT_SUBAGENT_TYPE | typeof EXPLORE_AGENT_TYPE, ModelSelection>

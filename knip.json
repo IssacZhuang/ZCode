@@ -6,25 +6,67 @@
       "entry": [
         ".release-it.mjs",
         ".vscode/*.mjs",
+        "scripts/build-desktop-agent-cli.mjs",
         "scripts/check-workspace-freshness.mjs",
+        "scripts/licenses.mjs",
         "scripts/mise-run.mjs"
       ]
     },
     "packages/desktop": {
       "entry": [
         "electron-builder.config.js",
-        "scripts/sign-windows-hook.cjs",
         "src/renderer/*.html",
-        "src/renderer/cuaPermissionPanel.ts",
         "src/renderer/src/resource-manager.tsx"
+      ],
+      "ignore": [
+        "scripts/powershell-command.d.mts",
+        "scripts/target-platform.d.mts",
+        "scripts/write-dev-ready-marker.mjs",
+        "src/scheduler/**"
       ]
     },
     "packages/services": {
-      "entry": ["src/index.ts", "src/storage/module.ts"]
+      "entry": ["src/storage/module.ts"]
     },
     "apps/zcode-cli/packages/browser-use-plugin": {
       "entry": ["src/browser-client.ts"]
     }
   },
-  "ignore": [".agents/**", "docs/**", "packages/ui/src/components/**"]
+  "ignore": [
+    ".agents/**",
+    "packages/ui/src/components/**",
+    "apps/zcode-cli/packages/node-repl-host/dist-types/**",
+    "apps/zcode-cli/packages/core/src/tool/handlers/generated/**",
+    "scripts/compile-desktop-agent-bytecode.cjs",
+    "scripts/desktop-agent-bytecode-runtime.cjs"
+  ],
+  "ignoreDependencies": [
+    "@babel/runtime",
+    "@electron/asar",
+    "@electron/rebuild",
+    "@lydell/node-pty-linux-arm64",
+    "@lydell/node-pty-linux-x64",
+    "@release-it/conventional-changelog",
+    "@rive-app/react-webgl2",
+    "@tanstack/react-virtual",
+    "@xyflow/react",
+    "@zcode/provider",
+    "@zcode/provider-node",
+    "ansi-to-react",
+    "d3-path",
+    "dotenv",
+    "istanbul-lib-instrument",
+    "module-details-from-path",
+    "node-forge",
+    "oxlint",
+    "playwright-core",
+    "postject",
+    "proxy-agent",
+    "tailwind-scrollbar-hide",
+    "tailwindcss",
+    "tsx",
+    "turbo",
+    "use-stick-to-bottom",
+    "yauzl"
+  ]
 }

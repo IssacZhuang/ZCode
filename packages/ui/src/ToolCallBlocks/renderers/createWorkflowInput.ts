@@ -186,7 +186,7 @@ export function readWorkflowMaxConcurrency(input: unknown): number | undefined {
  * 流式中入参只到了一半时这个形状也会短暂成立（脚本还没流到），所以在途只用它挑一个对两种结局
  * 都真的词，不据它改变行的形态。
  */
-export interface WorkflowRetuneCall {
+interface WorkflowRetuneCall {
   runId: string;
   /**
    * 用户要求的上限；`null` = 解除本 run 自己的界（回到本机上限）。

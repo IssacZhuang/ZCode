@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { logger } from "@/logger.js";
 
-export interface AlertDialogRequest {
+interface AlertDialogRequest {
   title: string;
   description?: string;
   actionLabel?: string;

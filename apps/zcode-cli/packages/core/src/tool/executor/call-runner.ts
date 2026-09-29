@@ -15,7 +15,6 @@ import {
 } from "../input-normalization.js";
 import type { SkillTelemetryMetadata } from "@zcode/contracts";
 import type { ToolExecutionContext, ToolExecutionResult } from "../types.js";
-import type { ToolEntry } from "../types.js";
 import type { BackgroundTaskTracker } from "./background-tasks.js";
 import {
   createErrorResult,

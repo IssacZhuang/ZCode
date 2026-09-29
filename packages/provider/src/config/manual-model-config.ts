@@ -26,7 +26,7 @@ export const manualModelConfigSchema = completeModelConfigDataSchema
     }),
   });
 
-export type ManualModelConfig = z.infer<typeof manualModelConfigSchema>;
+type ManualModelConfig = z.infer<typeof manualModelConfigSchema>;
 
 /** 草稿/旧完整规则提取复用 schema 结构，避免维护第二份可编辑字段清单。 */
 export function extractManualModelConfig(input: unknown): ManualModelConfig {

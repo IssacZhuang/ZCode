@@ -115,9 +115,6 @@ import {
   type ZCodeProtocolSessionRecord,
 } from "./server-types.js";
 import { createInMemorySessionEventStore } from "@zcode/contracts";
-
-export type { ZCodeProtocolAgentDependencies, ZCodeProtocolSessionRecord };
-
 const MAX_CLIENT_REQUEST_REANNOUNCE_INTERVAL_MS = 10_000;
 
 type ZCodeProtocolOutboundMessage = ZCodeProtocolNotification | ZCodeProtocolRequest;

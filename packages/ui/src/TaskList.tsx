@@ -13,13 +13,9 @@ import { useTabStore } from "@/store/TabStoreProvider.js";
 import { MemoTaskItem, TaskListItemContextMenuContent } from "@/TaskListItem.js";
 import { TaskListLoadingHint } from "@/TaskListLoadingHint.js";
 import { TaskRenameDialog } from "@/TaskRenameDialog.js";
-import { buildTaskWorkspaceKey } from "@/lib/taskQueryCache.js";
 import { compareZCodeTaskListItems } from "@/lib/taskListOrdering.js";
 import { logger } from "@/logger.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
-
-export { deriveTaskLeadingIndicator } from "@/lib/taskListItemPresentation.js";
-
 // 默认参数里的 [] 会在每次 TaskList render 时创建新数组；
 // 任务流刷新期间这会放大 memo 子组件的等价数据判断成本。
 const EMPTY_PINNED_TASKS: ZCodeTaskMeta[] = [];

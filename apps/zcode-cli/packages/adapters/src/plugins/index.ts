@@ -104,12 +104,7 @@ const DEFAULT_VERSION = "0.0.0";
 const FIRST_PLUGIN_PRIORITY = 1_000;
 const PRIORITY_STEP = 10;
 const PLUGIN_NAME_PATTERN = /^[a-z0-9][a-z0-9._-]{0,127}$/;
-const UNSUPPORTED_COMPONENT_KEYS = [
-  "channels",
-  "lspServers",
-  "outputStyles",
-  "settings",
-] as const;
+const UNSUPPORTED_COMPONENT_KEYS = ["channels", "lspServers", "outputStyles", "settings"] as const;
 const SUPPORTED_HOOK_EVENTS = new Set<string>(Object.values(HookEventNameValue));
 
 interface PluginHookInspection {
@@ -860,7 +855,7 @@ function scanOfficialCache(
   // 不能简单选择最高 semver，否则官方回滚版本时仍会错误加载旧缓存。
   const bundledRoots = loadBundledOfficialPluginRootsSync(storageRoot);
   if (bundledRoots !== undefined) {
-    for (const rootPath of bundledRoots) {
+    for (const _rootPath of bundledRoots) {
       throwIfAborted(options);
     }
     return bundledRoots;

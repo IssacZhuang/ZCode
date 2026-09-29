@@ -39,7 +39,7 @@ export async function stageThirdPartyNotices(directory, root = repositoryRoot) {
   await writeFile(resolve(directory, noticesFileName), bytes);
 }
 
-export async function readNodeNotices(version, root = repositoryRoot) {
+async function readNodeNotices(version, root = repositoryRoot) {
   const normalized = version.replace(/^v/u, "");
   const sources = JSON.parse(
     await readFile(resolve(root, "third-party/runtime/sources.json"), "utf8"),
@@ -148,35 +148,4 @@ export async function stageNativeSearchNotices(
       ) + "\n",
     );
   }
-}
-
-export function thirdPartyNoticesVitePlugin(root = repositoryRoot) {
-  let base = "/";
-  return {
-    name: "zcode-third-party-notices",
-    apply: "build",
-    configResolved(config) {
-      base = config.base;
-    },
-    async generateBundle() {
-      this.emitFile({
-        type: "asset",
-        fileName: noticesFileName,
-        source: await readThirdPartyNotices(root),
-      });
-    },
-    transformIndexHtml: {
-      order: "post",
-      handler: () => [
-        {
-          tag: "link",
-          attrs: {
-            rel: "license",
-            href: `${base}${noticesFileName}`,
-          },
-          injectTo: "head",
-        },
-      ],
-    },
-  };
 }

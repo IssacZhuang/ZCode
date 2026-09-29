@@ -31,10 +31,6 @@ const PROVIDER_CONNECTION_API_FORMAT_TITLE_IDS: Record<ProviderApiType, string> 
   "openai-responses": "settings.modelProvider.apiFormat.title.responses",
 };
 
-export function resolveProviderConnectionApiFormatOptions(): ProviderApiType[] {
-  return [...PROVIDER_CONNECTION_API_FORMATS];
-}
-
 export function resolveProviderConnectionApiFormatDisplayLabel(
   intl: { formatMessage: (descriptor: { id: string }) => string },
   format: ProviderApiType,

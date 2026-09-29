@@ -21,7 +21,7 @@ import type { RunRegistryEntry } from "./dynamic-workflow-run-observation.js";
 import { clampRunConcurrency } from "./workflow-concurrency-ceiling.js";
 
 /** 本模块借用的 service 内部状态；全是引用，本文件不持有任何自己的状态。 */
-export interface DynamicWorkflowRunRetuneContext {
+interface DynamicWorkflowRunRetuneContext {
   runs: Map<string, RunRegistryEntry>;
   journal: JournalStorePort;
   /** 与 caps 起点、两条读面判据同一个函数（见 run service 的 `concurrencyCeiling`）。 */

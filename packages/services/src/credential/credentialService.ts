@@ -2,10 +2,10 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { atomicWritePrivateTextFile, backupCorruptFile, withFileLock } from "@zcode/shared/node";
 import {
-  credentialKeySchema,
   credentialRecordSchema,
   credentialValueSchema,
   formatZodError,
+  nonEmptyStringSchema,
 } from "@zcode/shared";
 import type { ICredentialService } from "./credential.js";
 import {
@@ -91,7 +91,7 @@ export function createCredentialService(
 
   return {
     async load(key: string): Promise<string | null> {
-      const validatedKey = credentialKeySchema.parse(key);
+      const validatedKey = nonEmptyStringSchema.parse(key);
       const creds = await readAll();
       const rawValue = creds[validatedKey];
       if (rawValue === undefined) {
@@ -102,7 +102,7 @@ export function createCredentialService(
     },
 
     async save(key: string, value: string): Promise<void> {
-      const validatedKey = credentialKeySchema.parse(key);
+      const validatedKey = nonEmptyStringSchema.parse(key);
       const validatedValue = credentialValueSchema.parse(value);
       const encryptedValue = cipherProvider.encrypt(validatedValue);
       const credentialsFile = getCredentialsFile();
@@ -117,7 +117,7 @@ export function createCredentialService(
     },
 
     async delete(key: string): Promise<void> {
-      const validatedKey = credentialKeySchema.parse(key);
+      const validatedKey = nonEmptyStringSchema.parse(key);
       const credentialsFile = getCredentialsFile();
       await withFileLock(credentialsFile, async () => {
         const creds = await readAll(credentialsFile);

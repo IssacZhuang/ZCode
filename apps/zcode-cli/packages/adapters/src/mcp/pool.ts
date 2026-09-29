@@ -342,7 +342,7 @@ export function createMcpConnectionPool(options: McpConnectionPoolOptions): McpC
       async close(): Promise<void> {
         if (leaseClosed) return;
         leaseClosed = true;
-        for (const serverName of [...leased.keys()]) release(serverName);
+        for (const serverName of leased.keys()) release(serverName);
       },
       async connectConfiguredServers(
         servers: Record<string, McpServerConfig>,
@@ -353,7 +353,7 @@ export function createMcpConnectionPool(options: McpConnectionPoolOptions): McpC
           configuredServers.set(serverName, config);
         }
         const configuredNames = new Set(Object.keys(servers));
-        for (const serverName of [...leased.keys()]) {
+        for (const serverName of leased.keys()) {
           if (!configuredNames.has(serverName)) release(serverName);
         }
         await Promise.all(

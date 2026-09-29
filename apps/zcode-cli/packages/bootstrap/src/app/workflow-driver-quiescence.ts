@@ -22,7 +22,7 @@ import type { AgentRuntimeWorkflowDriverDeps, SessionState } from "./workflow-dr
  * 慢磁盘与一次重试的余量，又不会让「修订一个在飞 run」这个交互明显变慢——而超了也只是
  * 少一次接续，不是失败。
  */
-export const AMEND_TRANSCRIPT_QUIESCE_MS = 5_000;
+const AMEND_TRANSCRIPT_QUIESCE_MS = 5_000;
 
 /** 一个 run 的 actor 会话静默探询面。driver 私有能力，**不上** Boundary B 的 `WorkflowDriver`。 */
 export interface ActorSessionQuiescence {

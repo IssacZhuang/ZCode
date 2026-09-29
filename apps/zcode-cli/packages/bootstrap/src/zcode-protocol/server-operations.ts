@@ -2976,7 +2976,7 @@ function reconcileRecordPersistence(record: ZCodeProtocolSessionRecord): void {
   if (record.app.runtime?.isSessionPersisted?.() === true) record.persistence = "immediate";
 }
 
-export function onSessionEvent(
+function onSessionEvent(
   context: ZCodeProtocolAgentServerContext,
   record: ZCodeProtocolSessionRecord,
   event: SessionEvent,

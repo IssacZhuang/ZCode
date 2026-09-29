@@ -20,7 +20,7 @@ interface CompactRetryLogger {
   warn(message: string, context?: Record<string, unknown>): void;
 }
 
-export interface CompactEntrySelection {
+interface CompactEntrySelection {
   entriesForSummary: RuntimeMessageEntry[];
   groupsPreserved: number;
   preservedEntries: RuntimeMessageEntry[];

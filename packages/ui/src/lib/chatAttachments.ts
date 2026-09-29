@@ -20,14 +20,11 @@ import {
 } from "@/lib/chatAttachmentMetadata.js";
 
 export {
-  MissingInlineImageContentError,
   MissingInlinePdfContentError,
-  OversizedInlineImageAttachmentError,
   OversizedInlinePdfAttachmentError,
   OversizedInlineVideoAttachmentError,
 } from "@/lib/chatAttachmentErrors.js";
 export {
-  countClipboardTextLines,
   formatAttachmentSize,
   shouldPreferSpreadsheetClipboardText,
 } from "@/lib/chatAttachmentMetadata.js";

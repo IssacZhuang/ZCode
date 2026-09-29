@@ -1,6 +1,6 @@
 import type { IServiceAccessor } from "@zcode/services";
 import { useMemo } from "react";
-import { useOptionalServices, useServices } from "@/hooks/useServices.js";
+import { useServices } from "@/hooks/useServices.js";
 import { useBaseWorkspaceServicesStore } from "@/store/baseWorkspaceServicesStore.js";
 
 export function useBaseWorkspaceServices(): IServiceAccessor {
@@ -10,15 +10,6 @@ export function useBaseWorkspaceServices(): IServiceAccessor {
   // App 会在当前激活 workspace 外层再套一层 ServiceProvider。
   // 跨 workspace 查询（timeline/search 等）必须继续查本机 host；
   // 这里优先使用 renderer 启动时注册的根 services，避免嵌套 Provider 覆盖本地任务列表。
-  return registeredBaseServices ?? contextServices;
-}
-
-export function useOptionalBaseWorkspaceServices(): IServiceAccessor | null {
-  const contextServices = useOptionalServices();
-  const registeredBaseServices = useBaseWorkspaceServicesStore((state) => state.baseServices);
-
-  // usage entitlement 等 app-global 能力以 base host 为权威；
-  // Web/SSR 未注册 base services 时保留原有 context/null 降级语义。
   return registeredBaseServices ?? contextServices;
 }
 

@@ -44,7 +44,7 @@ export type { BrowserBackendType };
 export type BrowserCapabilityInfo = BrowserCapabilityDescriptor;
 
 /** 视口坐标点（cua 坐标路 / drag / elementInfo 用；与 CDP Input 同坐标系）。 */
-export interface Point {
+interface Point {
   x: number;
   y: number;
 }
@@ -101,7 +101,7 @@ class VisibilityBrowserCapability extends BrowserCapability {
   }
 }
 
-export class BrowserCapabilityCollection {
+class BrowserCapabilityCollection {
   readonly #read: () => readonly BrowserCapabilityInfo[];
   readonly #readDocumentation: (name?: string) => string;
 
@@ -360,15 +360,15 @@ class DialogBase {
   }
 }
 
-export class AlertDialog extends DialogBase {
+class AlertDialog extends DialogBase {
   declare readonly type: "alert";
 }
 
-export class BeforeUnloadDialog extends DialogBase {
+class BeforeUnloadDialog extends DialogBase {
   declare readonly type: "beforeunload";
 }
 
-export class ConfirmDialog extends DialogBase {
+class ConfirmDialog extends DialogBase {
   declare readonly type: "confirm";
 
   accept(): Promise<void> {
@@ -376,7 +376,7 @@ export class ConfirmDialog extends DialogBase {
   }
 }
 
-export class PromptDialog extends DialogBase {
+class PromptDialog extends DialogBase {
   declare readonly type: "prompt";
 
   accept(text: string): Promise<void> {
@@ -812,20 +812,20 @@ export class BrowserTabs {
   }
 }
 
-export interface BrowserHistoryOptions {
+interface BrowserHistoryOptions {
   from?: string | Date;
   limit?: number;
   queries?: string[];
   to?: string | Date;
 }
 
-export interface BrowserHistoryEntry {
+interface BrowserHistoryEntry {
   dateVisited: string;
   title?: string;
   url: string;
 }
 
-export class BrowserUser {
+class BrowserUser {
   constructor(
     private readonly execute: BrowserExecuteFn,
     private readonly wrapTab: (tab: Tab) => Tab,

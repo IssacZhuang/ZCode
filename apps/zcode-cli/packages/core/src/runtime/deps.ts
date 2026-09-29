@@ -1,4 +1,4 @@
-export { basename, join, resolve as resolvePath } from "node:path";
+export { basename, resolve as resolvePath } from "node:path";
 import {
   createChildTraceContext as createContractChildTraceContext,
   traceContextToLogContext as contractTraceContextToLogContext,
@@ -83,24 +83,16 @@ export {
   formatLocalIsoDate,
   runWithContextAsync,
   runWithModelInvocationContext,
-  formatTodoStateForModel,
   formatGoalStateForModel,
   formatGoalContinuationPrompt,
   failOpenGoalCompletionVerification,
   failedGoalCompletionVerification,
-  formatGoalCompletionVerificationFailurePrompt,
-  formatGoalCompletionVerificationPassedContent,
   formatGoalCompletionVerificationPrompt,
   parseGoalCompletionVerificationText,
-  escapeGoalPromptText,
   GOAL_COMPLETION_VERIFICATION_QUERY_SOURCE,
   MEDIA_BUDGET_CURRENT_ATTACHMENT_TOO_LARGE_ERROR_CODE,
-  MEDIA_BUDGET_CURRENT_IMAGE_TOO_LARGE_ERROR_CODE,
-  MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE_ERROR_CODE,
   READ_IMAGE_MAX_BASE64_BYTES,
   READ_IMAGE_TARGET_BYTES,
-  VIDEO_INPUT_MAX_BYTES,
-  READ_VIDEO_MAX_INPUT_BYTES,
   COMPLETED_TOOL_PART_METADATA_SCHEMA_VERSION,
   SESSION_ENTRY_BASH_SHELL_SELECTION,
   SESSION_ENTRY_MODEL_SELECTION,
@@ -121,7 +113,6 @@ export type {
   BackgroundTaskInfo,
   BackgroundTaskInfoStatus,
   CompactBoundaryPayload,
-  CompactPreservedSegment,
   CompactTimelinePayload,
   MessageAnchorOrigin,
   MessageId,
@@ -138,10 +129,7 @@ export type {
   ModelNetworkStatusEvent,
   ModelAnomalyGuardConfig,
   Model,
-  ModelEvent,
   ModelInvocationContext,
-  ModelOptions,
-  ModelProperties,
   ModelRequest,
   ModelRequestAdmission,
   ModelSelection,
@@ -152,7 +140,6 @@ export type {
   ModelToolSideEffectScope,
   ModelMessageContent,
   ModelMessageContentBlock,
-  ModelVideoContentBlock,
   ModelInputMessage,
   ModelInputFormat,
   ModelReasoningContentBlock,
@@ -175,7 +162,6 @@ export type {
   SessionEventSink,
   SessionEventStorePort,
   SessionInfo,
-  SessionMailboxEnvelope,
   SessionMailboxPort,
   SessionModePort,
   StreamRecoveryAnchorPayload,
@@ -206,7 +192,6 @@ export type {
   HttpClientPort,
   ImageProcessorPort,
   PdfDocumentPort,
-  InteractionRequestOrigin,
   HooksRuntimeConfig,
   SkillLoadOutcome,
   SkillContent,
@@ -217,7 +202,6 @@ export type {
   McpPort,
   McpServerConfig,
   SubagentPort,
-  SubagentTaskSnapshot,
   ToolArtifactStorePort,
   ToolCallId,
   WorkflowPort,
@@ -225,9 +209,7 @@ export type {
   WorkflowSubmitPort,
   TodoItem,
   SessionGoal,
-  SessionModeChangedPayload,
   QueryId,
-  TokenUsageInfo,
   TraceContext,
   TraceId,
   TurnFileChangeSummary,
@@ -252,7 +234,6 @@ export {
 } from "../agent/session-history-hydrator.js";
 export type { SessionHistoryHydrationResult } from "../agent/session-history-hydrator.js";
 export { hydrateReadFileStateFromSession } from "../agent/read-file-state-hydrator.js";
-export type { ReadFileStateHydrationResult } from "../agent/read-file-state-hydrator.js";
 export { countContextPrefixMessages, MessageHistoryImpl } from "../agent/message-history.js";
 export type { MessageHistory } from "../agent/message-history.js";
 export { TurnMachineImpl } from "../agent/turn-machine.js";
@@ -296,7 +277,6 @@ export {
   estimateMessageTokens,
   formatCompactSummary,
   getAutoCompactThreshold,
-  getMessagesToSummarize,
   getUsageTotalTokens,
   hasEnoughMessagesToCompact,
   maybeLocalMicrocompactMessages,
@@ -307,16 +287,10 @@ export type { AutoCompactPolicyConfig } from "../compact/index.js";
 export type { AutoCompactTokenOverride } from "../compact/index.js";
 export type { LocalMicrocompactPolicyConfig } from "../compact/index.js";
 export {
-  EXPLORE_AGENT_ALLOWED_TOOLS,
-  EXPLORE_AGENT_TYPE,
-  GENERAL_PURPOSE_AGENT_TYPE,
-  DEFAULT_SUBAGENT_TYPE,
-  buildGeneralPurposeSystemPrompt,
   buildExploreAllowedTools,
   buildExploreAgentPrompt,
-  buildExploreSystemPrompt,
   createSubagentContextBuilder,
   createExploreSubagentPort,
 } from "../subagent/index.js";
-export type { AgentProfile, ExploreSubagentRuntimeRequest } from "../subagent/index.js";
+export type { ExploreSubagentRuntimeRequest } from "../subagent/index.js";
 export { registerMcpTools } from "../mcp/index.js";

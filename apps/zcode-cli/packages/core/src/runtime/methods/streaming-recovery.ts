@@ -19,7 +19,7 @@ const START_PLAN_BUSY_RETRY_PROVIDER_IDS = new Set([
   "account:zai-start-plan",
 ]);
 const START_PLAN_BUSY_MAIN_TURN_ADMISSION_RETRY_DELAYS_MS = [1_000, 2_000] as const;
-export const START_PLAN_BUSY_AUTO_RETRY_EXHAUSTED_MESSAGE =
+const START_PLAN_BUSY_AUTO_RETRY_EXHAUSTED_MESSAGE =
   "Start Plan is busy and automatic model stream recovery reached the maximum retry count.";
 const TRANSIENT_ERROR_CODES = new Set([
   "model_request_timeout",

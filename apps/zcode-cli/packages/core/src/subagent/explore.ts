@@ -66,7 +66,3 @@ export function buildExploreAgentPrompt(options: ExploreAgentPromptOptions): str
     "Complete the user's search request efficiently and report your findings clearly.",
   ].join("\n");
 }
-
-export function buildExploreSystemPrompt(options: LegacyExploreSystemPromptOptions): string {
-  return buildExploreAgentPrompt({ embeddedSearchEnabled: options.embeddedSearchEnabled });
-}

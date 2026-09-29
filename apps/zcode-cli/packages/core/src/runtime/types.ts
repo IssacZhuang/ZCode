@@ -721,9 +721,6 @@ export interface ExecuteToolsResult {
 }
 
 export type ActiveTurnKind = "regular" | "compact" | "rewind";
-
-export const INLINE_TEXT_ATTACHMENT_MAX_BYTES = 64 * 1024;
-
 export const INLINE_MEDIA_ATTACHMENT_MAX_BYTES = 20 * 1024 * 1024;
 
 export const MAX_IMAGE_ATTACHMENT_DIMENSION = 2000;
@@ -776,19 +773,6 @@ export interface DrainedPendingInputDiagnostics {
   runtimeEntries: readonly RuntimeMessageEntry[];
   /** 本次 drain 注入的输入附带的工具隐藏列表，下一次 provider 请求必须继续生效。 */
   toolDisallowlist?: readonly string[];
-}
-
-export interface ProviderContextUsageSnapshot {
-  cacheReadTokens?: number;
-  cacheWriteTokens?: number;
-  contextUsageTokens?: number;
-  inputTokens: number;
-  messageCount: number;
-  model: { providerId: Model["providerId"]; modelId: Model["modelId"] };
-  outputTokens?: number;
-  recordedAt: number;
-  traceId: TraceId;
-  turnId?: TurnId;
 }
 
 export interface RunModelTextRequestOptions {

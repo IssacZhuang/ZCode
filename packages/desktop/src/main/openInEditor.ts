@@ -67,7 +67,7 @@ async function openWindowsEditor(
 export async function openInEditor(
   editorId: string,
   path: string,
-  options?: OpenInEditorOptions,
+  _options?: OpenInEditorOptions,
 ): Promise<OpenInEditorResult> {
   const def = getEditorDefsForCurrentPlatform().find((editor) => editor.id === editorId);
   if (!def) {

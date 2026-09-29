@@ -7,7 +7,7 @@ import { createReadFileStateKey, normalizeReadFileStateMtimeMs } from "../tool/r
 import type { ReadFileStateMap } from "../tool/types.js";
 import { activeSessionMessages } from "./session-history-hydrator.js";
 
-export interface ReadFileStateHydrationResult {
+interface ReadFileStateHydrationResult {
   restoredCount: number;
   skippedRangeReadCount: number;
   skippedUnreadableEditCount: number;

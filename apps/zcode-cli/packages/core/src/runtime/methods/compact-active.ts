@@ -176,7 +176,6 @@ async function compactActiveConversationImpl(
     createRuntimeModel(this, {
       selection: this.getSessionModelSelection(),
     });
-  const executionMaxOutputTokens = compactModel.optionSpecs.maxOutputTokens.max;
   // Active compact 会跨多个 await 保留这份成员浅快照；它依赖 RuntimeMessageEntry
   // 不可变约定。selection、provider render 和最终 replace 会创建各自拥有的副本，
   // 禁止在 compact 期间原地修改 activeEntries 内共享的 entry/message/content。

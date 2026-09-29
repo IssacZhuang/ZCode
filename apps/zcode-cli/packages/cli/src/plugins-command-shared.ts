@@ -8,7 +8,7 @@ export type BootstrapModule = typeof import("@zcode/bootstrap");
 export type PluginListOutcome = ReturnType<typeof listZCodePlugins>;
 export type PluginListItem = PluginListOutcome["plugins"][number];
 export type PluginDiagnostic = PluginListOutcome["diagnostics"][number];
-export type PluginScope = "user" | "workspace";
+type PluginScope = "user" | "workspace";
 
 /**
  * CLI 依赖名 → bootstrap 导出名。测试按依赖名注入假实现；生产路径按导出名懒加载 bootstrap，

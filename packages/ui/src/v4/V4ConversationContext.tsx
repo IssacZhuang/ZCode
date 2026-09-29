@@ -34,7 +34,6 @@ import type { IServiceAccessor } from "@zcode/services";
 import { ServiceProvider } from "@/hooks/useServices.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useWorkspaceServicesResolution } from "@/hooks/useWorkspaceServices.js";
-import { createAgentConversationTransport } from "@/v4/agentConversationTransport.js";
 import type { ConversationAttachmentReadParams, ConversationTransport } from "@/v4/transport.js";
 import type { PaneWorkspaceScope } from "@/v4/paneLayoutStore.js";
 import { SessionDataLayer } from "@/v4/sessionDataLayer.js";
@@ -99,110 +98,6 @@ export interface V4ConversationContextValue {
 // 导出 context 本体：静态回放视图用静态 transport 自己
 // 装配 value 后直接 Provider 注入，不经 V4ConversationProvider 的 workspace 解析链路。
 export const V4ConversationContext = createContext<V4ConversationContextValue | null>(null);
-
-interface V4ConversationProviderProps {
-  workspacePath: string;
-  workspaceIdentity?: string;
-  children: ReactNode;
-}
-
-function ReadyV4ConversationProvider({
-  workspacePath,
-  workspaceIdentity,
-  children,
-  services,
-  remoteSessionId,
-}: V4ConversationProviderProps & {
-  services: IServiceAccessor;
-  remoteSessionId: string | null;
-}) {
-  const { zcodeAgentService } = services;
-  const platform = usePlatform();
-  const bundle = useMemo(() => {
-    const transport = createAgentConversationTransport(zcodeAgentService, {
-      workspacePath,
-      workspaceIdentity,
-      // 主 workspace resolver 已识别远端 endpoint，但这里曾丢弃
-      // remoteSessionId，导致远端绝对路径被交给本机 zcode-media。仅本地 endpoint 注入转换器。
-      ...(remoteSessionId === null && platform.createLocalMediaPreviewUrl
-        ? { createLocalMediaPreviewUrl: platform.createLocalMediaPreviewUrl }
-        : {}),
-    });
-    const layer = new SessionDataLayer({ transport });
-    return {
-      layer,
-      sendCommand: (envelope: CommandEnvelope) => transport.sendCommand(envelope),
-      fileChanges: (params: V4ConversationFileChangesParams) => transport.fileChanges(params),
-      fileRewindPreview: (params: V4ConversationFileRewindPreviewParams) =>
-        transport.fileRewindPreview(params),
-      workflowRunEvents: (params: V4ConversationWorkflowRunEventsParams) =>
-        transport.workflowRunEvents(params),
-      workflowRunArtifacts: (params: V4ConversationWorkflowRunArtifactsParams) =>
-        transport.workflowRunArtifacts(params),
-      workflowRunArtifactData: (params: V4ConversationWorkflowRunArtifactDataParams) =>
-        transport.workflowRunArtifactData(params),
-      workflowRunArtifactRead: (params: V4ConversationWorkflowRunArtifactReadParams) =>
-        transport.workflowRunArtifactRead(params),
-      workflowRunWorkspace: (params: V4ConversationWorkflowRunWorkspaceParams) =>
-        transport.workflowRunWorkspace(params),
-      workflowRunNodeResult: (params: V4ConversationWorkflowRunNodeResultParams) =>
-        transport.workflowRunNodeResult(params),
-      workflowRuns: (params: V4ConversationWorkflowRunsParams) => transport.workflowRuns(params),
-      attachmentPut: (params: V4AttachmentPutParams, options?: AttachmentUploadOptions) =>
-        transport.attachmentPut(params, options),
-      attachmentRead: (params) => transport.attachmentRead(params),
-      attachmentReadRange: (params) => transport.attachmentReadRange(params),
-      onRuntimeRestart: (listener: () => void) => transport.onRuntimeRestart(listener),
-      ...(transport.onRuntimeLifecycle
-        ? {
-            onRuntimeLifecycle: (listener: (state: "available" | "unavailable") => void) =>
-              transport.onRuntimeLifecycle?.(listener) ?? (() => {}),
-          }
-        : {}),
-    } satisfies V4ConversationContextValue;
-  }, [
-    platform.createLocalMediaPreviewUrl,
-    remoteSessionId,
-    workspacePath,
-    workspaceIdentity,
-    zcodeAgentService,
-  ]);
-
-  useEffect(() => {
-    return () => {
-      bundle.layer.dispose();
-    };
-  }, [bundle]);
-
-  return (
-    <ServiceProvider services={services}>
-      <V4ConversationContext.Provider value={bundle}>{children}</V4ConversationContext.Provider>
-    </ServiceProvider>
-  );
-}
-
-/** 每个 workspace 一条 host 连接 + 一个 SessionDataLayer。 */
-export function V4ConversationProvider({
-  workspacePath,
-  workspaceIdentity,
-  children,
-}: V4ConversationProviderProps) {
-  const resolution = useWorkspaceServicesResolution(workspacePath, undefined, workspaceIdentity);
-  if (!resolution.rpcReady) {
-    return null;
-  }
-
-  return (
-    <ReadyV4ConversationProvider
-      workspacePath={workspacePath}
-      workspaceIdentity={workspaceIdentity}
-      services={resolution.services}
-      remoteSessionId={resolution.remoteSessionId}
-    >
-      {children}
-    </ReadyV4ConversationProvider>
-  );
-}
 
 export function useV4Conversation(): V4ConversationContextValue {
   const ctx = useContext(V4ConversationContext);

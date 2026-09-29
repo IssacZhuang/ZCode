@@ -37,7 +37,7 @@ import {
 import type { UtilityProcess as ElectronUtilityProcess } from "electron";
 import { spawn } from "node:child_process";
 import { join } from "node:path";
-import { homedir, hostname } from "node:os";
+import { homedir } from "node:os";
 import {
   createSettingService,
   buildRuntimeProcessEnvPatch,
@@ -56,7 +56,6 @@ import {
   DEFAULT_ZCODE_ENDPOINT_ORIGIN,
   DEFAULT_LOCALE,
   resolveZCodeEndpointOrigin,
-  shouldEnableE2ETestBridge,
 } from "@zcode/shared";
 import { logger } from "./logger.js";
 import { markMainLaunchAppReady } from "./desktopLaunchMarks.js";
@@ -64,7 +63,6 @@ import { BroadcastHub } from "./broadcastHub.js";
 import { TaskRealtimeBus } from "./taskRealtimeBus.js";
 import { resolveAppShutdownPolicy } from "./appShutdownPolicy.js";
 import { createPrimaryWindowCoordinator } from "./primaryWindowCoordinator.js";
-import { createTempTextAttachment } from "./tempTextAttachment.js";
 import { flushMainE2ECoverage } from "./e2eCoverage.js";
 import { resolveStartupWindowBootstrap, type StartupWindowBootstrap } from "./startupWorkspace.js";
 import {
@@ -109,7 +107,6 @@ import {
   disposeHostProcess,
   disposeHostProcessAndWait,
   listDisposingHostProcesses,
-  loadWindow,
   spawnHostProcess,
 } from "./desktopHostProcess.js";
 import { spawnCronScheduler, type CronSchedulerHandle } from "./desktopCronScheduler.js";
@@ -132,11 +129,6 @@ import {
 } from "./desktopDeepLinkUrl.js";
 import { setBrowserUseGuestWebContentsIdsProvider } from "./resourceManagerWindow.js";
 import { registerPlatformIpcHandlers } from "./desktopMainIpcPlatform.js";
-import {
-  loadCliMcpFromUserDirectory,
-  migrateLegacyCommonMcp,
-  saveCliMcpToUserDirectory,
-} from "./mcpUserDirectory/index.js";
 import { applyDesktopChromiumNetworkPolicies } from "./desktopNetworkPolicy.js";
 import { registerCrashEventMonitor } from "./desktopCrashCapture.js";
 import { snapshotWindowsPackagedResources } from "./windowsInstallResourceLocks.js";

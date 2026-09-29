@@ -26,7 +26,6 @@ import {
   taskRealtimeHostDeliveryKindSchema,
   taskRunLeaseAcquireRequestSchema,
   taskRunLeaseResultSchema,
-  taskRunLeaseTargetSchema,
   taskStreamMirrorPublishOpSchema,
   taskStreamMirrorTargetSchema,
 } from "./task-realtime-core.js";
@@ -53,7 +52,6 @@ export function formatZodError(error: z.ZodError): string {
 export const nonEmptyStringSchema = z.string().trim().min(1);
 export const stringArraySchema = z.array(z.string());
 export const credentialRecordSchema = z.record(z.string(), z.string());
-export const credentialKeySchema = nonEmptyStringSchema;
 export const credentialValueSchema = z.string();
 
 export const sshConnectOptionsSchema = z.object({
@@ -589,7 +587,7 @@ export const hostTaskRunLeaseAcquireResponseSchema = z.object({
 
 export const hostTaskRunLeaseReleaseResponseSchema = z.object({
   type: z.literal("task-run-lease-release"),
-  target: taskRunLeaseTargetSchema,
+  target: taskStreamMirrorTargetSchema,
 });
 
 export const hostTaskOwnerCommandRequestResponseSchema = z.object({

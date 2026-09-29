@@ -3,7 +3,7 @@ import type { TuiThemeTokens } from "./types.js";
 
 export const DEFAULT_TUI_THEME_MODE: UiThemeMode = "dark";
 
-export const DARK_TUI_THEME: TuiThemeTokens = {
+const DARK_TUI_THEME: TuiThemeTokens = {
   mode: "dark",
   primary: "#7dd3fc",
   secondary: "#c4b5fd",
@@ -61,7 +61,7 @@ export const DARK_TUI_THEME: TuiThemeTokens = {
   thinkingOpacity: 0.68,
 };
 
-export const LIGHT_TUI_THEME: TuiThemeTokens = {
+const LIGHT_TUI_THEME: TuiThemeTokens = {
   mode: "light",
   primary: "#0369a1",
   secondary: "#7c3aed",

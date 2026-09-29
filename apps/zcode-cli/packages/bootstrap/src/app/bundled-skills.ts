@@ -18,13 +18,13 @@ import { candidateBaseDirs } from "./bundled-plugins.js";
  * - 远端主机：prepare-prebuilds 把目录 stage 到远端 zcode.cjs 旁，与桌面同路。
  */
 
-export const BUNDLED_SKILL_PACK_DIRECTORY_NAME = "bundled-skills";
-export const BUNDLED_SKILL_PACK_SKILLS_DIRECTORY = "skills";
+const BUNDLED_SKILL_PACK_DIRECTORY_NAME = "bundled-skills";
+const BUNDLED_SKILL_PACK_SKILLS_DIRECTORY = "skills";
 /** 门与技能包共用一个名字：常量住在 contracts（core 的技能门也读它），这里只转出。 */
 export { DYNAMIC_WORKFLOW_SKILL_NAME };
 
 /** 技能包里每个文件都是必需资产：丢任何一个都拒绝整包，而不是装出一个引用文件缺失的技能。 */
-export const BUNDLED_SKILL_PACK_REQUIRED_PATHS = [
+const BUNDLED_SKILL_PACK_REQUIRED_PATHS = [
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/SKILL.md`,
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/patterns.md`,
   `skills/${DYNAMIC_WORKFLOW_SKILL_NAME}/examples.md`,
@@ -38,7 +38,7 @@ const BUNDLED_SKILL_PACK_ROOT_CANDIDATES = [
   `../../../${BUNDLED_SKILL_PACK_DIRECTORY_NAME}`,
 ] as const;
 
-export const SEA_BUNDLED_SKILL_ASSET_PREFIX = "zcode-bundled-skills/";
+const SEA_BUNDLED_SKILL_ASSET_PREFIX = "zcode-bundled-skills/";
 const SEA_BUNDLED_SKILL_MANIFEST_ASSET_KEY = `${SEA_BUNDLED_SKILL_ASSET_PREFIX}manifest.json`;
 const SEED_MARKER_FILE = ".zcode-bundled-skills-seed.json";
 
@@ -56,7 +56,7 @@ interface SeaBundledSkillManifest {
 
 type SeaModule = typeof import("node:sea");
 
-export interface ResolveBundledSkillRootsOptions {
+interface ResolveBundledSkillRootsOptions {
   /** `getCliStorageRoot(storage.dir)`；仅 SEA 解压需要。 */
   cliStorageRoot: string;
   logger?: Logger;
@@ -86,7 +86,7 @@ export async function resolveBundledSkillRoots(
   ];
 }
 
-export async function findMissingBundledSkillPackPaths(packRoot: string): Promise<string[]> {
+async function findMissingBundledSkillPackPaths(packRoot: string): Promise<string[]> {
   const present = await Promise.all(
     BUNDLED_SKILL_PACK_REQUIRED_PATHS.map((requiredPath) =>
       pathExists(join(packRoot, ...requiredPath.split("/"))),

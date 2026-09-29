@@ -512,7 +512,7 @@ async function persistActorSession(input: {
  * 时同步落 persona 的那一刻看不见它。引擎那一侧的两处 putActor 会把本字段原样带过去，见
  * dynamic-workflow 的 engine.ts / scheduler.ts。
  */
-export function journalActorResolvedModel(input: {
+function journalActorResolvedModel(input: {
   actor: ActorRef;
   journal: JournalStorePort;
   selection: ModelSelection;

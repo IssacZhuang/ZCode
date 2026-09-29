@@ -26,8 +26,6 @@ class V4SelectionSideChatRestrictedCommandError extends Error {
   }
 }
 
-export { V4SessionNotFoundError } from "./record-access.js";
-
 export class V4CommandExecutor {
   constructor(private readonly host: V4CommandCoreHost) {}
 

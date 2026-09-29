@@ -6,7 +6,7 @@ interface ParsedAssistantDirective {
   start: number;
 }
 
-export type AssistantTextRange = readonly [start: number, end: number];
+type AssistantTextRange = readonly [start: number, end: number];
 
 interface AssistantDirectiveSyntaxOptions {
   allowSmartQuotes?: boolean;

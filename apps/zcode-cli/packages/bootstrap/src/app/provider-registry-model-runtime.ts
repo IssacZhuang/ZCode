@@ -10,7 +10,7 @@ import {
 } from "@zcode/provider";
 import { createRegistrySelectionProtocolError } from "./provider-registry-selection.js";
 
-export type RuntimeModelFactory = NonNullable<AgentRuntimeDeps["modelFactory"]>;
+type RuntimeModelFactory = NonNullable<AgentRuntimeDeps["modelFactory"]>;
 
 export interface ProviderRegistryModelSource {
   getView(): ProviderRegistryView;

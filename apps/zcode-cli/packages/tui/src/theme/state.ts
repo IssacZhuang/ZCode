@@ -8,10 +8,6 @@ export function activeTuiTheme(mode: UiThemeMode = activeThemeMode): TuiThemeTok
   return BUILTIN_TUI_THEMES[mode];
 }
 
-export function getActiveTuiThemeMode(): UiThemeMode {
-  return activeThemeMode;
-}
-
 export function setActiveTuiThemeMode(mode: UiThemeMode): void {
   activeThemeMode = mode;
 }

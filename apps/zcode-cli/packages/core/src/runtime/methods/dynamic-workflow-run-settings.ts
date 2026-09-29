@@ -35,8 +35,6 @@ import {
   type RunSettings,
 } from "./dynamic-workflow-run-settings-turn.js";
 
-export { buildSettingsMessageText } from "./dynamic-workflow-run-settings-turn.js";
-
 /**
  * GUI「配置」的请求。两项设置守工具的三态：
  * 省略 = 沿用，`null` = 回到默认（会话模型 / 本机上限），值 = 设定。

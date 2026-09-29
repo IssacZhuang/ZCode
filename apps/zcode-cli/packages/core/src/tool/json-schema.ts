@@ -14,11 +14,6 @@ import {
   type ToolInputValidationPath,
 } from "./tool-input-validation-issues.js";
 
-export type {
-  ToolInputValidationIssue,
-  ToolInputValidationPath,
-} from "./tool-input-validation-issues.js";
-
 interface JsonSchemaValidationResult {
   valid: boolean;
   errors: string[];

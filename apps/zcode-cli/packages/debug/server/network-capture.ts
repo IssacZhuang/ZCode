@@ -320,7 +320,7 @@ function defaultCertificateContainerDir(): string {
   return join(debugRoot, "certs", "network-ca");
 }
 
-export function extractAttribution(
+function extractAttribution(
   headers: IncomingHttpHeaders,
   url: URL,
 ): NetworkRequestAttribution {
@@ -331,7 +331,7 @@ export function extractAttribution(
   };
 }
 
-export function sanitizeHeaders(headers: IncomingHttpHeaders): Record<string, string> {
+function sanitizeHeaders(headers: IncomingHttpHeaders): Record<string, string> {
   const sanitized: Record<string, string> = {};
   for (const [name, value] of Object.entries(headers)) {
     const normalizedName = name.toLowerCase();

@@ -838,7 +838,9 @@ export const v4AttachmentBeginParamsSchema = z
       .string()
       .min(1)
       .max(255)
-      .regex(/^[^\0\r\n]+$/),
+      // 协议校验有意拒绝 NUL/CR/LF：文件名将进入跨进程路径与展示，防止控制字符注入。
+      // eslint-disable-next-line no-control-regex
+      .regex(/^[^\u0000\r\n]+$/),
     mime: z
       .string()
       .min(3)

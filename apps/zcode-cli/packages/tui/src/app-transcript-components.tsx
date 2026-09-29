@@ -92,7 +92,7 @@ export function ContentPane({
   );
 }
 
-export function MessageRow({
+function MessageRow({
   copy = DEFAULT_TUI_COPY,
   expandedWorkflowRunIds,
   message,

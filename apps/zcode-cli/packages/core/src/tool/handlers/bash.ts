@@ -59,14 +59,6 @@ import {
   classifyCommand,
   classifySafeCommandIdentity,
 } from "./tool-perf.js";
-export {
-  getBashActivityDescription,
-  getBashAutoClassifierInput,
-  getBashDescription,
-  getBashToolUseSummary,
-  getBashUserFacingName,
-} from "./bash-metadata.js";
-
 const MAX_INLINE_OUTPUT_BYTES = 30_000;
 const MAX_RUNTIME_PERSISTED_OUTPUT_BYTES = 5 * 1024 * 1024 * 1024;
 const BASH_PROVIDER_DESCRIPTION = createBashProviderDescription({

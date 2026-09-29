@@ -109,7 +109,6 @@
     "@zcode/provider": "workspace:*",
     "@zcode/shared": "workspace:*",
     "ai": "6.0.193",
-    "cheerio": "^1.0.0",
     "iconv-lite": "0.7.2",
     "jimp": "^1.6.1",
     "koffi": "2.15.6",

@@ -14,14 +14,11 @@ import { SettingsSegmentedTabs } from "@/settings/SettingsSegmentedTabs.js";
 
 export {
   AutomationAddScheduleIcon,
-  AutomationCancelActionIcon,
   AutomationChevronDownIcon,
   AutomationClockIcon,
   AutomationContinueIcon,
   AutomationEditActionIcon,
   AutomationExternalLinkIcon,
-  AutomationIdleTimeIcon,
-  AutomationInfoIcon,
   AutomationMoreHorizontalIcon,
   AutomationPauseActionIcon,
   AutomationPausedIcon,

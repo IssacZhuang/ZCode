@@ -1,7 +1,7 @@
 // 个人本地版排序：远端 pluginStoreOrder 配置已随 clientConfigService 移除，
 // 这里保留原 shared 排序的“无远端配置”默认分支，供商店条目与已安装列表复用。
-export const FALLBACK_PLUGIN_STORE_CATEGORY = "other";
-export const PLUGIN_STORE_CATEGORY_ORDER: readonly string[] = [
+const FALLBACK_PLUGIN_STORE_CATEGORY = "other";
+const PLUGIN_STORE_CATEGORY_ORDER: readonly string[] = [
   "productivity",
   "developer-tools",
   "utilities",

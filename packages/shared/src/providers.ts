@@ -10,5 +10,3 @@ import { z } from "zod";
 const ZCODE_PROVIDERS = ["glm"] as const;
 
 export const zcodeProviderSchema = z.enum(ZCODE_PROVIDERS);
-
-export type ZCodeProvider = (typeof ZCODE_PROVIDERS)[number];

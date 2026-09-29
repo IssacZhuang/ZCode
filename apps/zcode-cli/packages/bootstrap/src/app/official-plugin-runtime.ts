@@ -89,7 +89,7 @@ export function writeOfficialPluginRuntimeManifest(input: OfficialRuntimeManifes
   );
 }
 
-export function officialPluginHostPrefixArgs(): string[] | undefined {
+function officialPluginHostPrefixArgs(): string[] | undefined {
   if (isSeaRuntime()) return [ZCODE_PLUGIN_HOST_COMMAND];
 
   const entrypoint = process.argv[1];

@@ -11,7 +11,7 @@ export function toMcpToolName(
   );
 }
 
-export function toModelVisibleMcpNamePart(name: string): string {
+function toModelVisibleMcpNamePart(name: string): string {
   const sanitized = name.replace(/[^a-zA-Z0-9_-]/g, "_").replace(/_+/g, "_");
   return sanitized.length > 0 ? sanitized : "unknown";
 }

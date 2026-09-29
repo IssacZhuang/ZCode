@@ -23,7 +23,6 @@ const EFFORT_COMMAND_NAMES = ["/effort", "/variant"] as const;
 
 export {
   clampIndex,
-  filterSelectionItems,
   handleSelectionKey,
   printableKey,
 } from "./app-selection-keyboard.js";

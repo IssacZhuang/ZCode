@@ -10,9 +10,6 @@ const MAX_DETAIL_LINES = 4;
 const MAX_DETAIL_WIDTH = 100;
 const SENSITIVE_KEY_PATTERN = /token|secret|password|api[_-]?key|authorization|credential|cookie/i;
 const LARGE_TEXT_KEYS = new Set(["content", "old_string", "new_string"]);
-
-export { formatFileDiffDisplay } from "./app-tool-diff-display.js";
-
 type ToolTranscriptHandlers = {
   assistantMessageIdsByToolCallId?: Map<string, string>;
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>;

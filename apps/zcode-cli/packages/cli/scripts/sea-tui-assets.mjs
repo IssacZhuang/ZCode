@@ -9,15 +9,15 @@ import {
 } from "./sea-runtime-package-resolution.mjs";
 import { stageSeaPackageAssets } from "./sea-workspace-package-assets.mjs";
 
-export const seaTuiAssetPrefix = "zcode-tui-runtime/";
-export const seaTuiManifestAssetKey = `${seaTuiAssetPrefix}manifest.json`;
+const seaTuiAssetPrefix = "zcode-tui-runtime/";
+const seaTuiManifestAssetKey = `${seaTuiAssetPrefix}manifest.json`;
 
 const workspacePackageParentDirectoryNames = ["packages", "tools"];
 
 const opentuiCorePackageName = "@mbears/opentui-core";
 const opentuiReactPackageName = "@mbears/opentui-react";
 
-export const opentuiNativePackageForTarget = (target) => {
+const opentuiNativePackageForTarget = (target) => {
   const { arch, releasePlatform } = targetParts(target);
   const packagePlatform = releasePlatform === "win" ? "win32" : releasePlatform;
   return `@mbears/opentui-core-${packagePlatform}-${arch}`;

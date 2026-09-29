@@ -29,7 +29,7 @@ export async function resolveInitialTerminalThemeMode(
   return await detectThemeModeFromPalette(renderer);
 }
 
-export function inferThemeModeFromTerminalColors(colors: TerminalColors): UiThemeMode | null {
+function inferThemeModeFromTerminalColors(colors: TerminalColors): UiThemeMode | null {
   const background = colors.defaultBackground ?? colors.palette[0];
   if (!background) return null;
   return inferThemeModeFromHex(background);

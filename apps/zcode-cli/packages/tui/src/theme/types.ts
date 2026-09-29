@@ -1,6 +1,6 @@
-import type { UiThemeMode, UiThemePreference } from "@zcode/contracts";
+import type { UiThemeMode } from "@zcode/contracts";
 
-export type { UiThemeMode as TuiThemeMode, UiThemePreference as TuiThemePreference };
+export type { UiThemeMode as TuiThemeMode };
 
 export type TuiThemeTokens = {
   mode: UiThemeMode;
@@ -73,4 +73,3 @@ export type TuiLegacyPalette = {
   userMessageBackground: string;
   warning: string;
 };
-

@@ -64,7 +64,7 @@ interface CuaToolResultDisplay {
   };
 }
 
-export type ToolResultDisplay =
+type ToolResultDisplay =
   | LocalAgentMessageToolResultDisplay
   | TaskStopToolResultDisplay
   | TaskOutputToolResultDisplay

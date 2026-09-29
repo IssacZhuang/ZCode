@@ -15,7 +15,7 @@ const LEGACY_PALETTE_KEYS = [
   "warning",
 ] as const satisfies readonly (keyof TuiLegacyPalette)[];
 
-export function themeToLegacyPalette(theme: TuiThemeTokens): TuiLegacyPalette {
+function themeToLegacyPalette(theme: TuiThemeTokens): TuiLegacyPalette {
   return {
     accent: theme.accent,
     background: theme.background,

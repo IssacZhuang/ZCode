@@ -25,10 +25,7 @@ import { createBrowserControlMainBridge } from "./browserControlMainBridge.js";
 import { materializeBrowserRecordingArtifact } from "./browserRecordingArtifactMaterializer.js";
 import {
   ServiceCollection,
-  IFileService,
-  IMediaPreviewService,
   IModelSelectionService,
-  ISettingService,
   IZCodeAgentService,
   IZCodeTaskService,
   IZCodeSessionService,
@@ -44,13 +41,11 @@ import {
   createServiceLogger,
   createHostApiNetworkTransport,
   createSettingService,
-  type HostApiNetworkTransport,
 } from "@zcode/services/node";
 import { createHostResourceUsageResponder } from "./hostResourceUsage.js";
 import {
   HostMessageTypes,
   HostResponseTypes,
-  ZCODE_VERSION,
   formatLogPrefix,
   formatZCodeHostProcessName,
   formatZodError,
@@ -900,7 +895,6 @@ console.error = (...args: unknown[]) => {
 let databaseStartup: ReturnType<typeof createHostDatabaseStartup> | undefined;
 const pendingStartupAttachments = new Map<string, () => void>();
 let activeServices: ServiceCollection | null = null;
-let activeHostApiNetworkTransport: HostApiNetworkTransport | null = null;
 // 资源管理器采样只在 main 请求时执行一次，Host 不维护任何周期定时器。
 const hostResourceUsageResponder = createHostResourceUsageResponder({
   getAgentService: () => activeServices?.getOptional(IZCodeAgentService),
@@ -909,14 +903,6 @@ const hostResourceUsageResponder = createHostResourceUsageResponder({
 let activeSessionRealtimePort: ReturnType<typeof createTaskRealtimeBridgeForHostInit> = null;
 let hasDisposedHostResources = false;
 let disposeHostResourcesInFlight: Promise<HostShutdownResult> | null = null;
-
-function requireActiveHostApiNetworkTransport(): HostApiNetworkTransport {
-  if (!activeHostApiNetworkTransport) {
-    // Bug 原因：remote asset 若在 Host 网络策略就绪前回退 global fetch，会绕过设置页显式代理。
-    throw new Error("Window Host network transport is not initialized");
-  }
-  return activeHostApiNetworkTransport;
-}
 
 type ExposedServicePortHandle = {
   server: IChannelServer & { ready(): void };
@@ -1050,17 +1036,15 @@ async function disposeHostResources(reason: string): Promise<HostShutdownResult>
     activeServices = null;
     // Registry 是全部远端 connection 的唯一 owner；释放失败不能阻塞本地服务继续收口。
     const shutdownResult = await runHostShutdownPhases(
-      [
-        ...(servicesToDispose
-          ? [
-              {
-                name: "service-dispose",
-                run: () => disposeServiceResourcesAndWait(servicesToDispose),
-                timeoutMs: 3_500,
-              },
-            ]
-          : []),
-      ],
+      servicesToDispose
+        ? [
+            {
+              name: "service-dispose",
+              run: () => disposeServiceResourcesAndWait(servicesToDispose),
+              timeoutMs: 3_500,
+            },
+          ]
+        : [],
       {
         phaseTimeoutMs: 5_000,
         log: (message, details) => logger.warn(message, details),
@@ -1073,7 +1057,6 @@ async function disposeHostResources(reason: string): Promise<HostShutdownResult>
         timedOutPhases: shutdownResult.timedOutPhases,
       });
     }
-    activeHostApiNetworkTransport = null;
     return shutdownResult;
   })();
 
@@ -1104,7 +1087,6 @@ function disposeHostResourcesBestEffort(reason: string): void {
       logger.error("failed to dispose local services:", error);
     } finally {
       activeServices = null;
-      activeHostApiNetworkTransport = null;
     }
   }
 
@@ -1438,7 +1420,6 @@ parentPort.on("message", async (e: Electron.MessageEvent) => {
               browserControlExecutor: browserControlMainBridge,
             });
             activeServices = initializedServices;
-            activeHostApiNetworkTransport = hostApiNetworkTransport;
             return initializedServices;
           },
         });

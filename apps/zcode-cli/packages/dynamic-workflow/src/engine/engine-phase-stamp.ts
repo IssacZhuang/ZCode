@@ -9,7 +9,7 @@ import type { RunEvent } from "./types.js";
 import { refToString, WorkflowError } from "./types.js";
 
 /** 实例键（`siteId@ordinal`）→ 它出生时的阶段名。引擎的 `instancePhases` 的只读视图。 */
-export type InstancePhases = ReadonlyMap<string, string>;
+type InstancePhases = ReadonlyMap<string, string>;
 
 /**
  * 给**出生事件**补上出生阶段：actor 的 `actor-created` 按 actor 查表，节点的 `node-queued`

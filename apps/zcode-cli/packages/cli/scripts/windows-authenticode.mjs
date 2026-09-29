@@ -47,7 +47,7 @@ const optionalHeaderLayout = (contents, optionalHeaderOffset) => {
   throw new Error(`Invalid PE optional header magic: 0x${magic.toString(16)}`);
 };
 
-export const readWindowsAuthenticodeDirectory = (contents) => {
+const readWindowsAuthenticodeDirectory = (contents) => {
   assertRange({
     length: contents.length,
     offset: 0,
@@ -147,7 +147,7 @@ export const readWindowsAuthenticodeDirectory = (contents) => {
   };
 };
 
-export const removeWindowsAuthenticodeSignatureFromBuffer = (contents) => {
+const removeWindowsAuthenticodeSignatureFromBuffer = (contents) => {
   const signature = readWindowsAuthenticodeDirectory(contents);
 
   if (!signature.signed) {

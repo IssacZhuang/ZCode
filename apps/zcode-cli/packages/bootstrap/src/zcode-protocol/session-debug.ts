@@ -147,7 +147,7 @@ export function observeSessionDebug(record: SessionRecord, event: SessionEvent):
   ].slice(-SESSION_DEBUG_LIMITS.rounds);
 }
 
-export function readSessionDebug(record: SessionRecord): SessionDebugSnapshot {
+function readSessionDebug(record: SessionRecord): SessionDebugSnapshot {
   return observations.get(record)?.snapshot ?? emptySnapshot(record.app.sessionId);
 }
 

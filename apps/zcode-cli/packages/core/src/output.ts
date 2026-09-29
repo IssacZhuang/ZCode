@@ -1,7 +1,4 @@
 import type { JsonValue } from "@zcode/shared-types";
-
-export { type JsonValue };
-
 export const formatJson = (value: JsonValue): string => `${JSON.stringify(value, null, 2)}\n`;
 
 export const supportsColor = (stream: NodeJS.WriteStream, noColor: boolean): boolean => {

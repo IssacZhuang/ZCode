@@ -26,14 +26,6 @@ interface DirectoryMcpDescriptor {
   configKeyName: McpConfigKeyName;
 }
 
-interface UserMcpRecord {
-  name: string;
-  config: McpServerConfig;
-  enabled: boolean;
-  source: McpSyncSource;
-  path: string;
-}
-
 const ZCODE_MCP_DESCRIPTOR: DirectoryMcpDescriptor = {
   source: "zcode",
   directorySource: "zcode",
@@ -197,10 +189,6 @@ async function saveMcpToUserDirectory(payload: SaveCliMcpToUserDirectoryRequest)
   await writeZCodeServersToFile(scope, nextServers, payload.projectPath);
 }
 
-function sortMcpRecords(records: UserMcpRecord[]): UserMcpRecord[] {
-  return records.sort((left, right) => left.name.localeCompare(right.name));
-}
-
 async function readDirectoryServersFromPreferredSources(
   scope: Exclude<McpScope, "common">,
   workspacePath?: string,
@@ -337,28 +325,6 @@ async function writeServerEnabledToFile(
     next = legacyCleanup.config;
   }
   await writeTextAtomic(filePath, `${JSON.stringify(next, null, 2)}\n`);
-}
-
-async function readUserMcpRecordsFromFile(
-  descriptor: DirectoryMcpDescriptor,
-): Promise<UserMcpRecord[]> {
-  const filePath = buildUserConfigPath(descriptor);
-  const parsed = await readJsonObject(filePath);
-  if (!parsed) {
-    return [];
-  }
-  const serverMap = await readServerMapWithLegacyMigration(
-    filePath,
-    parsed,
-    descriptor.configKeyName,
-  );
-  return Object.entries(serverMap).map(([name, config]) => ({
-    name,
-    config: config as McpServerConfig,
-    enabled: readServerEnabled(config),
-    source: descriptor.source,
-    path: filePath,
-  }));
 }
 
 function readServerEnabled(config: Record<string, unknown>): boolean {

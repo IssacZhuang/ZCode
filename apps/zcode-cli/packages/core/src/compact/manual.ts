@@ -58,7 +58,7 @@ export const COMPACT_PROMPT_TOO_LONG_RETRY_MARKER =
 export const COMPACT_PROMPT_TOO_LONG_USER_MESSAGE =
   "Conversation too long to compact automatically. Try /compact again after narrowing the active context.";
 
-export function getMessagesToSummarize(
+function getMessagesToSummarize(
   messages: readonly CompactModelMessage[],
 ): CompactModelMessage[] {
   return messages

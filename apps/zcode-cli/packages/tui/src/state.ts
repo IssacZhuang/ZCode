@@ -1,21 +1,4 @@
 import type { SessionEvent } from "@zcode/contracts";
-import type { TuiPromptInput } from "./types.js";
-
-export const normalizePromptInput = (
-  input: TuiPromptInput,
-): { text: string; attachmentCount: number } => {
-  if (typeof input === "string") {
-    return {
-      attachmentCount: 0,
-      text: input,
-    };
-  }
-
-  return {
-    attachmentCount: input.attachments?.length ?? 0,
-    text: input.text,
-  };
-};
 
 export const describeSessionEvent = (event: SessionEvent): string => {
   if (typeof event !== "object" || event === null) return "session event";
@@ -26,26 +9,17 @@ export const describeSessionEvent = (event: SessionEvent): string => {
 export const asRecord = (value: unknown): Record<string, unknown> =>
   value !== null && typeof value === "object" ? (value as Record<string, unknown>) : {};
 
-export const stringField = (
-  value: Record<string, unknown>,
-  key: string,
-): string | undefined => {
+export const stringField = (value: Record<string, unknown>, key: string): string | undefined => {
   const field = value[key];
   return typeof field === "string" && field.length > 0 ? field : undefined;
 };
 
-export const numberField = (
-  value: Record<string, unknown>,
-  key: string,
-): number | undefined => {
+export const numberField = (value: Record<string, unknown>, key: string): number | undefined => {
   const field = value[key];
   return typeof field === "number" && Number.isFinite(field) ? field : undefined;
 };
 
-export const booleanField = (
-  value: Record<string, unknown>,
-  key: string,
-): boolean | undefined => {
+export const booleanField = (value: Record<string, unknown>, key: string): boolean | undefined => {
   const field = value[key];
   return typeof field === "boolean" ? field : undefined;
 };

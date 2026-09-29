@@ -7,12 +7,10 @@ import {
   Ellipsis,
   ExternalLink,
   Info,
-  Moon,
   Pencil,
   Play,
   Plus,
   RefreshCw,
-  Square,
   Trash2,
 } from "lucide-react";
 import { cn } from "@/components/lib/utils.js";
@@ -56,10 +54,6 @@ export function AutomationInfoIcon(props: AutomationSvgIconProps) {
   return <Info {...AUTOMATION_ICON_PROPS} {...props} />;
 }
 
-export function AutomationIdleTimeIcon(props: AutomationSvgIconProps) {
-  return <Moon {...AUTOMATION_ICON_PROPS} {...props} />;
-}
-
 export function AutomationPausedIcon(props: AutomationSvgIconProps) {
   return <CircleStop {...AUTOMATION_ICON_PROPS} {...props} />;
 }
@@ -78,10 +72,6 @@ export function AutomationRunNowIcon(props: AutomationSvgIconProps) {
 
 export function AutomationContinueIcon(props: AutomationSvgIconProps) {
   return <CirclePlay {...AUTOMATION_ICON_PROPS} {...props} />;
-}
-
-export function AutomationCancelActionIcon(props: AutomationSvgIconProps) {
-  return <Square {...AUTOMATION_ICON_PROPS} fill="currentColor" {...props} />;
 }
 
 export function AutomationClockIcon(props: AutomationSvgIconProps) {

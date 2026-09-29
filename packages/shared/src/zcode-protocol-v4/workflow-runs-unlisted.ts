@@ -27,7 +27,7 @@
 import type { WorkflowRunState, WorkflowRunUnlistedPhase } from "./workflow-runs.js";
 
 /** 往一格上加的增量。`actors` 可以是负数（子代理回表），其余只会是正数。 */
-export interface WorkflowRunUnlistedDelta {
+interface WorkflowRunUnlistedDelta {
   actors?: number;
   actorsSettled?: number;
   actorsFailed?: number;

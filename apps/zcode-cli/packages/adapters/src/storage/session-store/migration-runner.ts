@@ -70,6 +70,7 @@ export async function runSqliteSessionMigrationsAsync(
     options.lockWaitTimeoutMs ?? DEFAULT_SQLITE_MIGRATION_WAIT_MS,
   );
   let failed = false;
+  let migrationError: unknown;
   try {
     for (const step of steps) {
       if ("delayMs" in step)
@@ -84,16 +85,17 @@ export async function runSqliteSessionMigrationsAsync(
     }
   } catch (error) {
     failed = true;
-    throw error;
-  } finally {
-    // 通知传输失败也会关闭 generator 的事务，不能将半迁移连接交给业务。
-    try {
-      steps.return();
-      db.exec(`pragma busy_timeout = ${DEFAULT_SQLITE_STARTUP_LOCK_TIMEOUT_MS}`);
-    } catch (error) {
-      if (!failed) throw error;
-    }
+    migrationError = error;
   }
+  // 通知传输失败也会关闭 generator 的事务，不能将半迁移连接交给业务。
+  // 收尾自身的异常只在迁移成功时抛出；迁移已失败时以原数据库异常优先，不在此处覆盖。
+  try {
+    steps.return();
+    db.exec(`pragma busy_timeout = ${DEFAULT_SQLITE_STARTUP_LOCK_TIMEOUT_MS}`);
+  } catch (error) {
+    if (!failed) throw error;
+  }
+  if (failed) throw migrationError;
 }
 
 function* migrationSteps(
