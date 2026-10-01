@@ -62,6 +62,7 @@ export interface CreatePersonalProviderInput {
 /** Facade 提供的 Host 内部成员事实；不得接受 Renderer 自报的模型名单。 */
 export interface ProviderModelMembership {
   readonly providerId: ProviderId;
+  /** 原始继承目录，包含已由 Personal 排除的成员。 */
   readonly inheritedModelIds: readonly ModelId[];
   readonly personalRevision: string;
   /** 在 Personal 事务内检查发布快照未过期，不触发网络请求。 */
@@ -233,6 +234,9 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
     if (input.initialConfig?.builtinModelIds !== undefined) {
       throw new Error("initialConfig 不能包含 builtinModelIds");
     }
+    if (input.initialConfig?.excludedModelIds !== undefined) {
+      throw new Error("initialConfig 不能包含 excludedModelIds");
+    }
     let createdProviderId: ProviderId | undefined;
     await this.#updatePersonal((current) => {
       const occupied = new Set([...zcodeBuiltin.providers.keys(), ...current.providers.keys()]);
@@ -310,6 +314,7 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
         membership?.inheritedModelIds ?? builtinProvider?.builtinModelIds ?? [],
         provider.personalModelIds ?? [],
         modelIds,
+        provider.excludedModelIds ?? [],
       );
       return {
         providers: current.providers.set(providerId, provider.withModelOrder(modelOrder)),
@@ -335,22 +340,27 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
       const builtinModelIds =
         membership?.inheritedModelIds ??
         resolveProviderBuiltinModelIds(zcodeBuiltin, current.providers, normalizedProviderId);
-      if (builtinModelIds.includes(normalizedModelId)) {
-        throw new Error(`Model 已存在: ${normalizedProviderId}/${normalizedModelId}`);
-      }
+      const excludedModelIds = provider.excludedModelIds ?? [];
+      const restoring = excludedModelIds.includes(normalizedModelId);
+      const inherited = builtinModelIds.includes(normalizedModelId);
       const currentModelIds = provider.personalModelIds ?? [];
-      if (currentModelIds.includes(normalizedModelId)) {
+      if (!restoring && (inherited || currentModelIds.includes(normalizedModelId))) {
         throw new Error(`Model 已存在: ${normalizedProviderId}/${normalizedModelId}`);
       }
+      const nextExcluded = excludedModelIds.filter((id) => id !== normalizedModelId);
+      const nextPersonal = currentModelIds.filter((id) => id !== normalizedModelId);
+      if (!inherited) nextPersonal.push(normalizedModelId);
+      const nextProvider = restoring ? provider.withExcludedModelIds(nextExcluded) : provider;
       return {
         providers: current.providers.set(
           normalizedProviderId,
-          provider.withPersonalModelIds([...currentModelIds, normalizedModelId]).withModelOrder(
+          nextProvider.withPersonalModelIds(nextPersonal).withModelOrder(
             // 添加不能重新按成员名单排序，否则会丢掉用户已经保存的顺序。
             normalizeModelOrder(
               builtinModelIds,
-              [...currentModelIds, normalizedModelId],
+              nextPersonal,
               provider.modelOrder ?? [],
+              nextExcluded,
             ),
           ),
         ),
@@ -385,8 +395,14 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
       // 继承归属保护适用于 Facade 和底层直接调用，不能只在有动态上下文时检查。
       if (builtinModelIds.includes(currentId))
         throw new Error(`Built-in Model 不能重命名: ${normalizedProviderId}/${currentId}`);
-      if (!provider?.personalModelIds?.includes(currentId)) {
+      if (
+        !provider?.personalModelIds?.includes(currentId) ||
+        provider.excludedModelIds?.includes(currentId)
+      ) {
         throw new Error(`Personal Model 不存在: ${normalizedProviderId}/${currentId}`);
+      }
+      if (provider.excludedModelIds?.includes(nextId)) {
+        throw new Error(`Model 已删除，请通过添加恢复: ${normalizedProviderId}/${nextId}`);
       }
       if (provider.personalModelIds.includes(nextId)) {
         throw new Error(`Model 已存在: ${normalizedProviderId}/${nextId}`);
@@ -405,7 +421,14 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
           normalizedProviderId,
           provider
             .withPersonalModelIds(modelIds)
-            .withModelOrder(normalizeModelOrder(builtinModelIds, modelIds, requestedOrder)),
+            .withModelOrder(
+              normalizeModelOrder(
+                builtinModelIds,
+                modelIds,
+                requestedOrder,
+                provider.excludedModelIds ?? [],
+              ),
+            ),
         ),
         models: current.models.renameExactModel(normalizedProviderId, currentId, nextId),
         providerOrder: current.providerOrder,
@@ -429,7 +452,10 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
       const inherited =
         membership?.inheritedModelIds ??
         resolveProviderBuiltinModelIds(builtin, current.providers, id);
-      if (!inherited.includes(model) && !provider?.personalModelIds?.includes(model)) {
+      if (
+        provider?.excludedModelIds?.includes(model) ||
+        (!inherited.includes(model) && !provider?.personalModelIds?.includes(model))
+      ) {
         throw new Error(`Model 不存在: ${id}/${model}`);
       }
       // 启停曾复用完整草稿保存，可能覆盖其他编辑或被固定配置完整性阻挡。
@@ -482,9 +508,14 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
         throw new Error(`Model 已存在: ${normalizedProviderId}/${nextId}`);
       }
       const personalModelIds = provider?.personalModelIds ?? [];
-      const originalExists = builtinSet.has(originalId) || personalModelIds.includes(originalId);
+      const originalExists =
+        !provider?.excludedModelIds?.includes(originalId) &&
+        (builtinSet.has(originalId) || personalModelIds.includes(originalId));
       if (!originalExists) {
         throw new Error(`Model 不存在: ${normalizedProviderId}/${originalId}`);
+      }
+      if (originalId !== nextId && provider?.excludedModelIds?.includes(nextId)) {
+        throw new Error(`Model 已删除，请通过添加恢复: ${normalizedProviderId}/${nextId}`);
       }
       if (originalId !== nextId && (personalModelIds.includes(nextId) || builtinSet.has(nextId))) {
         throw new Error(`Model 已存在: ${normalizedProviderId}/${nextId}`);
@@ -506,7 +537,14 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
           normalizedProviderId,
           provider
             .withPersonalModelIds(modelIds)
-            .withModelOrder(normalizeModelOrder(builtinModelIds, modelIds, requestedOrder)),
+            .withModelOrder(
+              normalizeModelOrder(
+                builtinModelIds,
+                modelIds,
+                requestedOrder,
+                provider.excludedModelIds ?? [],
+              ),
+            ),
         );
         models = models.renameExactModel(normalizedProviderId, originalId, nextId);
       }
@@ -528,27 +566,43 @@ export class ProviderConfigService implements ProviderSource<ProviderConfigSnaps
     const builtin = await this.#zcodeBuiltinSource.read();
     return this.#updatePersonal((current) => {
       assertMembershipCurrent(membership, normalizedProviderId, current);
-      const provider = current.providers.get(normalizedProviderId);
+      const provider = writableProviderOverlay(builtin, current, normalizedProviderId);
       const inherited =
         membership?.inheritedModelIds ??
         resolveProviderBuiltinModelIds(builtin, current.providers, normalizedProviderId);
-      if (inherited.includes(normalizedModelId))
-        throw new Error(`Built-in Model 不能删除: ${normalizedProviderId}/${normalizedModelId}`);
-      if (!provider?.personalModelIds?.includes(normalizedModelId)) {
-        throw new Error(`Personal Model 不存在: ${normalizedProviderId}/${normalizedModelId}`);
+      const isChatGpt =
+        builtin.providers.get(normalizedProviderId)?.access?.type === "chatgpt-account";
+      if (provider.excludedModelIds?.includes(normalizedModelId)) {
+        throw new Error(`Model 不存在: ${normalizedProviderId}/${normalizedModelId}`);
       }
+      if (inherited.includes(normalizedModelId) && !isChatGpt)
+        throw new Error(`Built-in Model 不能删除: ${normalizedProviderId}/${normalizedModelId}`);
+      if (
+        !inherited.includes(normalizedModelId) &&
+        !provider.personalModelIds?.includes(normalizedModelId)
+      ) {
+        throw new Error(`Model 不存在: ${normalizedProviderId}/${normalizedModelId}`);
+      }
+      const personalModelIds = (provider.personalModelIds ?? []).filter(
+        (id) => id !== normalizedModelId,
+      );
+      // 目录会在恢复账号时重新发布；删除所有来源的 ChatGPT ID 都需保存个人排除意图。
+      const nextProvider = isChatGpt
+        ? provider.withExcludedModelIds(
+            uniqueInOrder([...(provider.excludedModelIds ?? []), normalizedModelId]),
+          )
+        : provider;
       return {
         providers: current.providers.set(
           normalizedProviderId,
-          provider
-            .withPersonalModelIds(
-              provider.personalModelIds.filter((candidate) => candidate !== normalizedModelId),
-            )
+          nextProvider
+            .withPersonalModelIds(personalModelIds)
             .withModelOrder(
               normalizeModelOrder(
                 inherited,
-                provider.personalModelIds.filter((candidate) => candidate !== normalizedModelId),
+                personalModelIds,
                 provider.modelOrder ?? [],
+                nextProvider.excludedModelIds ?? [],
               ),
             ),
         ),
@@ -626,7 +680,12 @@ function normalizePersonalProviderMembership(
   let normalized = personal.withPersonalModelIds(personalModelIds);
   if (personal.modelOrder !== undefined && personal.modelOrder !== null) {
     normalized = normalized.withModelOrder(
-      normalizeModelOrder(builtinModelIds, personalModelIds, personal.modelOrder),
+      normalizeModelOrder(
+        builtinModelIds,
+        personalModelIds,
+        personal.modelOrder,
+        personal.excludedModelIds ?? [],
+      ),
     );
   }
   return normalized;
@@ -681,8 +740,16 @@ function normalizeModelOrder(
   builtinModelIds: readonly ModelId[],
   personalModelIds: readonly ModelId[],
   requested: readonly ModelId[],
+  excludedModelIds: readonly ModelId[] = [],
 ): ModelId[] {
-  return [...resolveOwnedOrder(builtinModelIds, personalModelIds, requested)];
+  const excluded = new Set(excludedModelIds);
+  return [
+    ...resolveOwnedOrder(
+      builtinModelIds.filter((id) => !excluded.has(id)),
+      personalModelIds.filter((id) => !excluded.has(id)),
+      requested,
+    ),
+  ];
 }
 
 function nextPersonalProviderId(

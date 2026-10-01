@@ -517,7 +517,12 @@ export function ProviderModelsSection({
                       })
                     }
                     settingsRevision={settingsRevision}
-                    onDelete={!model.builtin ? () => onDeleteModel(model.modelId) : undefined}
+                    // ChatGPT 的目录成员也允许排除；builtin 仍用于 ID 只读，不代表删除权限。
+                    onDelete={
+                      !model.builtin || providerAccess?.type === "chatgpt-account"
+                        ? () => onDeleteModel(model.modelId)
+                        : undefined
+                    }
                     onEnabledChange={(enabled) => {
                       void Promise.resolve(onModelEnabledChange?.(model.modelId, enabled)).catch(
                         () => undefined,

@@ -9,11 +9,13 @@ import {
   type ProviderConfigLayerUpdate,
 } from "@zcode/provider";
 
-const CURRENT_SCHEMA_VERSION = 1 as const;
+const CURRENT_SCHEMA_VERSION = 2 as const;
 
 type ProviderConfigFileMigration = (input: unknown) => unknown;
 
-const migrations: ReadonlyMap<number, ProviderConfigFileMigration> = new Map();
+const migrations: ReadonlyMap<number, ProviderConfigFileMigration> = new Map([
+  [1, (input) => (isRecord(input) ? { ...input, schemaVersion: 2 } : input)],
+]);
 
 const storedProviderConfigSchema = z
   .object({

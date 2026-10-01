@@ -76,6 +76,7 @@ export function serializeRegistryProviderConfig(
     },
     ...(config.builtinModelIds == null ? {} : { builtinModelIds: [...config.builtinModelIds] }),
     ...(config.personalModelIds == null ? {} : { personalModelIds: [...config.personalModelIds] }),
+    ...(config.excludedModelIds == null ? {} : { excludedModelIds: [...config.excludedModelIds] }),
     ...(config.modelOrder == null ? {} : { modelOrder: [...config.modelOrder] }),
     ...(config.visibility === undefined ? {} : { visibility: config.visibility }),
   };
@@ -246,8 +247,10 @@ export class ProviderConfigResolver {
         });
       }
       issues.push(...providerIssues);
-      const builtinModelIds = config.builtinModelIds ?? [];
-      const personalModelIds = config.personalModelIds ?? [];
+      // 官方目录可重新发布；个人删除意图必须在公共解析边界同时约束设置和执行成员。
+      const excludedIds = new Set(config.excludedModelIds ?? []);
+      const builtinModelIds = (config.builtinModelIds ?? []).filter((id) => !excludedIds.has(id));
+      const personalModelIds = (config.personalModelIds ?? []).filter((id) => !excludedIds.has(id));
       const builtinIdsInOrder = uniqueInOrder(builtinModelIds);
       const builtinIds = new Set(builtinIdsInOrder);
       const personalIdsInOrder = uniqueInOrder(personalModelIds).filter(

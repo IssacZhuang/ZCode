@@ -78,6 +78,7 @@ export interface ProviderSettingsMutationTarget {
     nextModelId: ModelId,
     membership?: ProviderModelMembership,
   ): Promise<unknown>;
+  /** 删除 Personal 成员；ChatGPT 还可持久排除官方目录成员。 */
   deletePersonalModel(
     providerId: ProviderId,
     modelId: ModelId,
@@ -388,7 +389,7 @@ export class ProviderSettingsFacade {
   }
 
   deletePersonalModel(providerId: ProviderId, modelId: ModelId): Promise<ProviderSettingsView> {
-    return this.#mutateProvider(providerId, "delete-personal-model", (target) =>
+    return this.#mutateProvider(providerId, "delete-model", (target) =>
       target.deletePersonalModel(providerId, modelId, this.#modelMembership(providerId)),
     );
   }
@@ -441,9 +442,8 @@ export class ProviderSettingsFacade {
     // Account 的空/替换名单也必须原样使用，不能再与静态 Built-in 取并集。
     return Object.freeze({
       providerId,
-      inheritedModelIds: Object.freeze(
-        provider.models.filter((model) => model.source === "builtin").map((model) => model.modelId),
-      ),
+      // 展示成员已经过滤个人删除；恢复和来源保护仍需要未过滤的账号目录事实。
+      inheritedModelIds: Object.freeze([...(provider.config.builtinModelIds ?? [])]),
       personalRevision: snapshot.config.personalRevision,
       assertCurrent: () => {
         if (this.#source.getSnapshot() !== snapshot)

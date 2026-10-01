@@ -57,6 +57,7 @@ export interface IProviderSettingsService {
     currentModelId: ModelId,
     nextModelId: ModelId,
   ): Promise<ProviderSettingsView>;
+  /** 删除 Personal 成员或持久排除 ChatGPT 官方目录成员。 */
   deletePersonalModel(providerId: ProviderId, modelId: ModelId): Promise<ProviderSettingsView>;
   savePersonalModelDraft(input: SavePersonalModelDraftInput): Promise<ProviderSettingsView>;
   setPersonalModelEnabled(

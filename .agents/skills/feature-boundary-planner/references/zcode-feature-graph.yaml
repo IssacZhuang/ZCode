@@ -33,6 +33,7 @@ nodes:
       - siwc
       - openai account
       - ChatGPT 登录
+      - ChatGPT 模型删除
       - 账号登录
     codeSeeds:
       - file: packages/services/src/model-provider/chatgptAccountService.ts
@@ -41,11 +42,15 @@ nodes:
         symbol: buildSiwcAuthorizeUrl
       - file: apps/zcode-cli/packages/adapters/src/model/siwc-auth.ts
         symbol: SiwcModelRequestAuthSource
+      - file: packages/provider/src/config-service.ts
+        symbol: ProviderConfigService
     invariants:
       - "Account projection owner is the host ChatGptAccountService; CLI only receives
         provider/updateAccountConfig pushes and resolves tokens locally from the encrypted
         shared credential store. Tokens never enter provider config overlays or protocol
         messages."
+      - "ChatGPT model deletions are provider-scoped Personal exclusions owned by
+        ProviderConfigService; account catalog refreshes do not restore excluded IDs."
   - id: capability.model-selection
     kind: capability
     label: Model selection
