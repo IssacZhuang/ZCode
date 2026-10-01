@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 31,
+  "revision": 32,
   "config": {
     "providerConfigRules": {
       "templateRules": [
@@ -353,6 +353,23 @@
           }
         },
         {
+          "templateId": "chatgpt",
+          "templateNameMap": {
+            "zh-CN": "ChatGPT",
+            "en-US": "ChatGPT"
+          },
+          "config": {
+            "api": {
+              "type": "openai-responses",
+              "baseUrl": "https://api.openai.com/v1"
+            },
+            "logo": {
+              "type": "builtin",
+              "key": "openai"
+            }
+          }
+        },
+        {
           "templateId": "anthropic",
           "templateNameMap": {
             "zh-CN": "Anthropic",
@@ -688,7 +705,21 @@
           }
         }
       ],
-      "providerRules": []
+      "providerRules": [
+        {
+          "providerId": "chatgpt",
+          "templateId": "chatgpt",
+          "providerName": "ChatGPT",
+          "config": {
+            "group": "chatgpt-family",
+            "access": {
+              "type": "chatgpt-account",
+              "entitled": false
+            },
+            "visibility": "hidden"
+          }
+        }
+      ]
     },
     "modelConfigRules": {
       "modelRules": [
@@ -1249,7 +1280,7 @@
           }
         },
         {
-          "modelMatch": ".*gpt-6-astra(?:[.\\-:/\\[].*)?",
+          "modelMatch": ".*gpt-(?:6-astra|6\\.1-sol)(?:[.\\-:/\\[].*)?",
           "config": {
             "properties": {
               "contextWindow": 1050000,

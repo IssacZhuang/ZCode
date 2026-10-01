@@ -18,10 +18,11 @@ import {
   type ModelProviderId,
   type ModelRequestAuth,
 } from "@zcode/contracts";
-import type { RegistryProviderConfig } from "@zcode/provider";
+import { isApiKeyAccess, type RegistryProviderConfig } from "@zcode/provider";
 import { withOpenRouterAttributionHeaders } from "@zcode/shared";
 import { createAnthropicCompatFetch } from "./anthropic-stream-compat.js";
 import { createOpenAIResponsesJsonCompatFetch } from "./openai-responses-json-compat.js";
+import { createSiwcCompatFetch } from "./siwc-compat-fetch.js";
 import { createModelOptionMapFetch, type RawRequestBodyCapture } from "./model-option-map-fetch.js";
 import { createNetworkProxyFetch } from "../network/proxy-fetch.js";
 import { normalizeModelTlsFailure } from "./failure-tls.js";
@@ -267,15 +268,21 @@ export class AiSdkModelExecution {
       providerId,
       providerKind: providerConfig.kind,
     });
+    // SIWC 曾在 Option Map 之前剥离预算，随后 max_output_tokens 又被写回，导致连通性探测被拒绝。
+    // 让 SDK 与 Option Map 先生成完整 body，再由 SIWC 作为发送前的最终约束；普通 API-key 保持原链路。
+    const protocolFetch =
+      providerConfig.kind === "openai" && providerConfig.access.type === "chatgpt-account"
+        ? createSiwcCompatFetch(fetch)
+        : fetch;
     const optionFetch =
       optionMaps && optionValues
         ? createModelOptionMapFetch({
             capture: rawRequestBodyCapture,
-            fetch,
+            fetch: protocolFetch,
             maps: optionMaps,
             values: optionValues,
           })
-        : fetch;
+        : protocolFetch;
 
     switch (providerConfig.kind) {
       case "openai": {
@@ -350,9 +357,16 @@ function toAiSdkProviderConfig(
   config: RegistryProviderConfig,
 ): AiSdkProviderConfig {
   const common = {
-    ...(config.access.type !== "zhipu-account" && config.access.apiKey
-      ? { apiKey: config.access.apiKey }
-      : {}),
+    ...(isApiKeyAccess(config.access)
+      ? config.access.apiKey
+        ? { apiKey: config.access.apiKey }
+        : {}
+      : // SIWC 占位 key：@ai-sdk/openai 缺 key 时会回退读 OPENAI_API_KEY 环境变量，
+        // 可能把无关 key 发给 api.openai.com；真实 Bearer 由每 attempt 的 requestAuth 注入，
+        // 无凭据时在请求前 fail-closed（ModelRequestAuthMissing），占位值不会被发出。
+        config.access.type === "chatgpt-account"
+        ? { apiKey: "siwc-chatgpt-account" }
+        : {}),
     baseURL: config.api.baseUrl,
     ...(config.api.headers ? { headers: { ...config.api.headers } } : {}),
     providerOptions: { apiFormat: config.api.type },

@@ -1614,6 +1614,28 @@ const zhCN: Record<string, string> = {
   "settings.modelProvider.usage.queryFailed": "查询失败",
   "settings.modelProvider.usage.balanceRemaining": "余额",
   "settings.modelProvider.usage.balanceUsedTotal": "已用 {used} / {total} {unit}",
+  "settings.modelProvider.chatgpt.groupTitle": "账号",
+  "settings.modelProvider.chatgpt.accountSectionTitle": "账号",
+  "settings.modelProvider.chatgpt.accountSignedIn": "已登录",
+  "settings.modelProvider.chatgpt.planLabel": "套餐：{plan}",
+  "settings.modelProvider.chatgpt.notEntitledHint":
+    "当前 ChatGPT 套餐不支持在编码工具中使用，请升级套餐后重新登录。",
+  "settings.modelProvider.chatgpt.signOut": "登出",
+  "settings.modelProvider.chatgpt.signInTitle": "登录 ChatGPT",
+  "settings.modelProvider.chatgpt.signInWaiting":
+    "已在浏览器打开 ChatGPT 授权页，完成授权后此处将自动继续…",
+  "settings.modelProvider.chatgpt.signInRetry": "重试",
+  "settings.modelProvider.chatgpt.signInCancel": "取消",
+  "settings.modelProvider.chatgpt.signInFailed.denied": "你取消了 ChatGPT 授权。",
+  "settings.modelProvider.chatgpt.signInFailed.timeout": "等待授权超时，请重试。",
+  "settings.modelProvider.chatgpt.signInFailed.cancelled": "登录已取消。",
+  "settings.modelProvider.chatgpt.signInFailed.credentialWriteFailed": "登录凭据写入失败，请重试。",
+  "settings.modelProvider.chatgpt.signInFailed.protocol":
+    "ChatGPT 登录响应校验失败，请重试或稍后再试。",
+  "settings.modelProvider.chatgpt.signInFailed.serverError":
+    "ChatGPT 服务端拒绝了登录请求，请检查网络代理出口后重试。",
+  "settings.modelProvider.chatgpt.signInFailed.network":
+    "网络异常，无法完成 ChatGPT 登录，请检查网络后重试。",
   "settings.modelProvider.codingPlan.recheck": "重新检查",
   "settings.modelProvider.codingPlan.checkingPlans": "检查中...",
   "settings.modelProvider.codingPlan.switchAccount": "切换账号",

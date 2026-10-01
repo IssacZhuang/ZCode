@@ -2123,6 +2123,9 @@ export const zcodeProviderUpdateAccountConfigResultSchema = z
 export type ZCodeProviderUpdateAccountConfigResult = z.infer<
   typeof zcodeProviderUpdateAccountConfigResultSchema
 >;
+export type ZCodeProviderUpdateAccountConfigParams = z.infer<
+  typeof zcodeProviderUpdateAccountConfigParamsSchema
+>;
 export const zcodeInteractionPreferencesSchema = z
   .object({
     askUserQuestionAutoResolutionEnabled: z.boolean(),

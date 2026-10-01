@@ -16,6 +16,7 @@ import type {
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
 import type { IProviderUsageService } from "./model-provider/providerUsageService.js";
+import type { IChatGptAccountService } from "./model-provider/chatgptAccountService.js";
 import type { IUsageStatsService } from "./usage-stats/usageStats.js";
 import type { IClientScenesService } from "./client-scenes/clientScenes.js";
 import type { ISkillsService } from "./skills/skills.js";
@@ -45,6 +46,8 @@ export interface IServiceAccessor {
   readonly providerSettingsService: IProviderSettingsService;
   /** 供应商用量/余额查询（按 base_url 域名识别内置适配器）。 */
   readonly providerUsageService: IProviderUsageService;
+  /** ChatGPT（SIWC）账号登录服务；账号态以服务端事实为准，UI 不缓存。 */
+  readonly chatGptAccountService: IChatGptAccountService;
   /** 当前 Environment Registry 发布的唯一模型选择 View。 */
   readonly modelSelectionService: IModelSelectionService;
   readonly usageStatsService: IUsageStatsService;

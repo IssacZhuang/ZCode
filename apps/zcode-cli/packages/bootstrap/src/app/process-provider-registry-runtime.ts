@@ -1,5 +1,6 @@
 import {
   MutableAccountProviderConfigSource,
+  isAccountAccess,
   parseAccountProviderConfigMap,
   type AccountProviderConfigSnapshot,
   type AccountProviderStates,
@@ -137,7 +138,7 @@ export function parseProcessAccountProviderConfigSnapshot(input: {
     // 仅约束托管 Worker 的普通账号信封；独立 CLI、API 和闲时不需要 current。
     if (
       isBuiltinModelProviderId(providerId) &&
-      provider.access?.type === "zhipu-account" &&
+      isAccountAccess(provider.access) &&
       provider.access.entitled &&
       typeof input.states?.[providerId]?.current !== "boolean"
     ) {

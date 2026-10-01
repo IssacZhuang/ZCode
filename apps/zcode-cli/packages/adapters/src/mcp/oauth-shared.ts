@@ -1,5 +1,5 @@
 import type { OAuthDiscoveryState } from "@modelcontextprotocol/client";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 import { isRecord, mcpOAuthCredentialKey } from "./oauth-credentials.js";
 
 const MCP_OAUTH_DISCOVERY_STATE_KEY = "discovery_state";

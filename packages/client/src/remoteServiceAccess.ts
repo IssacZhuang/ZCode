@@ -16,6 +16,7 @@ import {
   IModelSelectionService,
   IProviderSettingsService,
   IProviderUsageService,
+  IChatGptAccountService,
   IUsageStatsService,
   IClientScenesService,
   ISkillsService,
@@ -49,6 +50,7 @@ export class RemoteServiceAccess implements IServiceAccessor {
   readonly fileWatcherService: IFileWatcherService;
   readonly providerSettingsService: IProviderSettingsService;
   readonly providerUsageService: IProviderUsageService;
+  readonly chatGptAccountService: IChatGptAccountService;
   readonly modelSelectionService: IModelSelectionService;
   readonly usageStatsService: IUsageStatsService;
   readonly clientScenesService: IClientScenesService;
@@ -107,6 +109,9 @@ export class RemoteServiceAccess implements IServiceAccessor {
     );
     this.providerUsageService = ProxyChannel.toService<IProviderUsageService>(
       channelClient.getChannel(IProviderUsageService.channelName),
+    );
+    this.chatGptAccountService = ProxyChannel.toService<IChatGptAccountService>(
+      channelClient.getChannel(IChatGptAccountService.channelName),
     );
     this.modelSelectionService = ProxyChannel.toService<IModelSelectionService>(
       channelClient.getChannel(IModelSelectionService.channelName),

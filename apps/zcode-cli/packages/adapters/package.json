@@ -107,6 +107,7 @@
     "@zcode/dynamic-workflow": "workspace:*",
     "@zcode/model-option-map": "workspace:*",
     "@zcode/provider": "workspace:*",
+    "@zcode/provider-node": "workspace:*",
     "@zcode/shared": "workspace:*",
     "ai": "6.0.193",
     "iconv-lite": "0.7.2",

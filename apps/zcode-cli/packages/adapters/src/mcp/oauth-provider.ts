@@ -1,6 +1,6 @@
 import type { FetchLike, AuthProvider } from "@modelcontextprotocol/client";
 import type { Logger, McpOAuthConfig } from "@zcode/contracts";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 import { isCanonicalTokenNearExpiry, loadCredentialPair } from "./oauth-credentials.js";
 import { createInteractiveAuthorizationRequiredError } from "./oauth-errors.js";
 import { refreshMcpOAuthTokensUnderLock } from "./oauth-refresh.js";

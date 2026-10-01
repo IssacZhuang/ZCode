@@ -1,6 +1,7 @@
 import type { AiSdkModelAdapter } from "@zcode/adapters/model";
 import type { Model } from "@zcode/contracts";
 import type { AgentRuntimeDeps } from "@zcode/core";
+import { createSiwcModelRequestAuthSource } from "@zcode/adapters/model";
 import {
   type ModelSelection,
   type ModelSelectionValidation,
@@ -83,6 +84,15 @@ export class ApiProviderModelRuntime {
               requestAuth: {
                 source: target.requestDependencies?.requestAuth?.source,
               },
+            },
+          }
+        : {}),
+      // ChatGPT 账号（SIWC）：鉴权源在 CLI 本地解析共享凭据库（临期单飞刷新），
+      // 不从 target/HOST 反向 RPC 取 token，凭据不出本机进程。
+      ...(provider.config.access.type === "chatgpt-account"
+        ? {
+            requestDependencies: {
+              requestAuth: { source: createSiwcModelRequestAuthSource() },
             },
           }
         : {}),

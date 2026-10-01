@@ -2,7 +2,7 @@ import { randomBytes } from "node:crypto";
 import { dirname, join } from "node:path";
 import { acquireFileLock } from "@zcode/shared/node";
 import { ZCODE_FILE_LOCK_TIMEOUT_ERROR_CODE } from "@zcode/shared";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 import { isRecord, mcpOAuthCredentialKey } from "./oauth-credentials.js";
 
 const MCP_OAUTH_PENDING_AUTHORIZATION_KEY = "pending_authorization";

@@ -74,7 +74,7 @@ import {
 import {
   createSharedZCodeCredentialStore,
   type SharedZCodeCredentialStore,
-} from "../auth/shared-credentials.js";
+} from "@zcode/provider-node";
 import { loadCredentialPair } from "./oauth-credentials.js";
 import { createMcpOAuthTokenProvider } from "./oauth-provider.js";
 import { terminateMcpStdioProcessTree } from "./process-tree.js";

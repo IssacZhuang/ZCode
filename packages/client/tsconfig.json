@@ -8,5 +8,7 @@
   "include": ["src"],
   // client 直接依赖 rpc，如果不显式引用 rpc project，typecheck 会顺着 workspace 包入口重新编译 rpc 源码。
   // 补 references 后，client 会优先读取 rpc 已生成的声明文件。
-  "references": [{ "path": "../services" }, { "path": "../rpc" }]
+  // provider-node 同理：services 的 ChatGPT 账号服务类型间接引用其源码入口，
+  // 不加引用会把依赖 node:* 全局的 provider-node 源码拉进无 node 类型的 client 工程检查。
+  "references": [{ "path": "../services" }, { "path": "../rpc" }, { "path": "../provider-node" }]
 }

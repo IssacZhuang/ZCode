@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import type { OAuthClientInformationMixed, OAuthTokens } from "@modelcontextprotocol/client";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 
 const MCP_OAUTH_CANONICAL_CREDENTIALS_KEY = "authorization_credentials";
 const MCP_OAUTH_LEGACY_CLIENT_KEY = "client_information";

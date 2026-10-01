@@ -75,6 +75,8 @@ export const ServiceChannels = {
   UsageStats: "usage-stats",
   /** 供应商用量/余额查询服务（按 base_url 域名识别内置适配器） */
   ProviderUsage: "provider-usage",
+  /** Sign in with ChatGPT 账号服务（登录编排与账号投影唯一所有者） */
+  ChatGPTAccount: "chatgpt-account",
   /** Coding Plan 订阅购买服务 */
   CodingPlanSubscription: "coding-plan-subscription",
   /** ZCode 客户端场景配置服务 */

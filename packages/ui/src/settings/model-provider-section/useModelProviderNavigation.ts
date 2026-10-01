@@ -32,8 +32,29 @@ export function useModelProviderNavigation({
     return sortModelProvidersForDisplay(allCustomProviders, displayOrder);
   }, [displayOrder, modelProviders]);
 
+  // ChatGPT 账号族：未登录时 builtin provider visibility:hidden 不进 View，分组自然为空。
+  const chatgptProviders = useMemo(
+    () => modelProviders.filter((provider) => provider.config.group === "chatgpt-family"),
+    [modelProviders],
+  );
+
   const navigationGroups = useMemo<ModelProviderNavGroup[]>(
     () => [
+      ...(chatgptProviders.length > 0
+        ? [
+            {
+              id: "chatgpt" as const,
+              title: intl.formatMessage({ id: "settings.modelProvider.chatgpt.groupTitle" }),
+              items: chatgptProviders.map((provider) => ({
+                key: createCustomProviderNodeKey(provider.providerId),
+                type: "chatgpt" as const,
+                label: getProviderFormLabel(provider),
+                provider,
+                statusActive: provider.executable === true,
+              })),
+            },
+          ]
+        : []),
       {
         id: "custom",
         title: intl.formatMessage({ id: "settings.modelProvider.customTitle" }),
@@ -47,6 +68,7 @@ export function useModelProviderNavigation({
       },
     ],
     [
+      chatgptProviders,
       customProviders,
       // 左侧导航分组标题在这个 memo 内格式化。
       // 语言切换时 provider 引用可能不变，必须依赖 intl 才能刷新旧 locale 的文案。

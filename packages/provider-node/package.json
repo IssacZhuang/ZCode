@@ -13,6 +13,7 @@
   "dependencies": {
     "@zcode/provider": "workspace:*",
     "@zcode/shared": "workspace:*",
+    "jose": "6.2.2",
     "zod": "4.6.5"
   },
   "devDependencies": {

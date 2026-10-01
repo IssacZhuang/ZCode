@@ -25,6 +25,27 @@ rules:
     - invariant-only
     - evidence-only
 nodes:
+  - id: capability.chatgpt-account-signin
+    kind: capability
+    label: Sign in with ChatGPT account
+    aliases:
+      - chatgpt login
+      - siwc
+      - openai account
+      - ChatGPT 登录
+      - 账号登录
+    codeSeeds:
+      - file: packages/services/src/model-provider/chatgptAccountService.ts
+        symbol: IChatGptAccountService
+      - file: packages/provider-node/src/siwc/siwc-oauth.ts
+        symbol: buildSiwcAuthorizeUrl
+      - file: apps/zcode-cli/packages/adapters/src/model/siwc-auth.ts
+        symbol: SiwcModelRequestAuthSource
+    invariants:
+      - "Account projection owner is the host ChatGptAccountService; CLI only receives
+        provider/updateAccountConfig pushes and resolves tokens locally from the encrypted
+        shared credential store. Tokens never enter provider config overlays or protocol
+        messages."
   - id: capability.model-selection
     kind: capability
     label: Model selection

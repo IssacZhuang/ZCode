@@ -1,9 +1,14 @@
 import { z } from "zod";
 import { modelConfigDataSchema } from "@zcode/shared/model-config";
-import { providerConfigDataSchema, zhipuAccountAccessDataSchema } from "./provider-data-schema.js";
+import {
+  chatgptAccountAccessDataSchema,
+  providerConfigDataSchema,
+  zhipuAccountAccessDataSchema,
+} from "./provider-data-schema.js";
 import { ModelConfig, ModelConfigRules } from "./model-config.js";
 import {
   ApiKeyAccessConfig,
+  ChatgptAccountAccessConfig,
   ProviderApiConfig,
   ProviderConfig,
   ProviderConfigMap,
@@ -23,10 +28,16 @@ import {
   type ProviderTemplateConfigRuleData,
 } from "./rule-data-schema.js";
 
+// Account 运行时事实：成员（模型可见性）、权益（entitled）与账号 Provider 的呈现可见性。
+// Token、API Key、Header 与账号身份不进 Overlay；api/baseUrl 等 capability 也不允许改写。
+const accountProviderAccessSchema = z.discriminatedUnion("type", [
+  zhipuAccountAccessDataSchema.pick({ type: true, entitled: true }),
+  chatgptAccountAccessDataSchema.pick({ type: true, entitled: true }),
+]);
 const accountProviderConfigSchema = providerConfigDataSchema
-  .pick({ builtinModelIds: true })
+  .pick({ builtinModelIds: true, visibility: true })
   .extend({
-    access: zhipuAccountAccessDataSchema.pick({ type: true, entitled: true }).nullable().optional(),
+    access: accountProviderAccessSchema.nullable().optional(),
   });
 
 export function parseProviderConfigMap(input: unknown): ProviderConfigMap {
@@ -148,9 +159,11 @@ function createProviderConfig(config: z.infer<typeof providerConfigDataSchema>):
     access:
       config.access == null
         ? config.access
-        : config.access.type !== "zhipu-account"
-          ? new ApiKeyAccessConfig(config.access)
-          : new ZhipuAccountAccessConfig(config.access),
+        : config.access.type === "zhipu-account"
+          ? new ZhipuAccountAccessConfig(config.access)
+          : config.access.type === "chatgpt-account"
+            ? new ChatgptAccountAccessConfig(config.access)
+            : new ApiKeyAccessConfig(config.access),
     api: config.api == null ? config.api : new ProviderApiConfig(config.api),
   });
 }

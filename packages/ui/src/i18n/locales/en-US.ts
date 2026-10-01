@@ -1701,6 +1701,30 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.usage.queryFailed": "Query failed",
   "settings.modelProvider.usage.balanceRemaining": "Balance",
   "settings.modelProvider.usage.balanceUsedTotal": "Used {used} / {total} {unit}",
+  "settings.modelProvider.chatgpt.groupTitle": "Account",
+  "settings.modelProvider.chatgpt.accountSectionTitle": "Account",
+  "settings.modelProvider.chatgpt.accountSignedIn": "Signed in",
+  "settings.modelProvider.chatgpt.planLabel": "Plan: {plan}",
+  "settings.modelProvider.chatgpt.notEntitledHint":
+    "Your ChatGPT plan does not include use in coding tools. Upgrade and sign in again.",
+  "settings.modelProvider.chatgpt.signOut": "Sign out",
+  "settings.modelProvider.chatgpt.signInTitle": "Continue with ChatGPT",
+  "settings.modelProvider.chatgpt.signInWaiting":
+    "ChatGPT authorization page opened in your browser. This will continue automatically once you approve…",
+  "settings.modelProvider.chatgpt.signInRetry": "Retry",
+  "settings.modelProvider.chatgpt.signInCancel": "Cancel",
+  "settings.modelProvider.chatgpt.signInFailed.denied": "ChatGPT authorization was denied.",
+  "settings.modelProvider.chatgpt.signInFailed.timeout":
+    "Timed out waiting for authorization. Please retry.",
+  "settings.modelProvider.chatgpt.signInFailed.cancelled": "Sign-in was cancelled.",
+  "settings.modelProvider.chatgpt.signInFailed.credentialWriteFailed":
+    "Failed to save sign-in credentials. Please retry.",
+  "settings.modelProvider.chatgpt.signInFailed.protocol":
+    "ChatGPT sign-in response failed verification. Please retry later.",
+  "settings.modelProvider.chatgpt.signInFailed.serverError":
+    "ChatGPT rejected the sign-in request. Check your network proxy and retry.",
+  "settings.modelProvider.chatgpt.signInFailed.network":
+    "Network error while signing in to ChatGPT. Check your connection and retry.",
   "settings.modelProvider.codingPlan.recheck": "Recheck",
   "settings.modelProvider.codingPlan.checkingPlans": "Checking...",
   "settings.modelProvider.codingPlan.switchAccount": "Switch account",

@@ -64,6 +64,7 @@ import type {
   ZCodeWorkspaceGenerateTextParams,
   ZCodeWorkspaceHookTrustGrantResult,
 } from "@zcode/shared";
+import type { ZCodeProviderUpdateAccountConfigParams } from "@zcode/shared";
 import type {
   ClientHello,
   CommandAck,
@@ -572,6 +573,11 @@ export interface IZCodeAgentService {
    * 同步 App 全局运行时偏好到所有已活动 workspace；不得为此启动空闲 Agent。
    */
   syncAppRuntimePreferences(preferences: ZCodeAgentAppRuntimePreferences): Promise<void>;
+  /**
+   * 推送账号 Provider Config Overlay（当前只有 ChatGPT）给全部已连接 agent；
+   * 新 agent 就绪时补推最新快照。不得为此启动空闲 Agent。
+   */
+  syncProviderAccountConfig(envelope: ZCodeProviderUpdateAccountConfigParams): Promise<void>;
   getWorkspaceRuntimeIdentity(
     params: ZCodeAgentWorkspaceTarget,
   ): Promise<ZCodeAgentWorkspaceRuntimeIdentity>;

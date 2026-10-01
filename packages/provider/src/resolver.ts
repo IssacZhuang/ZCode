@@ -4,6 +4,7 @@ import type { completeModelConfigDataSchema } from "@zcode/shared/model-config";
 import type {
   completeApiKeyAccessDataSchema,
   completeZhipuAccountAccessDataSchema,
+  completeChatgptAccountAccessDataSchema,
   completeProviderConfigDataSchema,
 } from "./config/provider-data-schema.js";
 import type { ConfigValidationIssue } from "./config-overlay.js";
@@ -12,6 +13,8 @@ import {
   ModelConfig,
   ModelConfigRules,
   type ZhipuAccountAccessConfig,
+  type ChatgptAccountAccessConfig,
+  isAccountAccess,
   type ModelId,
   type ProviderConfig,
   type ProviderConfigRule,
@@ -25,9 +28,13 @@ import type { AccountProviderStates } from "./account-provider-state.js";
 export type RegistryZhipuAccountAccessConfig = ZhipuAccountAccessConfig &
   z.infer<typeof completeZhipuAccountAccessDataSchema>;
 
+export type RegistryChatgptAccountAccessConfig = ChatgptAccountAccessConfig &
+  z.infer<typeof completeChatgptAccountAccessDataSchema>;
+
 export type RegistryProviderAccessConfig =
   | (ApiKeyAccessConfig & z.infer<typeof completeApiKeyAccessDataSchema>)
-  | RegistryZhipuAccountAccessConfig;
+  | RegistryZhipuAccountAccessConfig
+  | RegistryChatgptAccountAccessConfig;
 
 export type RegistryProviderConfig = ProviderConfig &
   z.infer<typeof completeProviderConfigDataSchema> & {
@@ -43,20 +50,25 @@ export function serializeRegistryProviderConfig(
     group: config.group,
     ...(config.logo === undefined ? {} : { logo: config.logo }),
     access:
-      config.access.type !== "zhipu-account"
+      config.access.type === "zhipu-account"
         ? {
-            type: config.access.type,
-            apiKey: config.access.apiKey,
-            ...(config.access.apiKeyManagementUrl === undefined
-              ? {}
-              : { apiKeyManagementUrl: config.access.apiKeyManagementUrl }),
-          }
-        : {
             type: config.access.type,
             accountType: config.access.accountType,
             mode: config.access.mode,
             entitled: config.access.entitled,
-          },
+          }
+        : config.access.type === "chatgpt-account"
+          ? {
+              type: config.access.type,
+              entitled: config.access.entitled,
+            }
+          : {
+              type: config.access.type,
+              apiKey: config.access.apiKey,
+              ...(config.access.apiKeyManagementUrl === undefined
+                ? {}
+                : { apiKeyManagementUrl: config.access.apiKeyManagementUrl }),
+            },
     api: {
       type: config.api.type,
       baseUrl: config.api.baseUrl,
@@ -218,7 +230,7 @@ export class ProviderConfigResolver {
       const rule = effectiveProviders.getRule(providerId)!;
       const { config, providerName } = rule;
       // 账号不再支持总禁用；旧覆盖值不能让无开关的账号永久失效，其他资格仍正常校验。
-      const enabled = config.access?.type === "zhipu-account" || (rule.enabled ?? true);
+      const enabled = isAccountAccess(config.access) || (rule.enabled ?? true);
       const providerPath = ["providers", providerId];
       const registryProviderResult = createRegistryProviderConfig(config, providerPath);
       const providerIssues: ConfigValidationIssue[] = registryProviderResult.ok
@@ -246,8 +258,7 @@ export class ProviderConfigResolver {
         personalIdsInOrder,
         config.modelOrder ?? [],
       );
-      const accessEntitled =
-        config.access?.type !== "zhipu-account" || config.access.entitled === true;
+      const accessEntitled = !isAccountAccess(config.access) || config.access.entitled === true;
       // 账号权益与当前连接是两件事。非当前账号仍保留设置展示，不向普通 Registry 发布模型。
       // Off-Peak 不定义 current，沿用其独立调度、隐藏和鉴权规则。
       const accountCurrent = input.accountStates?.[providerId]?.current !== false;
@@ -359,7 +370,7 @@ function resolveProviderOrder(
   const sourceIds = effectiveProviders.keys();
   const familyIds = sourceIds.filter((providerId) => {
     const group = effectiveProviders.get(providerId)?.group;
-    return group === "zai-family" || group === "bigmodel-family";
+    return group === "zai-family" || group === "bigmodel-family" || group === "chatgpt-family";
   });
   const familySet = new Set(familyIds);
   const builtinIds = input.zcodeBuiltinProviders

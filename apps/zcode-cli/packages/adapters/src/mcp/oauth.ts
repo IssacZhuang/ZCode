@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { McpOAuthConfig } from "@zcode/contracts";
-import { type SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import { type SharedZCodeCredentialStore } from "@zcode/provider-node";
 import { type McpOAuthAuthorizationContext } from "./oauth-shared.js";
 type McpAuthorizationCodeOAuthConfig = Extract<McpOAuthConfig, { type: "authorization_code" }>;
 

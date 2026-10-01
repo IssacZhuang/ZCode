@@ -12,8 +12,8 @@ import type { Logger, McpOAuthConfig } from "@zcode/contracts";
 import {
   createLocalhostOAuthCallbackServer,
   type LocalhostOAuthCallbackServer,
-} from "../auth/localhost-callback.js";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+} from "@zcode/provider-node";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 import {
   loadCanonicalCredentials,
   publishCanonicalCredentials,

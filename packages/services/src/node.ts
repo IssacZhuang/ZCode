@@ -3,9 +3,11 @@
 import { join } from "node:path";
 import {
   createNodeProviderRuntimePathEnv,
+  createSharedZCodeCredentialStore,
   NodeModelSelectionConfigRepository,
   PERSONAL_PROVIDER_CONFIG_FILE_NAME,
 } from "@zcode/provider-node";
+import { MutableAccountProviderConfigSource } from "@zcode/provider";
 import { getAppConfigDir as resolveAppConfigDir } from "./paths.js";
 import { buildLocalMediaPreviewUrl } from "@zcode/shared";
 
@@ -117,6 +119,10 @@ export {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+export {
+  createChatGptAccountService,
+  IChatGptAccountService,
+} from "./model-provider/chatgptAccountService.js";
 export { createUsageStatsService } from "./usage-stats/usageStatsService.js";
 // Storage：service 与 adapters 工厂；desktop host 负责组装（Worker runner 在 desktop 包内）
 export { createStorageService } from "./storage/app/storageService.js";
@@ -225,13 +231,16 @@ import { readLegacyZCodeConfigProviders } from "./model-provider/legacyZCodeConf
 import { createProviderConfigRuntime } from "./model-provider/providerConfigRuntime.js";
 import {
   createProviderRuntimeFromConfigRuntime,
-  EmptyAccountProviderConfigSource,
   type ProviderRuntime,
 } from "./model-provider/providerRuntime.js";
 import {
   IModelSelectionService,
   IProviderSettingsService,
 } from "./model-provider/providerFacadeServices.js";
+import {
+  createChatGptAccountService,
+  IChatGptAccountService,
+} from "./model-provider/chatgptAccountService.js";
 import {
   IProviderUsageService,
   createProviderUsageService,
@@ -468,10 +477,9 @@ export function createLocalServices(options: {
     // Repository 仅在新 Personal 配置不存在时导入，并保留旧文件以便回滚。
     readLegacyProviders: () => readLegacyZCodeConfigProviders(),
   });
-  // 账号登录已移除：所有 zhipu-account 类型 provider fail-closed，仅 api-key 自定义 provider 可用。
-  const accountProviderConfigSource = new EmptyAccountProviderConfigSource(
-    providerConfigRuntime.configService,
-  );
+  // 账号 Provider Config Overlay 的唯一投影 owner 是 chatGptAccountService：
+  // SIWC 登录/登出把 ChatGPT 权益写进第三层 Overlay；未登录时服务保持 fail-closed 投影。
+  const accountProviderConfigSource = new MutableAccountProviderConfigSource();
 
   const modelSelectionConfiguredDefaultSource = new NodeModelSelectionConfigRepository({
     personalRepository: providerConfigRuntime.personalRepository,
@@ -586,6 +594,18 @@ export function createLocalServices(options: {
         }),
   });
   providerConnectivityAgentService = zcodeAgentService;
+  // ChatGPT 账号服务：账号投影写入 accountProviderConfigSource（registry 自动 refresh），
+  // 并把 provider/updateAccountConfig 推给全部已连接 agent。凭据走共享加密凭据库，
+  // 网络走 host 的代理感知 fetch。
+  const chatGptAccountService = createChatGptAccountService({
+    accountSource: accountProviderConfigSource,
+    readConfigSnapshot: () => providerConfigRuntime.configService.read(),
+    createCredentialStore: () => createSharedZCodeCredentialStore(),
+    fetch: hostApiNetworkTransport.fetch,
+    // zcodeAgentService 在本语句前已创建；getter 只在实际投影时调用，无初始化顺序问题。
+    getSyncProviderAccountConfig: () => (envelope) =>
+      zcodeAgentService.syncProviderAccountConfig(envelope),
+  });
   // desktop-continuous UI 直接订阅 zcodeSessionService，绕开 ZCode task adapter 的
   // mapServiceEvent 路径，导致 task_complete 永远不会写回 sqlite，侧边栏 spinner 不停。
   // 在 services 层装配一个共享的 taskIndexRepo + syncer，session 任意入口都会唤醒
@@ -684,6 +704,8 @@ export function createLocalServices(options: {
   services
     .register(IProviderSettingsService, providerRuntime.providerSettings)
     .register(IModelSelectionService, providerRuntime.modelSelection)
+    // ChatGPT（SIWC）账号服务：设置页登录入口的唯一服务面。
+    .register(IChatGptAccountService, chatGptAccountService)
     // 供应商用量/余额查询：读取 ProviderSettingsView 的 effective baseUrl/apiKey，
     // 走 host 的代理感知 fetch；快照按次返回，不落盘。
     .register(
@@ -700,6 +722,11 @@ export function createLocalServices(options: {
       log.info("Provider Registry 已就绪", {
         configRevision: snapshot.sourceRevisions.config,
         providerCount: snapshot.registry.providers.length,
+      });
+      // Registry 就绪后再重建账号投影：按已存 SIWC 凭据恢复 ChatGPT 卡片与模型成员，
+      // 后台刷新模型目录（容错）；未登录投影 fail-closed，不产生网络请求。
+      void chatGptAccountService.initialize().catch((error: unknown) => {
+        log.warn(undefined, "ChatGPT 账号投影初始化失败", { error });
       });
     },
     (error: unknown) => {

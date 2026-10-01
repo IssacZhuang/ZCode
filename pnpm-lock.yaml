@@ -142,6 +142,9 @@ importers:
       '@zcode/provider':
         specifier: workspace:*
         version: link:../../../../packages/provider
+      '@zcode/provider-node':
+        specifier: workspace:*
+        version: link:../../../../packages/provider-node
       '@zcode/shared':
         specifier: workspace:*
         version: link:../../../../packages/shared
@@ -667,6 +670,9 @@ importers:
       '@zcode/shared':
         specifier: workspace:*
         version: link:../shared
+      jose:
+        specifier: 6.2.2
+        version: 6.2.2
       zod:
         specifier: 4.6.5
         version: 4.6.5

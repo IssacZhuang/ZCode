@@ -3,6 +3,7 @@ import {
   ProviderConfigMap,
   ProviderTemplateMap,
   ZhipuAccountAccessConfig,
+  ChatgptAccountAccessConfig,
   type ModelConfigRules,
 } from "./config/index.js";
 import type { AccountProviderStates } from "./account-provider-state.js";
@@ -46,7 +47,16 @@ export function createFailClosedAccountProviderConfigSnapshot(
               }),
             ],
           ] as const)
-        : [],
+        : provider.access?.type === "chatgpt-account"
+          ? ([
+              [
+                providerId,
+                new ProviderConfig({
+                  access: new ChatgptAccountAccessConfig({ entitled: false }),
+                }),
+              ],
+            ] as const)
+          : [],
     ),
   );
   return createAccountProviderConfigSnapshot(config.zcodeBuiltinRevision, unentitledProviders);

@@ -10,6 +10,7 @@ export const providerGroupDataSchema = z.enum([
   "standard-personal",
   "zai-family",
   "bigmodel-family",
+  "chatgpt-family",
 ]);
 export const zhipuAccountModeDataSchema = z.enum([
   "start-plan",
@@ -52,13 +53,29 @@ export const zhipuAccountAccessDataSchema = z
     type: completeZhipuAccountAccessDataSchema.shape.type,
   })
   .strict();
+
+export const completeChatgptAccountAccessDataSchema = z
+  .object({
+    type: z.literal("chatgpt-account"),
+    entitled: z.boolean(),
+  })
+  .strict();
+export const chatgptAccountAccessDataSchema = z
+  .object({
+    ...sparseShape(completeChatgptAccountAccessDataSchema.shape),
+    type: completeChatgptAccountAccessDataSchema.shape.type,
+  })
+  .strict();
+
 export const providerAccessDataSchema = z.discriminatedUnion("type", [
   apiKeyAccessDataSchema,
   zhipuAccountAccessDataSchema,
+  chatgptAccountAccessDataSchema,
 ]);
 const completeProviderAccessDataSchema = z.discriminatedUnion("type", [
   completeApiKeyAccessDataSchema,
   completeZhipuAccountAccessDataSchema,
+  completeChatgptAccountAccessDataSchema,
 ]);
 
 export const completeProviderApiDataSchema = z

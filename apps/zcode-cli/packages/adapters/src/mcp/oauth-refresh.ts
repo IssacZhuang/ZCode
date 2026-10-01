@@ -12,7 +12,7 @@ import {
 import type { Logger } from "@zcode/contracts";
 import { isZCodeFileLockTimeoutError } from "@zcode/shared";
 import { withFileLock } from "@zcode/shared/node";
-import type { SharedZCodeCredentialStore } from "../auth/shared-credentials.js";
+import type { SharedZCodeCredentialStore } from "@zcode/provider-node";
 import {
   invalidateCanonicalCredentials,
   loadCredentialPair,

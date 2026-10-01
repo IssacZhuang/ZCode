@@ -25,6 +25,7 @@ import {
   ProviderModelsSection,
 } from "./ProviderCardSections.js";
 import { ProviderUsageSection } from "./ProviderUsageSection.js";
+import { ChatGptAccountSection } from "./ChatGptAccountSection.js";
 import { useProviderDetailFeedback } from "./ProviderDetailFeedback.js";
 import { useIdleTrigger } from "./useIdleTrigger.js";
 import { useOptimisticReorder } from "./useOptimisticReorder.js";
@@ -746,7 +747,10 @@ export function InlineEditableProviderCard({
   }, [onDelete]);
 
   const headerProviderName = providerDisplayName;
-  const isAccountProvider = provider.config.access?.type === "zhipu-account";
+  const isAccountProvider =
+    provider.config.access?.type === "zhipu-account" ||
+    provider.config.access?.type === "chatgpt-account";
+  const isChatGptAccountProvider = provider.config.access?.type === "chatgpt-account";
   const isApiKeyProvider = isApiKeyAccess(provider.config.access);
   const effectiveHeaderVisible = headerVisible && statusSection === undefined;
 
@@ -840,6 +844,10 @@ export function InlineEditableProviderCard({
         ) : null}
 
         {isApiKeyProvider ? <ProviderUsageSection provider={provider} /> : null}
+
+        {isChatGptAccountProvider ? (
+          <ChatGptAccountSection accountState={provider.accountState} />
+        ) : null}
 
         <ProviderModelsSection
           // 不同 Provider 可以有同名模型；不能复用上一供应商的打开中草稿和版本。

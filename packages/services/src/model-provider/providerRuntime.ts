@@ -3,6 +3,7 @@ import {
   createNodeModelSelectionFacade,
 } from "@zcode/provider-node";
 import {
+  MutableAccountProviderConfigSource,
   ProviderRegistryService,
   ProviderSettingsFacade,
   createFailClosedAccountProviderConfigSnapshot,
@@ -66,6 +67,7 @@ export class ProviderRuntime {
   readonly providerSettings: IProviderSettingsService;
   readonly modelSelection: IModelSelectionService;
   readonly #configRuntime: ProviderConfigRuntime;
+  readonly #accountSource: RefreshableProviderSource<AccountProviderConfigSnapshot>;
   readonly #disposeAccountSource?: () => void;
   readonly #disposeBuiltinRecovery: () => void;
   readonly #modelSelectionRuntime: IModelSelectionService & { dispose(): void };
@@ -81,6 +83,7 @@ export class ProviderRuntime {
     this.configService = this.#configRuntime.configService;
     const accountSource: RefreshableProviderSource<AccountProviderConfigSnapshot> =
       dependencies.accountSource ?? new EmptyAccountProviderConfigSource(this.configService);
+    this.#accountSource = accountSource;
     this.#disposeBuiltinRecovery = this.#configRuntime.onDidCheckZCodeBuiltin(async () => {
       const [config, account] = await Promise.all([
         this.configService.read(),
@@ -117,7 +120,21 @@ export class ProviderRuntime {
   start(): Promise<void> {
     if (this.#disposed) throw new Error("ProviderRuntime 已 dispose");
     if (this.#startPromise) return this.#startPromise;
-    const startPromise = this.#configRuntime.start().then(() => this.registryService.start());
+    const startPromise = this.#configRuntime.start().then(async () => {
+      if (this.#accountSource instanceof MutableAccountProviderConfigSource) {
+        const config = await this.configService.read();
+        const account = await this.#accountSource.read();
+        if (account.basedOnZCodeBuiltinRevision === "uninitialized") {
+          // 首个 Registry 等待账号版本对齐，而账号恢复在 Registry 就绪后才执行，曾形成启动互等。
+          // 先发布无权益初值解除闭环；已发布的账号投影保留，真实账号仍由账号服务后台恢复。
+          this.#accountSource.replace(
+            createFailClosedAccountProviderConfigSnapshot(config),
+            "initial-fail-closed",
+          );
+        }
+      }
+      return this.registryService.start();
+    });
     this.#startPromise = startPromise;
     void startPromise.catch(() => {
       if (this.#startPromise === startPromise) this.#startPromise = null;

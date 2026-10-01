@@ -14,7 +14,12 @@ export async function confirmAndDeleteModelProvider({
   intl: IntlInstance;
   deleteProvider: (providerId: string) => Promise<void>;
 }) {
-  if (provider.config.group === "zai-family" || provider.config.group === "bigmodel-family") {
+  // 账号族供应商（智谱 / ChatGPT）由账号登录管理，不提供删除入口。
+  if (
+    provider.config.group === "zai-family" ||
+    provider.config.group === "bigmodel-family" ||
+    provider.config.group === "chatgpt-family"
+  ) {
     return;
   }
 

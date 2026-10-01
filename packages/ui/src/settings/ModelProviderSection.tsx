@@ -6,10 +6,12 @@ import { Button } from "@/components/ui/button.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useModelProviders } from "@/hooks/useModelProviders.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
+import { useChatGptAccount } from "@/hooks/useChatGptAccount.js";
 import { logger } from "@/logger.js";
 import { ModelProviderSectionDetail } from "./model-provider-section/Detail.js";
 import { ModelProviderSectionLayout } from "./model-provider-section/SectionLayout.js";
 import { ProviderTemplatePicker } from "./model-provider-section/ProviderTemplatePicker.js";
+import { ChatGptSignInPanel } from "./model-provider-section/ChatGptAccountSection.js";
 import { useModelProviderNavigation } from "./model-provider-section/useModelProviderNavigation.js";
 import { createCustomProviderNodeKey } from "./model-provider-section/utils.js";
 import { confirmAndDeleteModelProvider } from "./model-provider-section/modelProviderActions.js";
@@ -89,6 +91,21 @@ export function ModelProviderSection({
   const [pendingCreatedProviderId, setPendingCreatedProviderId] = useState<string | null>(null);
   const [templatePickerOpen, setTemplatePickerOpen] = useState(false);
   const [creatingProvider, setCreatingProvider] = useState(false);
+  const [chatgptSignInActive, setChatgptSignInActive] = useState(false);
+  const { signInPhase, startSignIn, cancelSignIn } = useChatGptAccount();
+
+  useEffect(() => {
+    if (!chatgptSignInActive) {
+      return;
+    }
+    // 登录完成：账号 Overlay 已翻转 visibility，等 provider 进入 View 后由
+    // pendingCreatedProviderId 效应自动选中；失败留在登录面板展示原因与重试。
+    if (signInPhase.status === "completed") {
+      setChatgptSignInActive(false);
+      setTemplatePickerOpen(false);
+      setPendingCreatedProviderId("chatgpt");
+    }
+  }, [chatgptSignInActive, signInPhase.status]);
 
   useEffect(() => {
     if (
@@ -290,17 +307,35 @@ export function ModelProviderSection({
         </p>
       ) : null}
       {templatePickerOpen ? (
-        <ProviderTemplatePicker
-          templates={providerTemplates}
-          creating={creatingProvider}
-          onBack={() => setTemplatePickerOpen(false)}
-          onCreateFromTemplate={(templateId) => {
-            return handleCreateProvider({ templateId });
-          }}
-          onCreateCustom={(label) => {
-            return handleCreateProvider({ providerName: label });
-          }}
-        />
+        chatgptSignInActive ? (
+          <ChatGptSignInPanel
+            phase={signInPhase}
+            onRetry={() => void startSignIn()}
+            onCancel={() => {
+              void cancelSignIn();
+              setChatgptSignInActive(false);
+            }}
+            onBack={() => setChatgptSignInActive(false)}
+          />
+        ) : (
+          <ProviderTemplatePicker
+            templates={providerTemplates}
+            creating={creatingProvider}
+            onBack={() => setTemplatePickerOpen(false)}
+            onCreateFromTemplate={(templateId) => {
+              // ChatGPT 是账号型 Provider：不走 personal provider 创建，
+              // 直接发起 SIWC 登录；卡片与模型由账号 Overlay 自动注入。
+              if (templateId === "chatgpt") {
+                setChatgptSignInActive(true);
+                return startSignIn();
+              }
+              return handleCreateProvider({ templateId });
+            }}
+            onCreateCustom={(label) => {
+              return handleCreateProvider({ providerName: label });
+            }}
+          />
+        )
       ) : (
         <ModelProviderSectionDetail
           selectedNavItem={selectedNavItem}

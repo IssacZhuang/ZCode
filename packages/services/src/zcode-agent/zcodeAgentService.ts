@@ -58,6 +58,7 @@ import {
   zcodeProviderRuntimeHeadersCancelledSchema,
   zcodeProviderRuntimeHeadersRequestParamsSchema,
   zcodeProviderTestModelConnectivityResultSchema,
+  zcodeProviderUpdateAccountConfigResultSchema,
   zcodeProtocolEmptyResultSchema,
   zcodeProtocolMethods,
   zcodeProtocolNotifications,
@@ -106,6 +107,7 @@ import type {
   ZCodeProtocolRequestId,
   ModelSelection,
   ZCodeProviderRuntimeHeadersRequestParams,
+  ZCodeProviderUpdateAccountConfigParams,
   ZCodeSessionEvent,
   ZCodeSessionRuntimePreferencesScope,
   ZCodeSavedWorkflowScope,
@@ -936,7 +938,12 @@ export function createZCodeAgentService(
   >();
   const activeClientsByWorkspaceKey = new Map<string, ActiveWorkspaceClient>();
   const interactionPreferenceSyncByWorkspaceKey = new Map<string, Promise<void>>();
+  // 账号 Overlay 推送按 workspace 串行，避免登录/登出/刷新并发时旧快照后到覆盖新事实。
+  const accountConfigSyncByWorkspaceKey = new Map<string, Promise<void>>();
   let latestAppRuntimePreferences: ZCodeAgentAppRuntimePreferences | undefined;
+  // 账号 Provider Config Overlay（当前只有 ChatGPT）：登录/登出后 fan-out 给全部已连接
+  // agent；新 agent 就绪时补推，保证任何进程都能拿到同一份账号事实。
+  let latestProviderAccountConfig: ZCodeProviderUpdateAccountConfigParams | undefined;
   /** 动态工作流灰度门的进程内单次判定；见 resolveDynamicWorkflowGate 的注释。 */
   let dynamicWorkflowGate: Promise<boolean> | undefined;
   const waitingWorkspaceStartups = new Map<string, WaitingWorkspaceStartup>();
@@ -1112,6 +1119,41 @@ export function createZCodeAgentService(
       () => {
         if (interactionPreferenceSyncByWorkspaceKey.get(workspaceKey) === current) {
           interactionPreferenceSyncByWorkspaceKey.delete(workspaceKey);
+        }
+      },
+    );
+    return current;
+  }
+
+  function enqueueProviderAccountConfigSync(params: {
+    client: ZCodeProtocolClient;
+    envelope: ZCodeProviderUpdateAccountConfigParams;
+    workspace: ZCodeAgentWorkspaceTarget;
+  }): Promise<void> {
+    const workspaceKey = resolveWorkspaceKey(params.workspace);
+    const previous = accountConfigSyncByWorkspaceKey.get(workspaceKey) ?? Promise.resolve();
+    const current = previous
+      .catch(() => {
+        // 同 interaction preference 队列：前一次失败不打乱后续账号事实的提交顺序。
+      })
+      .then(() =>
+        params.client.request(
+          zcodeProtocolMethods.providerUpdateAccountConfig,
+          params.envelope,
+          zcodeProviderUpdateAccountConfigResultSchema,
+        ),
+      )
+      .then(() => undefined);
+    accountConfigSyncByWorkspaceKey.set(workspaceKey, current);
+    void current.then(
+      () => {
+        if (accountConfigSyncByWorkspaceKey.get(workspaceKey) === current) {
+          accountConfigSyncByWorkspaceKey.delete(workspaceKey);
+        }
+      },
+      () => {
+        if (accountConfigSyncByWorkspaceKey.get(workspaceKey) === current) {
+          accountConfigSyncByWorkspaceKey.delete(workspaceKey);
         }
       },
     );
@@ -2244,9 +2286,27 @@ export function createZCodeAgentService(
         }
       }
     })();
+    // 账号 Provider Overlay（ChatGPT 登录态）：新 agent 就绪时补推最新快照，
+    // 保证任何后启动的进程都拿得到同一份账号事实；未登录则不推（CLI 缺省即 fail-closed）。
+    const providerAccountConfigReady = (async () => {
+      const envelope = latestProviderAccountConfig;
+      if (!envelope) return;
+      try {
+        await enqueueProviderAccountConfigSync({ client, envelope, workspace: params });
+      } catch (error) {
+        // -32601 是旧 CLI 的正常降级（其本地 builtin fail-closed 快照兜底）；其它错误只记 warn。
+        if (!isProtocolMethodNotFoundError(error)) {
+          logger.warn(undefined, "账号 Provider 配置补推失败", {
+            workspaceKey,
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
+    })();
     entry.interactionPreferencesReady = Promise.all([
       interactionPreferencesReady,
       dynamicWorkflowPolicyReady,
+      providerAccountConfigReady,
     ]).then(() => undefined);
     try {
       // 新建或重启 runtime 在允许任何 session 工作前追平缓存；同步期间的新开关
@@ -2611,6 +2671,34 @@ export function createZCodeAgentService(
           }),
         ),
       );
+    },
+
+    async syncProviderAccountConfig(
+      envelope: ZCodeProviderUpdateAccountConfigParams,
+    ): Promise<void> {
+      latestProviderAccountConfig = envelope;
+      const activeClients = [...activeClientsByWorkspaceKey.values()];
+      const results = await Promise.allSettled(
+        activeClients.map((entry) =>
+          enqueueProviderAccountConfigSync({
+            client: entry.client,
+            envelope,
+            workspace: entry.workspace,
+          }),
+        ),
+      );
+      const failed = results.find(
+        (result): result is PromiseRejectedResult => result.status === "rejected",
+      );
+      if (failed) {
+        // 单个 agent 推送失败不阻塞其它 agent；ready 补推会在该进程下次启动时收敛。
+        const error = failed.reason;
+        if (!isProtocolMethodNotFoundError(error)) {
+          logger.warn(undefined, "账号 Provider 配置推送失败（部分 agent）", {
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+        }
+      }
     },
 
     async getWorkspaceRuntimeIdentity(params: ZCodeAgentWorkspaceTarget) {
