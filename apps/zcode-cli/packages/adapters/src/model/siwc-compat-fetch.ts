@@ -8,6 +8,8 @@
  * 发往 api.openai.com/v1/responses 的 body 都合规：非流式请求改写为流式并把
  * SSE 聚合回单 JSON 响应，SDK 无感。
  */
+import { SIWC_SESSION_ID_HEADER, clampSiwcCacheKey } from "./runner-attribution.js";
+
 type ProviderFetch = typeof globalThis.fetch;
 
 export function createSiwcCompatFetch(baseFetch: ProviderFetch): ProviderFetch {
@@ -27,7 +29,7 @@ export function createSiwcCompatFetch(baseFetch: ProviderFetch): ProviderFetch {
       return baseFetch(input, init);
     }
 
-    const shaped = shapeSiwcResponsesRequestBody(parsed);
+    const shaped = shapeSiwcResponsesRequestBody(parsed, readSessionIdHeader(init?.headers));
     const requestInit: RequestInit = { ...init, body: JSON.stringify(shaped.body) };
     const response = await baseFetch(input, requestInit);
     if (!shaped.streamingRewrite || !response.ok || !isEventStream(response)) {
@@ -38,8 +40,35 @@ export function createSiwcCompatFetch(baseFetch: ProviderFetch): ProviderFetch {
   };
 }
 
-/** 请求体塑形结果；streamingRewrite 表示原请求非流式、需要聚合回 JSON。 */
-function shapeSiwcResponsesRequestBody(body: Record<string, unknown>): {
+/** 提取归因层注入的 `session-id` header 值；兼容 Headers 实例、数组与普通对象三种形态。 */
+function readSessionIdHeader(headers: RequestInit["headers"]): string | undefined {
+  if (!headers) return undefined;
+  if (headers instanceof Headers) {
+    return headers.get(SIWC_SESSION_ID_HEADER) ?? undefined;
+  }
+  if (Array.isArray(headers)) {
+    for (const pair of headers) {
+      if (pair?.[0]?.toLowerCase() === SIWC_SESSION_ID_HEADER) {
+        return pair[1];
+      }
+    }
+    return undefined;
+  }
+  if (typeof headers === "object") {
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLowerCase() === SIWC_SESSION_ID_HEADER && typeof value === "string") {
+        return value;
+      }
+    }
+  }
+  return undefined;
+}
+
+/** 请求体塑形结果；streamingRewrite表示原请求非流式、需要聚合回 JSON。 */
+function shapeSiwcResponsesRequestBody(
+  body: Record<string, unknown>,
+  sessionIdHeader?: string,
+): {
   body: Record<string, unknown>;
   streamingRewrite: boolean;
 } {
@@ -67,6 +96,12 @@ function shapeSiwcResponsesRequestBody(body: Record<string, unknown>): {
     "previous_response_id",
   ]) {
     delete next[key];
+  }
+  // 前缀缓存路由派生自 `session-id` header；部分客户端只认 body 的 prompt_cache_key。
+  // 把归因层注入的 header 值同步为同值 body 字段（64 字符截断），显式传入者不覆盖。
+  const cacheKeyValue = sessionIdHeader ? clampSiwcCacheKey(sessionIdHeader) : undefined;
+  if (cacheKeyValue && !Object.hasOwn(next, "prompt_cache_key")) {
+    next.prompt_cache_key = cacheKeyValue;
   }
   if (Array.isArray(next.input)) {
     next.input = next.input.map((item) => {

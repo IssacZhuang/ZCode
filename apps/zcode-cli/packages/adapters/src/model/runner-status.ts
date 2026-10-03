@@ -23,7 +23,8 @@ import { stringMetadata } from "./runner-record.js";
 
 export {
   createModelRequestAttributionHeaders,
-  normalizeModelSessionIdForAttribution
+  createSiwcCacheAffinityHeaders,
+  normalizeModelSessionIdForAttribution,
 } from "./runner-attribution.js";
 
 export interface ModelStatusContext {

@@ -169,7 +169,7 @@ async function sdkFixture(account: boolean, maxOutputTokens: number, builtinMode
     },
     ...(account ? { requestAuth: { apiKey: "synthetic-access-token" } } : {}),
   });
-  return { model: resolved.model, requests };
+  return { model: resolved.model, resolved, requests };
 }
 
 for (const maxOutputTokens of [1, 5000]) {
@@ -313,4 +313,94 @@ test("SIWC final shape removes all unsupported fields and preserves supported bo
     headers,
     signal: controller.signal,
   });
+});
+
+test("chatgpt-account binding is flagged siwcAccount; ordinary API-key binding is not", async () => {
+  const account = await sdkFixture(true, 1);
+  assert.equal(account.resolved.siwcAccount, true);
+  const apiKey = await sdkFixture(false, 1);
+  assert.equal(apiKey.resolved.siwcAccount, undefined);
+});
+
+for (const headerShape of [
+  { name: "Headers instance", headers: new Headers({ "session-id": "affinity-key-1" }) },
+  { name: "plain record", headers: { "Session-Id": "affinity-key-1" } },
+  { name: "header array", headers: [["session-id", "affinity-key-1"]] },
+] as const) {
+  test(`SIWC fetch mirrors the session-id header (${headerShape.name}) into prompt_cache_key`, async () => {
+    let sent: Record<string, unknown> | undefined;
+    const fetch = createSiwcCompatFetch(async (_input, init) => {
+      sent = JSON.parse(init!.body as string) as Record<string, unknown>;
+      return new Response(null, { status: 204 });
+    });
+    await fetch("https://provider.example.invalid/v1/responses", {
+      method: "POST",
+      body: JSON.stringify({ model: MODEL_ID, stream: true, input: [] }),
+      headers: headerShape.headers as RequestInit["headers"],
+    });
+    assert.equal(sent!.prompt_cache_key, "affinity-key-1");
+  });
+}
+
+test("SIWC fetch keeps an explicit prompt_cache_key over the mirrored header", async () => {
+  let sent: Record<string, unknown> | undefined;
+  const fetch = createSiwcCompatFetch(async (_input, init) => {
+    sent = JSON.parse(init!.body as string) as Record<string, unknown>;
+    return new Response(null, { status: 204 });
+  });
+  await fetch("https://provider.example.invalid/v1/responses", {
+    method: "POST",
+    body: JSON.stringify({
+      model: MODEL_ID,
+      stream: true,
+      input: [],
+      prompt_cache_key: "explicit-key",
+    }),
+    headers: { "session-id": "header-key" },
+  });
+  assert.equal(sent!.prompt_cache_key, "explicit-key");
+});
+
+test("SIWC fetch truncates the mirrored prompt_cache_key to 64 code points", async () => {
+  let sent: Record<string, unknown> | undefined;
+  const fetch = createSiwcCompatFetch(async (_input, init) => {
+    sent = JSON.parse(init!.body as string) as Record<string, unknown>;
+    return new Response(null, { status: 204 });
+  });
+  await fetch("https://provider.example.invalid/v1/responses", {
+    method: "POST",
+    body: JSON.stringify({ model: MODEL_ID, stream: true, input: [] }),
+    headers: { "session-id": "😀".repeat(70) },
+  });
+  assert.equal(Array.from(String(sent!.prompt_cache_key)).length, 64);
+});
+
+test("SIWC SDK path mirrors the per-call session-id header into the request body", async () => {
+  const fixture = await sdkFixture(true, 5000);
+  const result = streamText({
+    model: fixture.model,
+    messages: MESSAGES,
+    maxOutputTokens: 5000,
+    maxRetries: 0,
+    allowSystemInMessages: true,
+    headers: { "session-id": "subagent:parent-session-42" },
+  });
+  assert.equal(await result.text, "ok");
+  const { body, headers } = fixture.requests[0]!;
+  assert.equal(headers.get("session-id"), "subagent:parent-session-42");
+  assert.equal(body.prompt_cache_key, "subagent:parent-session-42");
+});
+
+test("ordinary API-key SDK path never mirrors a prompt_cache_key", async () => {
+  const fixture = await sdkFixture(false, 5000);
+  const result = streamText({
+    model: fixture.model,
+    messages: MESSAGES,
+    maxOutputTokens: 5000,
+    maxRetries: 0,
+    allowSystemInMessages: true,
+  });
+  assert.equal(await result.text, "ok");
+  const { body } = fixture.requests[0]!;
+  assert.equal(Object.hasOwn(body, "prompt_cache_key"), false);
 });

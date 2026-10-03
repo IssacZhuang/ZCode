@@ -69,6 +69,8 @@ export interface AiSdkResolvedModel {
   providerKind: AiSdkProviderKind;
   providerOptions?: Record<string, unknown>;
   rawRequestBodyCapture?: RawRequestBodyCapture;
+  /** chatgpt-account（SIWC）绑定：请求归因层据此注入缓存亲和 header；随绑定快照冻结。 */
+  siwcAccount?: true;
 }
 
 export interface AiSdkBoundModelResolution {
@@ -249,6 +251,9 @@ export class AiSdkModelExecution {
       providerKind: providerConfig.kind,
       providerOptions: providerConfig.providerOptions,
       rawRequestBodyCapture,
+      ...(providerConfig.kind === "openai" && providerConfig.access.type === "chatgpt-account"
+        ? { siwcAccount: true as const }
+        : {}),
     };
   }
 

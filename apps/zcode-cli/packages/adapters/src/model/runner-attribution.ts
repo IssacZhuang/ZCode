@@ -23,6 +23,13 @@ const MODEL_SESSION_TYPE_HEADER = "x-zcode-session-type";
 const SESSION_ID_INTERNAL_PREFIX = "sess_";
 const SESSION_ID_SUBAGENT_PREFIX = "subagent_agent_";
 const QUERY_ID_INTERNAL_PREFIX = "query_";
+// ChatGPT（SIWC）通道的前缀缓存路由派生自 Responses `session-id` header；只发 body
+// prompt_cache_key 不足以建立稳定路由。与 Codex CLI 的 responses_session_id 对齐。
+export const SIWC_SESSION_ID_HEADER = "session-id";
+const SIWC_THREAD_ID_HEADER = "thread-id";
+const SIWC_SUBAGENT_AFFINITY_PREFIX = "subagent:";
+// OpenAI prompt_cache_key 的公开上限是 64 个字符（pi agent 同样按此截断）。
+const SIWC_CACHE_KEY_MAX_LENGTH = 64;
 
 export function createModelRequestAttributionHeaders(
   statusContext: ModelStatusContext,
@@ -60,6 +67,40 @@ export function resolveModelRequestSessionType(
     return ModelRequestSessionType.Subagent;
   }
   return ModelRequestSessionType.Other;
+}
+
+/**
+ * chatgpt-account（SIWC）请求的缓存亲和 header。Main/Other 会话用本会话规范化 id；
+ * Subagent 会话继承父会话派生 key（`subagent:<父会话 id>`），让同一父会话派生的全部
+ * subagent 请求共享同一路由，公共系统前缀可以互相命中缓存；同时以 `thread-id` 上报
+ * 父会话归属。值只含会话 id 派生信息，不含凭据或账号身份。
+ */
+export function createSiwcCacheAffinityHeaders(
+  statusContext: Pick<
+    ModelStatusContext,
+    "sessionId" | "parentSessionId" | "modelRequestSessionType"
+  >,
+): Record<string, string> {
+  const sessionValue = normalizeModelSessionIdForAttribution(statusContext.sessionId);
+  const parentValue = normalizeModelSessionIdForAttribution(statusContext.parentSessionId);
+  const isSubagent = statusContext.modelRequestSessionType === ModelRequestSessionType.Subagent;
+  const affinityValue =
+    isSubagent && parentValue
+      ? clampSiwcCacheKey(`${SIWC_SUBAGENT_AFFINITY_PREFIX}${parentValue}`)
+      : sessionValue
+        ? clampSiwcCacheKey(sessionValue)
+        : undefined;
+  return {
+    ...(affinityValue ? { [SIWC_SESSION_ID_HEADER]: affinityValue } : {}),
+    ...(isSubagent && parentValue ? { [SIWC_THREAD_ID_HEADER]: parentValue } : {}),
+  };
+}
+
+export function clampSiwcCacheKey(value: string): string {
+  const chars = Array.from(value);
+  return chars.length <= SIWC_CACHE_KEY_MAX_LENGTH
+    ? value
+    : chars.slice(0, SIWC_CACHE_KEY_MAX_LENGTH).join("");
 }
 
 function isModelRequestSessionType(value: unknown): value is ModelRequestSessionTypeValue {

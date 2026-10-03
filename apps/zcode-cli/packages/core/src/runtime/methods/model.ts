@@ -78,7 +78,12 @@ export async function runModelTextRequest(
   // 正常请求传递模型级 effective 预算，Compact 传递 min(effective, 20K) 的 summary
   // 任务预算；adapter 只做 provider 兼容映射，不再施加独立 global cap。
   const modelInvocationContext = {
-    metadata: traceContextToLogContext(projectedOptions.traceContext),
+    metadata: {
+      ...traceContextToLogContext(projectedOptions.traceContext),
+      // SIWC 缓存亲和需要父会话 id 派生 subagent 亲和 key；TraceContext 不含该字段，
+      // 它只存在于 runtime 配置，必须在此显式补入，Subagent 才能继承父会话路由。
+      ...(this.config.parentSessionId ? { parentSessionId: this.config.parentSessionId } : {}),
+    },
     modelRequestSessionType: resolveModelRequestSessionTypeFromTaskType(this.config.taskType),
     // 重试预算与准入端口不在这里设：它们是 runtime 层字段，由 createRuntimeModel 绑在句柄上，turn step 与工具内部的模型调用同一来源。
     modelCall: {

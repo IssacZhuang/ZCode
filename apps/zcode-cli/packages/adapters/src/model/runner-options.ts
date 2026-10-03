@@ -9,7 +9,11 @@ import type {
   AiSdkStreamTextOptions,
   ResolvedAiSdkModel,
 } from "./runner-runtime.js";
-import { createModelRequestAttributionHeaders, type ModelStatusContext } from "./runner-status.js";
+import {
+  createModelRequestAttributionHeaders,
+  createSiwcCacheAffinityHeaders,
+  type ModelStatusContext,
+} from "./runner-status.js";
 
 type ExperimentalIncludeWithResponseBody = {
   requestBody?: boolean;
@@ -31,6 +35,14 @@ function mergeRequestHeaders(
     ...providerHeaders,
     ...attributionHeaders,
   };
+}
+
+/** chatgpt-account（SIWC）绑定才注入缓存亲和 header；普通 API-key/账号请求保持原 header 面。 */
+function siwcCacheAffinityHeaders(
+  statusContext: ModelStatusContext,
+  resolved: ResolvedAiSdkModel,
+): Record<string, string> {
+  return resolved.siwcAccount ? createSiwcCacheAffinityHeaders(statusContext) : {};
 }
 
 export function createGenerateTextOptions(input: {
@@ -82,10 +94,10 @@ export function createGenerateTextOptions(input: {
       : undefined,
     providerOptions: requestProviderOptions,
     abortSignal: input.request.abortSignal,
-    headers: mergeRequestHeaders(
-      input.resolved.headers,
-      createModelRequestAttributionHeaders(input.statusContext),
-    ),
+    headers: mergeRequestHeaders(input.resolved.headers, {
+      ...createModelRequestAttributionHeaders(input.statusContext),
+      ...siwcCacheAffinityHeaders(input.statusContext, input.resolved),
+    }),
     // ZCode owns system-message construction in core/context. Keep AI SDK from
     // printing its generic system-message warning to process stderr.
     allowSystemInMessages: true,
@@ -140,10 +152,10 @@ export function createStreamTextOptions(input: {
     seed: input.request.seed,
     providerOptions: requestProviderOptions,
     abortSignal: input.request.abortSignal,
-    headers: mergeRequestHeaders(
-      input.resolved.headers,
-      createModelRequestAttributionHeaders(input.statusContext),
-    ),
+    headers: mergeRequestHeaders(input.resolved.headers, {
+      ...createModelRequestAttributionHeaders(input.statusContext),
+      ...siwcCacheAffinityHeaders(input.statusContext, input.resolved),
+    }),
     // ZCode owns system-message construction in core/context. Keep AI SDK from
     // printing its generic system-message warning to process stderr.
     allowSystemInMessages: true,
